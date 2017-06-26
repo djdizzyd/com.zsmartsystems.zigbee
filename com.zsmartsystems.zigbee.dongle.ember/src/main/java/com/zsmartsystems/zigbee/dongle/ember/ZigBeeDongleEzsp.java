@@ -662,6 +662,13 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return false;
     }
 
+    public boolean setChannelMask(int channelMask) {
+        networkParameters.setChannels(channelMask);
+        return true;
+    }
+
+    public int getChannelMask() { return networkParameters.getChannels(); }
+
     /**
      * Returns the 64 bit address of the dongle.
      *
