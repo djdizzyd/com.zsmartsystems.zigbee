@@ -489,9 +489,15 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         }
 
         logger.debug(emberCommand.toString());
-        ashHandler.queueFrame(emberCommand);
+        sendEmberCommand(emberCommand);
+        //ashHandler.queueFrame(emberCommand);
 
         // emberUnicast = (EzspSendUnicast) ashHandler.sendEzspRequestAsync(emberUnicast);
+    }
+
+
+    public void sendEmberCommand(EzspFrameRequest emberCommand) {
+        ashHandler.queueFrame(emberCommand);
     }
 
     @Override
