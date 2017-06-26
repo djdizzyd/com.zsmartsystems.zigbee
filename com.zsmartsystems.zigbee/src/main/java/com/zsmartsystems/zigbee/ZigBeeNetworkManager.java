@@ -286,6 +286,7 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
      */
     public boolean setZigBeeChannel(int channel) {
         if (channel < 11 || channel > 26) {
+            logger.debug("Can't set channel to {}", channel);
             return false;
         }
         return transport.setZigBeeChannel(channel);
@@ -748,34 +749,6 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
     }
 
     /**
-     * Sets group label.
-     *
-     * @param groupId
-     *            the group ID
-     * @param label
-     *            the label
-     */
-    public void addMembership(final int groupId, final String label) {
-        if (getGroup(groupId) == null) {
-            addGroup(new ZigBeeGroupAddress(groupId, label));
-        } else {
-            final ZigBeeGroupAddress group = getGroup(groupId);
-            group.setLabel(label);
-            updateGroup(group);
-        }
-    }
-
-    /**
-     * Removes group label.
-     *
-     * @param groupId
-     *            the group ID
-     */
-    public void removeMembership(final int groupId) {
-        removeGroup(groupId);
-    }
-
-    /**
      * Sends {@link ZclCommand} command to {@link ZigBeeAddress}.
      *
      * @param destination
@@ -833,7 +806,7 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
             try {
                 int transactionId = sendCommand(command);
                 if (command instanceof ZclCommand) {
-                    ((ZclCommand) command).setTransactionId((byte) transactionId);
+                    ((ZclCommand) command).setTransactionId(transactionId);
                 }
             } catch (final ZigBeeException e) {
                 future.set(new CommandResult(e.toString()));
