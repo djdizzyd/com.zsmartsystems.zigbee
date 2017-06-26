@@ -42,6 +42,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastRespons
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetConfigurationValueResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetInitialSecurityStateResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetPolicyResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetRadioChannelResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStackStatusHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStartScanResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspTrustCenterJoinHandler;
@@ -115,6 +116,7 @@ public abstract class EzspFrame {
     protected static final int FRAME_ID_SET_CONFIGURATION_VALUE = 0x53;
     protected static final int FRAME_ID_SET_INITIAL_SECURITY_STATE = 0x68;
     protected static final int FRAME_ID_SET_POLICY = 0x55;
+    protected static final int FRAME_ID_SET_RADIO_CHANNEL = 0x9A;
     protected static final int FRAME_ID_STACK_STATUS_HANDLER = 0x19;
     protected static final int FRAME_ID_START_SCAN = 0x1A;
     protected static final int FRAME_ID_TRUST_CENTER_JOIN_HANDLER = 0x24;
@@ -161,6 +163,7 @@ public abstract class EzspFrame {
         ezspHandlerMap.put(FRAME_ID_SET_CONFIGURATION_VALUE, EzspSetConfigurationValueResponse.class);
         ezspHandlerMap.put(FRAME_ID_SET_INITIAL_SECURITY_STATE, EzspSetInitialSecurityStateResponse.class);
         ezspHandlerMap.put(FRAME_ID_SET_POLICY, EzspSetPolicyResponse.class);
+        ezspHandlerMap.put(FRAME_ID_SET_RADIO_CHANNEL, EzspSetRadioChannelResponse.class);
         ezspHandlerMap.put(FRAME_ID_STACK_STATUS_HANDLER, EzspStackStatusHandler.class);
         ezspHandlerMap.put(FRAME_ID_START_SCAN, EzspStartScanResponse.class);
         ezspHandlerMap.put(FRAME_ID_TRUST_CENTER_JOIN_HANDLER, EzspTrustCenterJoinHandler.class);
