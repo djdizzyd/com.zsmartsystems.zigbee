@@ -346,7 +346,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     private void createEndpoints() {
         // Create a list of all the clusters we want to register
         final List<Integer> clusterSet = Arrays.asList(ZclClusterType.BASIC.getId(),
-                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId());
+                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId(), ZclClusterType.IAS_ZONE.getId());
 
         EzspAddEndpointRequest addEndpoint;
 
