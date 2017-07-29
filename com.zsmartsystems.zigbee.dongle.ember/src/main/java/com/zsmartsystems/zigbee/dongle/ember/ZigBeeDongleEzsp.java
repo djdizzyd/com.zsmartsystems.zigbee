@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
+import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
 import com.zsmartsystems.zigbee.ZigBeeDeviceStatus;
 import com.zsmartsystems.zigbee.ZigBeeException;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
@@ -22,6 +24,10 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRespons
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Request;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Response;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
@@ -109,6 +115,17 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
      * The current network parameters as {@link EmberNetworkParameters}
      */
     private EmberNetworkParameters networkParameters = new EmberNetworkParameters();
+
+    /**
+     *  The ieee address of the dongle
+     */
+    private IeeeAddress ieeeAddress;
+
+    /**
+     * The network address of the dongle
+     */
+    private ZigBeeDeviceAddress networkAddress;
+
 
     /**
      * The Ember version used in this system. Set during initialisation and saved in case the client is interested.
@@ -216,6 +233,10 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         networkParameters = getNetworkParameters();
         getCurrentSecurityState();
 
+        // get the ieee address of the dongle
+        ieeeAddress = getEui64Address();
+        networkAddress = new ZigBeeDeviceAddress(getNodeId());
+
         zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.INITIALISING);
 
         logger.debug("EZSP dongle initialize done: Initialised {}",
@@ -303,10 +324,26 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return getNetworkParametersResponse.getParameters();
     }
 
+    private IeeeAddress getEui64Address() {
+        EzspGetEui64Request getEui64Request = new EzspGetEui64Request();
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getEui64Request, EzspGetEui64Response.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspGetEui64Response getEui64Response = (EzspGetEui64Response) transaction.getResponse();
+        return getEui64Response.getEui64();
+    }
+
+    private Integer getNodeId() {
+        EzspGetNodeIdRequest getNodeIdRequest = new EzspGetNodeIdRequest();
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getNodeIdRequest, EzspGetNodeIdResponse.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspGetNodeIdResponse getNodeIdResponse = (EzspGetNodeIdResponse) transaction.getResponse();
+        return getNodeIdResponse.getNodeId();
+    }
+
     private void createEndpoints() {
         // Create a list of all the clusters we want to register
         final List<Integer> clusterSet = Arrays.asList(ZclClusterType.BASIC.getId(),
-                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId());
+                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId(), ZclClusterType.IAS_ZONE.getId());
 
         EzspAddEndpointRequest addEndpoint;
 
@@ -449,9 +486,15 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         }
 
         logger.debug(emberCommand.toString());
-        ashHandler.queueFrame(emberCommand);
+        sendEmberCommand(emberCommand);
+        //ashHandler.queueFrame(emberCommand);
 
         // emberUnicast = (EzspSendUnicast) ashHandler.sendEzspRequestAsync(emberUnicast);
+    }
+
+
+    public void sendEmberCommand(EzspFrameRequest emberCommand) {
+        ashHandler.queueFrame(emberCommand);
     }
 
     @Override
@@ -614,6 +657,31 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         networkKey.setContents(keyData);
 
         return false;
+    }
+
+    public boolean setChannelMask(int channelMask) {
+        networkParameters.setChannels(channelMask);
+        return true;
+    }
+
+    public int getChannelMask() { return networkParameters.getChannels(); }
+
+    /**
+     * Returns the 64 bit address of the dongle.
+     *
+     * @return IeeeAddress the 64 bit address of the dongle
+     */
+    public IeeeAddress getIeeeAddress() {
+        return ieeeAddress;
+    }
+
+    /**
+     * Returns the network address (16 bit) of the dongle.
+     *
+     * @return Integer the 16 bit address
+     */
+    public ZigBeeDeviceAddress getNetworkAddress() {
+        return networkAddress;
     }
 
     @Override

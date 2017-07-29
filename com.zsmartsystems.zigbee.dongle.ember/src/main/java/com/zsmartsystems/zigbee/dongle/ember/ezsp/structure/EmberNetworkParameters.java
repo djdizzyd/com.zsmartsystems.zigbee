@@ -82,7 +82,7 @@ public class EmberNetworkParameters {
      * <p>
      * EZSP type is <i>uint32_t</i> - Java type is {@link int}
      */
-    private int channels;
+    private int channels = EzspChannelMask.EZSP_CHANNEL_MASK_ALL.getKey();
 
     /**
      * Default Constructor

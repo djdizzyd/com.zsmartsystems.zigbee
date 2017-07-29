@@ -82,7 +82,7 @@ public class EmberNetworkInitialisation {
         }
 
         // Perform an energy scan to find a clear channel
-        int quietestChannel = doEnergyScan(scanDuration);
+        int quietestChannel = doEnergyScan(scanDuration, networkParameters.getChannels());
         logger.debug("Energy scan reports quietest channel is " + quietestChannel);
 
         // Check if any current networks were found and avoid those channels, PAN ID and especially Extended PAN ID
@@ -151,9 +151,9 @@ public class EmberNetworkInitialisation {
      * @param scanDuration duration of the scan on each channel
      * @return the quietest channel, or null on error
      */
-    private Integer doEnergyScan(int scanDuration) {
+    private Integer doEnergyScan(int scanDuration, int channelMask) {
         EzspStartScanRequest energyScan = new EzspStartScanRequest();
-        energyScan.setChannelMask(EzspChannelMask.EZSP_CHANNEL_MASK_ALL.getKey());
+        energyScan.setChannelMask(channelMask);
         energyScan.setDuration(scanDuration);
         energyScan.setScanType(EzspNetworkScanType.EZSP_ENERGY_SCAN);
 
