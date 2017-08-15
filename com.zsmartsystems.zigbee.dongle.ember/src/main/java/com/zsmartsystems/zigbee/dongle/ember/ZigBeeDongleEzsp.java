@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,29 +20,6 @@ import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Request;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Response;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendBroadcastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendMulticastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStackStatusHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspTrustCenterJoinHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsOption;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberCurrentSecurityState;
@@ -606,6 +584,11 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
              * zigbeeTransportReceive.receiveCommand(apsFrame);
              */
             return;
+        }
+
+        if(response instanceof EzspIncomingRouteRecordHandler) {
+            EzspIncomingRouteRecordHandler routeRecordHandler = (EzspIncomingRouteRecordHandler) response;
+            zigbeeTransportReceive.deviceNetworkAddressUpdate(routeRecordHandler.getSource(), routeRecordHandler.getSourceEui());
         }
 
         logger.debug("Unhandled EZSP Frame: {}", response.toString());
