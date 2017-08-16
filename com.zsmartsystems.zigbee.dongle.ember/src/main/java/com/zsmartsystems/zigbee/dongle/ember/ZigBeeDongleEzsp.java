@@ -318,6 +318,18 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return getNodeIdResponse.getNodeId();
     }
 
+    public EmberStatus sendManyToOneRouteRequest() {
+        EzspSendManyToOneRouteRequestRequest sendManyToOneRouteRequestRequest = new EzspSendManyToOneRouteRequestRequest();
+        sendManyToOneRouteRequestRequest.setRadius(0x1E);
+        // EMBER_HIGH_RAM_CONCENTRATOR
+        sendManyToOneRouteRequestRequest.setConcentratorType(0xFFF9);
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(sendManyToOneRouteRequestRequest, EzspSendManyToOneRouteRequestResponse.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
+        return sendManyToOneRouteRequestResponse.getStatus();
+    }
+
+
     private void createEndpoints() {
         // Create a list of all the clusters we want to register
         final List<Integer> clusterSet = Arrays.asList(ZclClusterType.BASIC.getId(),
