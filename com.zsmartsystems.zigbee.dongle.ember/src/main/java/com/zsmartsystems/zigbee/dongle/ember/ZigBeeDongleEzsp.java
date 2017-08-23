@@ -605,6 +605,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
             } catch(Exception e) {
                 logger.warn("Caught exception while processing EzspIncomingRouteRecord", e);
             }
+            return;
         }
 
         logger.debug("Unhandled EZSP Frame: {}", response.toString());
