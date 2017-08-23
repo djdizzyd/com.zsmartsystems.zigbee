@@ -599,8 +599,12 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         }
 
         if(response instanceof EzspIncomingRouteRecordHandler) {
-            EzspIncomingRouteRecordHandler routeRecordHandler = (EzspIncomingRouteRecordHandler) response;
-            zigbeeTransportReceive.deviceNetworkAddressUpdate(routeRecordHandler.getSource(), routeRecordHandler.getSourceEui());
+            try {
+                EzspIncomingRouteRecordHandler routeRecordHandler = (EzspIncomingRouteRecordHandler) response;
+                zigbeeTransportReceive.deviceNetworkAddressUpdate(routeRecordHandler.getSource(), routeRecordHandler.getSourceEui());
+            } catch(Exception e) {
+                logger.warn("Caught exception while processing EzspIncomingRouteRecord", e);
+            }
         }
 
         logger.debug("Unhandled EZSP Frame: {}", response.toString());

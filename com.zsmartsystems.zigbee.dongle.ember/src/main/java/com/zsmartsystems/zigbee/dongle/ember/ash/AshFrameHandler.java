@@ -386,7 +386,7 @@ public class AshFrameHandler {
      * This method queues a {@link EzspFrameRequest} frame without waiting for a response and
      * no transaction management is performed.
      *
-     * @param transaction
+     * @param request
      *            {@link EzspFrameRequest}
      */
     public void queueFrame(EzspFrameRequest request) {
@@ -477,7 +477,8 @@ public class AshFrameHandler {
                 // TODO: We probably should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
-                logger.debug("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Dropping message: {}", sentQueue.poll());
             }
 
             sendRetry();
@@ -585,7 +586,7 @@ public class AshFrameHandler {
      * Sends an EZSP request to the NCP and waits for the response. The response is correlated with the request and the
      * returned {@link EzspFrame} contains the request and response data.
      *
-     * @param ezspRequest
+     * @param ezspTransaction
      *            Request {@link EzspFrame}
      * @return response {@link EzspFrame}
      */
