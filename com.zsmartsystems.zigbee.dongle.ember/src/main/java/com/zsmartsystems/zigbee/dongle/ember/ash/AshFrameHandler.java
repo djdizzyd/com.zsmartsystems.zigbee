@@ -213,6 +213,13 @@ public class AshFrameHandler {
                                         case NAK:
                                             sendRetry();
                                             break;
+                                        case ERROR:
+                                            AshFrameError error = (AshFrameError) packet;
+                                            if(error.isResetError()) {
+                                                // we got a reset code, send a RST
+                                                responseFrame = new AshFrameRst();
+                                            }
+                                            break;
                                         case RSTACK:
                                             AshFrameRstAck rstAck = (AshFrameRstAck) packet;
                                             // Make sure this is a software reset.
@@ -459,6 +466,7 @@ public class AshFrameHandler {
             timerTask.cancel();
             timerTask = null;
         }
+        retries = 0;
     }
 
     private class AshRetryTimer extends TimerTask {
@@ -479,6 +487,7 @@ public class AshFrameHandler {
 
                 logger.warn("Error: number of retries exceeded [{}].", retries);
                 logger.warn("Dropping message: {}", sentQueue.poll());
+                retries = 0;
             }
 
             sendRetry();
