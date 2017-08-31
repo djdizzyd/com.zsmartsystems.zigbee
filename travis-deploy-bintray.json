@@ -6,13 +6,13 @@
     },
 
     "version": {
-        "name": "1.0.1-SNAPSHOT",
+        "name": "1.1.1-SNAPSHOT",
         "desc": ""
     },
 
     "files":
     [
-        {"includePattern": "com.zsmartsystems.zigbee/target/com.zsmartsystems.zigbee-1.0.1-SNAPSHOT.jar", "excludePattern": "",
+        {"includePattern": "com.zsmartsystems.zigbee/target/com.zsmartsystems.zigbee-1.1.1-SNAPSHOT.jar", "excludePattern": "",
 			"matrixParams": {
 		        "override": 1
 		    }

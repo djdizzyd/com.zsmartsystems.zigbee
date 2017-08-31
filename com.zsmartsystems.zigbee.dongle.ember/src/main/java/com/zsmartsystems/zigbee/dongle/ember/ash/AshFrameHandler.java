@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.zsmartsystems.zigbee.transport.ZigBeePort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +107,7 @@ public class AshFrameHandler {
     /**
      * The output stream.
      */
-    private final OutputStream outputStream;
+    private ZigBeePort zigBeePort;
 
     /**
      * The parser parserThread.
@@ -123,16 +124,11 @@ public class AshFrameHandler {
      * Construct which sets input stream where the packet is read from the and
      * handler which further processes the received packet.
      *
-     * @param inputStream
-     *            the input stream
-     * @param outputStream
-     *            the output stream
      * @param frameHandler
      *            the packet handler
      */
-    public AshFrameHandler(final InputStream inputStream, final OutputStream outputStream,
-            final EzspFrameHandler frameHandler) {
-        this.outputStream = outputStream;
+    public AshFrameHandler(final ZigBeePort zigBeePort, final EzspFrameHandler frameHandler) {
+        this.zigBeePort = zigBeePort;
         // this.inputStream = inputStream;
         this.frameHandler = frameHandler;
 
@@ -146,9 +142,9 @@ public class AshFrameHandler {
                 int inputCount = 0;
                 boolean inputError = false;
 
-                while (!close) {
+                while (!interrupted()) {
                     try {
-                        int val = inputStream.read();
+                        int val = zigBeePort.getInputStream().read();
                         logger.trace("ASH RX: " + String.format("%02X", val));
                         if (val == ASH_CANCEL_BYTE) {
                             inputCount = 0;
@@ -291,7 +287,6 @@ public class AshFrameHandler {
      * Requests parser thread to shutdown.
      */
     public void close() {
-        this.close = true;
         try {
             parserThread.interrupt();
             parserThread.join();
@@ -373,7 +368,7 @@ public class AshFrameHandler {
                 // result.append(" ");
                 // result.append(String.format("%02X", b));
                 // logger.debug("ASH TX: " + String.format("%02X", b));
-                outputStream.write(b);
+                zigBeePort.getOutputStream().write(b);
             }
         } catch (IOException e) {
             logger.debug(e.getMessage());
