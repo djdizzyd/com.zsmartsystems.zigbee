@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
 import java.io.IOException;
@@ -20,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.dongle.ember.EzspFrameHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrame.ErrorCode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrame.FrameType;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
@@ -217,10 +223,18 @@ public class AshFrameHandler {
                                             }
                                             break;
                                         case RSTACK:
+                                            // Stack has been reset!
                                             AshFrameRstAck rstAck = (AshFrameRstAck) packet;
+
+                                            // If we are already connected, we need to reconnect
+                                            if (stateConnected) {
+                                                reconnect();
+                                                break;
+                                            }
+
                                             // Make sure this is a software reset.
                                             // This avoids us reacting to a HW reset before our SW ack
-                                            if (rstAck.getResetType() != ErrorCode.SOFTWARE) {
+                                            if (rstAck.getResetType() != AshErrorCode.RESET_SOFTWARE) {
                                                 break;
                                             }
 
@@ -231,6 +245,7 @@ public class AshFrameHandler {
                                                 frmNum = 0;
                                                 sentQueue.clear();
                                                 logger.debug("ASH: Connected");
+                                                frameHandler.handleLinkStateChange(false);
                                             } else {
                                                 logger.debug("Invalid ASH version");
                                             }
@@ -416,6 +431,12 @@ public class AshFrameHandler {
         sendFrame(reset);
     }
 
+    private void reconnect() {
+        frameHandler.handleLinkStateChange(false);
+
+        connect();
+    }
+
     /**
      * Acknowledge frames we've sent and removes the from the sent queue.
      * This method is called for each DATA or ACK frame where we have the 'ack' property.
@@ -477,7 +498,7 @@ public class AshFrameHandler {
 
             if (retries++ > ACK_TIMEOUTS) {
                 // Too many retries.
-                // TODO: We probably should alert the upper layer so they can reset the link?
+                // We should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
                 logger.warn("Error: number of retries exceeded [{}].", retries);

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.ember;
 
 import java.util.Arrays;
@@ -615,9 +622,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     @Override
     public void handleLinkStateChange(boolean linkState) {
         // Handle link changes and notify framework or just reset link with dongle?
-        if (!linkState) {
-            zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.OFFLINE);
-        }
+        zigbeeTransportReceive.setNetworkState(linkState ? ZigBeeTransportState.ONLINE : ZigBeeTransportState.OFFLINE);
     }
 
     @Override
