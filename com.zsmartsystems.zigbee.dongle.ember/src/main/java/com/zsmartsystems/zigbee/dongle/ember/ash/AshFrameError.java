@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
 /**
@@ -43,35 +50,8 @@ public class AshFrameError extends AshFrame {
         builder.append(version);
         builder.append(". errorCode=");
         builder.append(errorCode);
-        switch (errorCode) {
-            case 0x00:
-                builder.append(", Reset: Unknown reason");
-                break;
-            case 0x01:
-                builder.append(", Reset: External");
-                break;
-            case 0x02:
-                builder.append(", Reset: Power-on");
-                break;
-            case 0x03:
-                builder.append(", Reset: Watchdog");
-                break;
-            case 0x06:
-                builder.append(", Reset: Assert");
-                break;
-            case 0x09:
-                builder.append(", Reset: Boot loader");
-                break;
-            case 0x0B:
-                builder.append(", Reset: Software");
-                break;
-            case 0x51:
-                builder.append(", Error: Exceeded maximum ACK timeout count");
-                break;
-            default:
-                break;
-        }
-
+        AshErrorCode ashError = AshErrorCode.getAshErrorCode(errorCode);
+        builder.append(ashError.getDescription());
         builder.append("]");
         return builder.toString();
     }
