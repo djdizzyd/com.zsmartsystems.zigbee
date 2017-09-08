@@ -10,12 +10,7 @@ package com.zsmartsystems.zigbee.dongle.ember.ash;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -332,6 +327,17 @@ public class AshFrameHandler {
         // Check how many frames are outstanding
         if (sentQueue.size() >= TX_WINDOW) {
             logger.debug("Sent queue larger than window [{} > {}].", sentQueue.size(), TX_WINDOW);
+            // check timer task
+            if(timerTask == null) {
+                logger.debug("Timer task not set, restarting it");
+                startRetryTimer();
+            } else {
+                if(logger.isDebugEnabled()) {
+                    logger.debug("Timer task is set to run at {}, current time: {}", timerTask.scheduledExecutionTime(), new Date().getTime());
+                }
+
+            }
+
             return;
         }
 
@@ -474,9 +480,11 @@ public class AshFrameHandler {
         // Create the timer task
         timerTask = new AshRetryTimer();
         timer.schedule(timerTask, receiveTimeout);
+        logger.debug("Scheduled new Timer Task");
     }
 
     private synchronized void resetRetryTimer() {
+        logger.debug("Resetting retry timer");
         // Stop any existing timer
         if (timerTask != null) {
             timerTask.cancel();
@@ -505,8 +513,11 @@ public class AshFrameHandler {
                 logger.warn("Dropping message: {}", sentQueue.poll());
                 retries = 0;
             }
-
-            sendRetry();
+            try {
+                sendRetry();
+            } catch(Exception e) {
+                logger.warn("Caught exception while attempting to retry message in AshRetryTimer", e);
+            }
         }
     }
 
