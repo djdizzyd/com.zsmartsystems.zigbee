@@ -21,6 +21,7 @@ import com.zsmartsystems.zigbee.ZigBeeApsFrame;
 import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
 import com.zsmartsystems.zigbee.ZigBeeDeviceStatus;
 import com.zsmartsystems.zigbee.ZigBeeException;
+import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
 import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
@@ -658,8 +659,8 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     @Override
-    public boolean setZigBeeSecurityKey(int[] keyData) {
-        networkKey.setContents(keyData);
+    public boolean setZigBeeNetworkKey(final ZigBeeKey key) {
+        networkKey.setContents(key.getValue());
 
         return false;
     }
@@ -690,29 +691,13 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     @Override
+    public boolean setZigBeeLinkKey(ZigBeeKey key) {
+        return false;
+    }
+
+    @Override
     public String getVersionString() {
         return versionString;
     }
 
-    /*
-     * private EmberStatus removeDevice() {
-     * logger.debug("EZSP removedevice: {}, {}");
-     * EzspRemoveDeviceRequest removeDeviceRequest = new EzspRemoveDeviceRequest();
-     * removeDeviceRequest.setDestLong(new IeeeAddress("001FEE0000000798"));
-     * removeDeviceRequest.setDestShort(37028);
-     * removeDeviceRequest.setTargetLong(new IeeeAddress("001FEE0000000798"));
-     * EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(removeDeviceRequest,
-     * EzspRemoveDeviceResponse.class);
-     * ashHandler.sendEzspTransaction(transaction);
-     * EzspRemoveDeviceResponse removeDeviceResponse = (EzspRemoveDeviceResponse) transaction.getResponse();
-     * logger.debug(removeDeviceResponse.toString());
-     * if (removeDeviceResponse.getStatus() != EmberStatus.EMBER_SUCCESS
-     * && removeDeviceResponse.getStatus() != EmberStatus.EMBER_NOT_JOINED) {
-     * logger.debug("Error during remove device: {}", removeDeviceResponse);
-     * return EmberStatus.UNKNOWN;
-     * }
-     *
-     * return removeDeviceResponse.getStatus();
-     * }
-     */
 }
