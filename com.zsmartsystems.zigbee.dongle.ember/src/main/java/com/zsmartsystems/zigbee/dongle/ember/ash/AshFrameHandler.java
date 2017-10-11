@@ -71,6 +71,7 @@ public class AshFrameHandler {
 
     private final int ASH_CANCEL_BYTE = 0x1A;
     private final int ASH_FLAG_BYTE = 0x7E;
+    private final int ASH_XON_BYTE = 0x11;
 
     private final int ASH_MAX_LENGTH = 131;
 
@@ -151,6 +152,9 @@ public class AshFrameHandler {
                             inputCount = 0;
                             inputError = false;
 
+                            continue;
+                        } else if (val == ASH_XON_BYTE) {
+                            inputError = false;
                             continue;
                         } else if (val == ASH_FLAG_BYTE) {
                             if (!inputError && inputCount != 0) {
