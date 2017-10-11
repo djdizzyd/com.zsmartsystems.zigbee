@@ -22,11 +22,35 @@ import com.zsmartsystems.zigbee.ZigBeeApsFrame;
 import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
 import com.zsmartsystems.zigbee.ZigBeeDeviceStatus;
 import com.zsmartsystems.zigbee.ZigBeeException;
+import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
 import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Request;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Response;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendBroadcastRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendMulticastRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStackStatusHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspTrustCenterJoinHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsOption;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberCurrentSecurityState;
@@ -659,8 +683,8 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     @Override
-    public boolean setZigBeeSecurityKey(int[] keyData) {
-        networkKey.setContents(keyData);
+    public boolean setZigBeeNetworkKey(final ZigBeeKey key) {
+        networkKey.setContents(key.getValue());
 
         return false;
     }
@@ -690,30 +714,15 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return networkAddress;
     }
 
+
+    @Override
+    public boolean setZigBeeLinkKey(ZigBeeKey key) {
+        return false;
+    }
+
     @Override
     public String getVersionString() {
         return versionString;
     }
 
-    /*
-     * private EmberStatus removeDevice() {
-     * logger.debug("EZSP removedevice: {}, {}");
-     * EzspRemoveDeviceRequest removeDeviceRequest = new EzspRemoveDeviceRequest();
-     * removeDeviceRequest.setDestLong(new IeeeAddress("001FEE0000000798"));
-     * removeDeviceRequest.setDestShort(37028);
-     * removeDeviceRequest.setTargetLong(new IeeeAddress("001FEE0000000798"));
-     * EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(removeDeviceRequest,
-     * EzspRemoveDeviceResponse.class);
-     * ashHandler.sendEzspTransaction(transaction);
-     * EzspRemoveDeviceResponse removeDeviceResponse = (EzspRemoveDeviceResponse) transaction.getResponse();
-     * logger.debug(removeDeviceResponse.toString());
-     * if (removeDeviceResponse.getStatus() != EmberStatus.EMBER_SUCCESS
-     * && removeDeviceResponse.getStatus() != EmberStatus.EMBER_NOT_JOINED) {
-     * logger.debug("Error during remove device: {}", removeDeviceResponse);
-     * return EmberStatus.UNKNOWN;
-     * }
-     *
-     * return removeDeviceResponse.getStatus();
-     * }
-     */
 }
