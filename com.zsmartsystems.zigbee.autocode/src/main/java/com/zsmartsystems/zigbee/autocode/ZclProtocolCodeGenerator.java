@@ -43,9 +43,10 @@ public class ZclProtocolCodeGenerator {
     static String packageZclProtocolCommand = packageZclCluster;
 
     static String packageZdp = ".zdo";
+    static String packageZdpField = packageZdp + ".field";
     static String packageZdpCommand = packageZdp + ".command";
     static String packageZdpTransaction = packageZdp + ".transaction";
-    static String packageZdpDescriptors = packageZdp + ".descriptors";
+    static String packageZdpDescriptors = packageZdpField;
 
     /**
      * The main method for running the code generator.
@@ -1284,7 +1285,7 @@ public class ZclProtocolCodeGenerator {
 
                 if (useList) {
                     imports.add("java.util.List");
-                    imports.add(packageRootPrefix + packageZclField + ".*");
+                    // imports.add(packageRootPrefix + packageZclField + ".*");
                 }
 
                 boolean addAttributeTypes = false;
@@ -1322,7 +1323,8 @@ public class ZclProtocolCodeGenerator {
                 // imports.add(packageRoot + packageZcl + ".ZclCommandMessage");
 
                 // imports.add(packageRoot + ".ZigBeeDestination");
-                imports.add(packageRoot + ".ZigBeeDeviceAddress");
+                imports.add(packageRoot + ".ZigBeeDevice");
+                // imports.add(packageRoot + ".ZigBeeDeviceAddress");
                 imports.add(packageRoot + ".ZigBeeNetworkManager");
                 if (!cluster.attributes.isEmpty() | !commands.isEmpty()) {
                     imports.add(packageRoot + ".CommandResult");
@@ -1330,7 +1332,7 @@ public class ZclProtocolCodeGenerator {
                 // imports.add(packageRoot + ".ZigBeeDevice");
                 imports.add(packageRoot + packageZcl + ".ZclAttribute");
                 imports.add("java.util.Map");
-                imports.add("java.util.HashMap");
+                imports.add("java.util.concurrent.ConcurrentHashMap");
 
                 if (!cluster.attributes.isEmpty() | !commands.isEmpty()) {
                     imports.add("java.util.concurrent.Future");
@@ -1397,10 +1399,12 @@ public class ZclProtocolCodeGenerator {
 
                 out.println("    // Attribute initialisation");
                 out.println("    protected Map<Integer, ZclAttribute> initializeAttributes() {");
-                out.println("        Map<Integer, ZclAttribute> attributeMap = new HashMap<Integer, ZclAttribute>("
-                        + cluster.attributes.size() + ");");
-                out.println();
+                out.println(
+                        "        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>("
+                                + cluster.attributes.size() + ");");
+
                 if (cluster.attributes.size() != 0) {
+                    out.println();
                     for (final Attribute attribute : cluster.attributes.values()) {
                         out.println("        attributeMap.put(" + attribute.enumName
                                 + ", new ZclAttribute(ZclClusterType." + cluster.clusterType + ", " + attribute.enumName
@@ -1417,11 +1421,14 @@ public class ZclProtocolCodeGenerator {
                 out.println();
 
                 out.println("    /**");
-                out.println("     * Default constructor.");
+                out.println("     * Default constructor to create a " + cluster.clusterName + " cluster.");
+                out.println("     *");
+                out.println("     * @param zigbeeManager {@link ZigBeeNetworkManager}");
+                out.println("     * @param zigbeeEndpoint the {@link ZigBeeDevice}");
                 out.println("     */");
                 out.println("    public " + className
-                        + "(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDeviceAddress zigbeeAddress) {");
-                out.println("        super(zigbeeManager, zigbeeAddress, CLUSTER_ID, CLUSTER_NAME);");
+                        + "(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {");
+                out.println("        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);");
                 out.println("    }");
                 out.println();
 
@@ -1778,7 +1785,10 @@ public class ZclProtocolCodeGenerator {
                                 out.println("import " + packageRootPrefix + packageZdp + ".ZdoStatus;");
                                 continue;
                             case "BindingTable":
-                                out.println("import " + packageRootPrefix + packageZclField + ".BindingTable;");
+                                out.println("import " + packageRootPrefix + packageZdpField + ".BindingTable;");
+                                continue;
+                            case "NeighborTable":
+                                out.println("import " + packageRootPrefix + packageZdpField + ".NeighborTable;");
                                 continue;
                         }
 
