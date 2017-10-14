@@ -20,7 +20,7 @@ public class AshFrameError extends AshFrame {
     /**
      * Constructor to create an ASH frame from a byte buffer.
      *
-     * @param buffer
+     * @param frameBuffer
      */
     public AshFrameError(int[] frameBuffer) {
         this.frameType = FrameType.ERROR;
@@ -36,6 +36,11 @@ public class AshFrameError extends AshFrame {
 
     public int getErrorCode() {
         return errorCode;
+    }
+
+    public boolean isResetError() {
+        return (errorCode == 0x00 || errorCode == 0x01 || errorCode == 0x02 || errorCode == 0x03 ||
+                errorCode == 0x06 || errorCode == 0x09 || errorCode == 0x0B);
     }
 
     @Override

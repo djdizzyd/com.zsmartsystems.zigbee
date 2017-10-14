@@ -681,6 +681,11 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
         }
     }
 
+    @Override
+    public void deviceNetworkAddressUpdate(Integer networkAddress, IeeeAddress ieeeAddress) {
+
+    }
+
     public void addNetworkStateListener(ZigBeeNetworkStateListener stateListener) {
         final List<ZigBeeNetworkStateListener> modifiedStateListeners = new ArrayList<ZigBeeNetworkStateListener>(
                 stateListeners);

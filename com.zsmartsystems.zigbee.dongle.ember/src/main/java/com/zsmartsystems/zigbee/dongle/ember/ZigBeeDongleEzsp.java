@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,7 +156,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         stackConfiguration.put(EzspConfigId.EZSP_CONFIG_SUPPORTED_NETWORKS, 2);
         stackConfiguration.put(EzspConfigId.EZSP_CONFIG_KEY_TABLE_SIZE, 4);
         stackConfiguration.put(EzspConfigId.EZSP_CONFIG_APPLICATION_ZDO_FLAGS, 0x01);
-        stackConfiguration.put(EzspConfigId.EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 16);
+        stackConfiguration.put(EzspConfigId.EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 20);
 
         stackPolicies = new HashMap<EzspPolicyId, EzspDecisionId>();
         stackPolicies.put(EzspPolicyId.EZSP_TRUST_CENTER_POLICY, EzspDecisionId.EZSP_ALLOW_PRECONFIGURED_KEY_JOINS);
@@ -179,10 +180,10 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
             logger.error("Unable to open Ember serial port");
             return ZigBeeInitializeResponse.FAILED;
         }
-        ashHandler = new AshFrameHandler(this);
+        ashHandler = new AshFrameHandler(serialPort, this);
 
         // Connect to the ASH handler and NCP
-        ashHandler.start(serialPort.getInputStream(), serialPort.getOutputStream());
+        ashHandler.start();
         ashHandler.connect();
 
         // We MUST send the version command first.
@@ -308,6 +309,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
     @Override
     public void shutdown() {
+        ashHandler.close();
         serialPort.close();
     }
 
@@ -348,6 +350,18 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         EzspGetNodeIdResponse getNodeIdResponse = (EzspGetNodeIdResponse) transaction.getResponse();
         return getNodeIdResponse.getNodeId();
     }
+
+    public EmberStatus sendManyToOneRouteRequest() {
+        EzspSendManyToOneRouteRequestRequest sendManyToOneRouteRequestRequest = new EzspSendManyToOneRouteRequestRequest();
+        sendManyToOneRouteRequestRequest.setRadius(0x1E);
+        // EMBER_HIGH_RAM_CONCENTRATOR
+        sendManyToOneRouteRequestRequest.setConcentratorType(0xFFF9);
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(sendManyToOneRouteRequestRequest, EzspSendManyToOneRouteRequestResponse.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
+        return sendManyToOneRouteRequestResponse.getStatus();
+    }
+
 
     private void createEndpoints() {
         // Create a list of all the clusters we want to register
@@ -617,6 +631,16 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
             return;
         }
 
+        if(response instanceof EzspIncomingRouteRecordHandler) {
+            try {
+                EzspIncomingRouteRecordHandler routeRecordHandler = (EzspIncomingRouteRecordHandler) response;
+                zigbeeTransportReceive.deviceNetworkAddressUpdate(routeRecordHandler.getSource(), routeRecordHandler.getSourceEui());
+            } catch(Exception e) {
+                logger.warn("Caught exception while processing EzspIncomingRouteRecord", e);
+            }
+            return;
+        }
+
         logger.debug("Unhandled EZSP Frame: {}", response.toString());
     }
 
@@ -690,6 +714,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     public ZigBeeDeviceAddress getNetworkAddress() {
         return networkAddress;
     }
+
 
     @Override
     public boolean setZigBeeLinkKey(ZigBeeKey key) {

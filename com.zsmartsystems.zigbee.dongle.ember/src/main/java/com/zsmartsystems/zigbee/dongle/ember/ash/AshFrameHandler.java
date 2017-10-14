@@ -7,6 +7,7 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,6 +33,15 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
+import com.zsmartsystems.zigbee.transport.ZigBeePort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Frame parser for the Silicon Labs Asynchronous Serial Host (ASH) protocol.
@@ -81,6 +91,7 @@ public class AshFrameHandler {
     private final int ASH_OFF_BYTE = 0x13;
     private final int ASH_TIMEOUT = -1;
 
+
     private final int ASH_MAX_LENGTH = 131;
 
     private Integer ackNum = 0;
@@ -117,7 +128,7 @@ public class AshFrameHandler {
     /**
      * The output stream.
      */
-    private OutputStream outputStream;
+    private ZigBeePort zigBeePort;
 
     /**
      * The parser parserThread.
@@ -136,7 +147,10 @@ public class AshFrameHandler {
      * @param frameHandler
      *            the packet handler
      */
-    public AshFrameHandler(final EzspFrameHandler frameHandler) {
+
+
+    public AshFrameHandler(final ZigBeePort zigBeePort, final EzspFrameHandler frameHandler) {
+        this.zigBeePort = zigBeePort;
         this.frameHandler = frameHandler;
     }
 
@@ -144,12 +158,8 @@ public class AshFrameHandler {
      * Starts the handler. Sets input stream where the packet is read from the and
      * handler which further processes the received packet.
      *
-     * @param inputStream the {@link InputStream}
-     * @param outputStream the {@link OutputStream}
      */
-    public void start(final InputStream inputStream, final OutputStream outputStream) {
-        this.outputStream = outputStream;
-
+    public void start() {
         parserThread = new Thread("AshFrameHandler") {
             @Override
             public void run() {
@@ -157,9 +167,9 @@ public class AshFrameHandler {
 
                 int exceptionCnt = 0;
 
-                while (!close) {
+                while (!interrupted()) {
                     try {
-                        int[] packetData = getPacket(inputStream);
+                        int[] packetData = getPacket(zigBeePort.getInputStream());
                         if (packetData == null) {
                             continue;
                         }
@@ -342,7 +352,6 @@ public class AshFrameHandler {
      * Requests parser thread to shutdown.
      */
     public void close() {
-        this.close = true;
         try {
             parserThread.interrupt();
             parserThread.join();
@@ -373,6 +382,17 @@ public class AshFrameHandler {
         // Check how many frames are outstanding
         if (sentQueue.size() >= TX_WINDOW) {
             logger.debug("Sent queue larger than window [{} > {}].", sentQueue.size(), TX_WINDOW);
+            // check timer task
+            if(timerTask == null) {
+                logger.debug("Timer task not set, restarting it");
+                startRetryTimer();
+            } else {
+                if(logger.isDebugEnabled()) {
+                    logger.debug("Timer task is set to run at {}, current time: {}", timerTask.scheduledExecutionTime(), new Date().getTime());
+                }
+
+            }
+
             return;
         }
 
@@ -424,7 +444,7 @@ public class AshFrameHandler {
                 // result.append(" ");
                 // result.append(String.format("%02X", b));
                 // logger.debug("ASH TX: " + String.format("%02X", b));
-                outputStream.write(b);
+                zigBeePort.getOutputStream().write(b);
             }
         } catch (IOException e) {
             logger.debug(e.getMessage());
@@ -444,7 +464,7 @@ public class AshFrameHandler {
      * This method queues a {@link EzspFrameRequest} frame without waiting for a response and
      * no transaction management is performed.
      *
-     * @param transaction
+     * @param request
      *            {@link EzspFrameRequest}
      */
     public void queueFrame(EzspFrameRequest request) {
@@ -515,14 +535,17 @@ public class AshFrameHandler {
         // Create the timer task
         timerTask = new AshRetryTimer();
         timer.schedule(timerTask, receiveTimeout);
+        logger.debug("Scheduled new Timer Task");
     }
 
     private synchronized void resetRetryTimer() {
+        logger.debug("Resetting retry timer");
         // Stop any existing timer
         if (timerTask != null) {
             timerTask.cancel();
             timerTask = null;
         }
+        retries = 0;
     }
 
     private class AshRetryTimer extends TimerTask {
@@ -541,10 +564,15 @@ public class AshFrameHandler {
                 // We should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
-                logger.debug("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Dropping message: {}", sentQueue.poll());
+                retries = 0;
             }
-
-            sendRetry();
+            try {
+                sendRetry();
+            } catch(Exception e) {
+                logger.warn("Caught exception while attempting to retry message in AshRetryTimer", e);
+            }
         }
     }
 
@@ -649,7 +677,7 @@ public class AshFrameHandler {
      * Sends an EZSP request to the NCP and waits for the response. The response is correlated with the request and the
      * returned {@link EzspFrame} contains the request and response data.
      *
-     * @param ezspRequest
+     * @param ezspTransaction
      *            Request {@link EzspFrame}
      * @return response {@link EzspFrame}
      */
