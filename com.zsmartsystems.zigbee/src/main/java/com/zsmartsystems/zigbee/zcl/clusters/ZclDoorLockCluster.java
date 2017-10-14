@@ -8,7 +8,7 @@
 package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
-import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
+import com.zsmartsystems.zigbee.ZigBeeDevice;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
@@ -17,8 +17,8 @@ import com.zsmartsystems.zigbee.zcl.clusters.doorlock.LockDoorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.LockDoorResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.UnlockDoorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.UnlockDoorResponse;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
@@ -35,17 +35,19 @@ public class ZclDoorLockCluster extends ZclCluster {
 
     // Attribute initialisation
     protected Map<Integer, ZclAttribute> initializeAttributes() {
-        Map<Integer, ZclAttribute> attributeMap = new HashMap<Integer, ZclAttribute>(0);
-
+        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(0);
 
         return attributeMap;
     }
 
     /**
-     * Default constructor.
+     * Default constructor to create a Door Lock cluster.
+     *
+     * @param zigbeeManager {@link ZigBeeNetworkManager}
+     * @param zigbeeEndpoint the {@link ZigBeeDevice}
      */
-    public ZclDoorLockCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDeviceAddress zigbeeAddress) {
-        super(zigbeeManager, zigbeeAddress, CLUSTER_ID, CLUSTER_NAME);
+    public ZclDoorLockCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {
+        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
 
 

@@ -9,7 +9,7 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
-import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
+import com.zsmartsystems.zigbee.ZigBeeDevice;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
@@ -27,14 +27,13 @@ import com.zsmartsystems.zigbee.zcl.clusters.scenes.StoreSceneCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.scenes.StoreSceneResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.scenes.ViewSceneCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.scenes.ViewSceneResponse;
-import com.zsmartsystems.zigbee.zcl.field.*;
 import com.zsmartsystems.zigbee.zcl.field.ExtensionFieldSet;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
@@ -69,7 +68,7 @@ public class ZclScenesCluster extends ZclCluster {
 
     // Attribute initialisation
     protected Map<Integer, ZclAttribute> initializeAttributes() {
-        Map<Integer, ZclAttribute> attributeMap = new HashMap<Integer, ZclAttribute>(6);
+        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(6);
 
         attributeMap.put(ATTR_SCENECOUNT, new ZclAttribute(ZclClusterType.SCENES, ATTR_SCENECOUNT, "SceneCount", ZclDataType.UNSIGNED_8_BIT_INTEGER, true, true, false, false));
         attributeMap.put(ATTR_CURRENTSCENE, new ZclAttribute(ZclClusterType.SCENES, ATTR_CURRENTSCENE, "CurrentScene", ZclDataType.UNSIGNED_8_BIT_INTEGER, true, true, false, false));
@@ -82,10 +81,13 @@ public class ZclScenesCluster extends ZclCluster {
     }
 
     /**
-     * Default constructor.
+     * Default constructor to create a Scenes cluster.
+     *
+     * @param zigbeeManager {@link ZigBeeNetworkManager}
+     * @param zigbeeEndpoint the {@link ZigBeeDevice}
      */
-    public ZclScenesCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDeviceAddress zigbeeAddress) {
-        super(zigbeeManager, zigbeeAddress, CLUSTER_ID, CLUSTER_NAME);
+    public ZclScenesCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {
+        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
 
 

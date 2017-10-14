@@ -8,7 +8,7 @@
 package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
-import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
+import com.zsmartsystems.zigbee.ZigBeeDevice;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
@@ -23,10 +23,9 @@ import com.zsmartsystems.zigbee.zcl.clusters.groups.RemoveGroupCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.groups.RemoveGroupResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.groups.ViewGroupCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.groups.ViewGroupResponse;
-import com.zsmartsystems.zigbee.zcl.field.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
@@ -61,17 +60,19 @@ public class ZclGroupsCluster extends ZclCluster {
 
     // Attribute initialisation
     protected Map<Integer, ZclAttribute> initializeAttributes() {
-        Map<Integer, ZclAttribute> attributeMap = new HashMap<Integer, ZclAttribute>(0);
-
+        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(0);
 
         return attributeMap;
     }
 
     /**
-     * Default constructor.
+     * Default constructor to create a Groups cluster.
+     *
+     * @param zigbeeManager {@link ZigBeeNetworkManager}
+     * @param zigbeeEndpoint the {@link ZigBeeDevice}
      */
-    public ZclGroupsCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDeviceAddress zigbeeAddress) {
-        super(zigbeeManager, zigbeeAddress, CLUSTER_ID, CLUSTER_NAME);
+    public ZclGroupsCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {
+        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
 
 
