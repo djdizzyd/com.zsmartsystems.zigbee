@@ -7,6 +7,26 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.zsmartsystems.zigbee.dongle.ember.EzspFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrame.FrameType;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
@@ -110,7 +130,6 @@ public class AshFrameHandler {
      */
     private ZigBeePort zigBeePort;
 
-
     /**
      * The parser parserThread.
      */
@@ -129,6 +148,7 @@ public class AshFrameHandler {
      *            the packet handler
      */
 
+
     public AshFrameHandler(final ZigBeePort zigBeePort, final EzspFrameHandler frameHandler) {
         this.zigBeePort = zigBeePort;
         this.frameHandler = frameHandler;
@@ -140,7 +160,6 @@ public class AshFrameHandler {
      *
      */
     public void start() {
-
         parserThread = new Thread("AshFrameHandler") {
             @Override
             public void run() {
@@ -150,7 +169,6 @@ public class AshFrameHandler {
 
                 while (!interrupted()) {
                     try {
-
                         int[] packetData = getPacket(zigBeePort.getInputStream());
                         if (packetData == null) {
                             continue;

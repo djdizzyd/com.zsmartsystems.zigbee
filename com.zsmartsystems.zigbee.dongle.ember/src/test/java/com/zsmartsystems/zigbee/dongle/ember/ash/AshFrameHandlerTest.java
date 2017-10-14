@@ -94,7 +94,6 @@ public class AshFrameHandlerTest {
     public void testRunning() {
         AshFrameHandler frameHandler = new AshFrameHandler(null, null);
         frameHandler.start();
-
         assertTrue(frameHandler.isAlive());
         frameHandler.close();
         assertFalse(frameHandler.isAlive());
