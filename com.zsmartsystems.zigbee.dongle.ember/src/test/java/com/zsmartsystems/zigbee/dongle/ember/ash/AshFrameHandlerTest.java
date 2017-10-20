@@ -28,36 +28,8 @@ import org.junit.Test;
  */
 public class AshFrameHandlerTest {
 
-    private class ZigBeePortLocal implements ZigBeePort {
-
-        @Override
-        public boolean open() {
-            return false;
-        }
-
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            return null;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return myStream;
-        }
-
-        private ByteArrayInputStream myStream;
-
-        public void setMyStream(ByteArrayInputStream myStream1) {
-            myStream = myStream1;
-        }
-    }
     private int[] getPacket(int[] data) {
-        AshFrameHandler frameHandler = new AshFrameHandler(null,null);
+        AshFrameHandler frameHandler = new AshFrameHandler(null);
         byte[] bytedata = new byte[data.length];
         int cnt = 0;
         for (int value : data) {
@@ -65,15 +37,12 @@ public class AshFrameHandlerTest {
         }
         ByteArrayInputStream stream = new ByteArrayInputStream(bytedata);
 
-        ZigBeePortLocal zbp = new ZigBeePortLocal();
-        zbp.setMyStream(stream);
-
         Method privateMethod;
         try {
-            privateMethod = AshFrameHandler.class.getDeclaredMethod("getPacket", new Class[] { ZigBeePort.class });
+            privateMethod = AshFrameHandler.class.getDeclaredMethod("getPacket", new Class[] { InputStream.class });
             privateMethod.setAccessible(true);
 
-            return (int[]) privateMethod.invoke(frameHandler, zbp);
+            return (int[]) privateMethod.invoke(frameHandler, stream);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException e) {
             // TODO Auto-generated catch block
@@ -125,8 +94,8 @@ public class AshFrameHandlerTest {
 
     @Test
     public void testRunning() {
-        AshFrameHandler frameHandler = new AshFrameHandler(null, null);
-        frameHandler.start();
+        AshFrameHandler frameHandler = new AshFrameHandler(null);
+        frameHandler.start(null, null);
         assertTrue(frameHandler.isAlive());
         frameHandler.close();
         assertFalse(frameHandler.isAlive());

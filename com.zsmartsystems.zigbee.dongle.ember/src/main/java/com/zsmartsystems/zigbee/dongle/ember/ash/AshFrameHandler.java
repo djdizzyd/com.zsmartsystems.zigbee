@@ -128,7 +128,9 @@ public class AshFrameHandler {
     /**
      * The output stream.
      */
-    private ZigBeePort zigBeePort;
+
+    private OutputStream outputStream;
+    //private ZigBeePort zigBeePort;
 
     /**
      * The parser parserThread.
@@ -149,8 +151,8 @@ public class AshFrameHandler {
      */
 
 
-    public AshFrameHandler(final ZigBeePort zigBeePort, final EzspFrameHandler frameHandler) {
-        this.zigBeePort = zigBeePort;
+    public AshFrameHandler(final EzspFrameHandler frameHandler) {
+        //this.zigBeePort = zigBeePort;
         this.frameHandler = frameHandler;
     }
 
@@ -159,7 +161,9 @@ public class AshFrameHandler {
      * handler which further processes the received packet.
      *
      */
-    public void start() {
+    public void start(final InputStream inputStream, final OutputStream outputStream) {
+        this.outputStream = outputStream;
+
         parserThread = new Thread("AshFrameHandler") {
             @Override
             public void run() {
@@ -169,7 +173,7 @@ public class AshFrameHandler {
 
                 while (!close) {
                     try {
-                        int[] packetData = getPacket(zigBeePort);
+                        int[] packetData = getPacket(inputStream);
                         if (packetData == null) {
                             continue;
                         }
@@ -263,13 +267,13 @@ public class AshFrameHandler {
         parserThread.start();
     }
 
-    private int[] getPacket(ZigBeePort zigBeePort) throws IOException {
+    private int[] getPacket(InputStream inputStream) throws IOException {
         int[] inputBuffer = new int[ASH_MAX_LENGTH];
         int inputCount = 0;
         boolean inputError = false;
 
         while (!close) {
-            int val = zigBeePort.getInputStream().read();
+            int val = inputStream.read();
             logger.trace("ASH RX: " + String.format("%02X", val));
             switch (val) {
                 case ASH_CANCEL_BYTE:
@@ -445,7 +449,7 @@ public class AshFrameHandler {
                 // result.append(" ");
                 // result.append(String.format("%02X", b));
                 // logger.debug("ASH TX: " + String.format("%02X", b));
-                zigBeePort.getOutputStream().write(b);
+                outputStream.write(b);
             }
         } catch (IOException e) {
             logger.debug(e.getMessage());
