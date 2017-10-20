@@ -169,7 +169,7 @@ public class AshFrameHandler {
 
                 while (!interrupted()) {
                     try {
-                        int[] packetData = getPacket(zigBeePort.getInputStream());
+                        int[] packetData = getPacket(zigBeePort);
                         if (packetData == null) {
                             continue;
                         }
@@ -263,13 +263,13 @@ public class AshFrameHandler {
         parserThread.start();
     }
 
-    private int[] getPacket(InputStream inputStream) throws IOException {
+    private int[] getPacket(ZigBeePort zigBeePort) throws IOException {
         int[] inputBuffer = new int[ASH_MAX_LENGTH];
         int inputCount = 0;
         boolean inputError = false;
 
         while (!close) {
-            int val = inputStream.read();
+            int val = zigBeePort.getInputStream().read();
             logger.trace("ASH RX: " + String.format("%02X", val));
             switch (val) {
                 case ASH_CANCEL_BYTE:
