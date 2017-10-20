@@ -167,7 +167,7 @@ public class AshFrameHandler {
 
                 int exceptionCnt = 0;
 
-                while (!interrupted()) {
+                while (!close) {
                     try {
                         int[] packetData = getPacket(zigBeePort);
                         if (packetData == null) {
@@ -352,6 +352,7 @@ public class AshFrameHandler {
      * Requests parser thread to shutdown.
      */
     public void close() {
+        this.close = true;
         try {
             parserThread.interrupt();
             parserThread.join();
