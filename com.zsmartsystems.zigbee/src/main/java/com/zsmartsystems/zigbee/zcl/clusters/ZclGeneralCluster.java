@@ -8,7 +8,7 @@
 package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
-import com.zsmartsystems.zigbee.ZigBeeDevice;
+import com.zsmartsystems.zigbee.ZigBeeEndpoint;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
@@ -37,7 +37,6 @@ import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesStructuredCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesStructuredResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesUndividedCommand;
-import com.zsmartsystems.zigbee.zcl.field.AttributeIdentifier;
 import com.zsmartsystems.zigbee.zcl.field.AttributeInformation;
 import com.zsmartsystems.zigbee.zcl.field.AttributeRecord;
 import com.zsmartsystems.zigbee.zcl.field.AttributeReport;
@@ -75,9 +74,9 @@ public class ZclGeneralCluster extends ZclCluster {
      * Default constructor to create a General cluster.
      *
      * @param zigbeeManager {@link ZigBeeNetworkManager}
-     * @param zigbeeEndpoint the {@link ZigBeeDevice}
+     * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclGeneralCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {
+    public ZclGeneralCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
         super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
 
@@ -89,10 +88,10 @@ public class ZclGeneralCluster extends ZclCluster {
      * values of one or more attributes located on another device. Each attribute
      * identifier field shall contain the identifier of the attribute to be read.
      *
-     * @param identifiers {@link List<AttributeIdentifier>} Identifiers
+     * @param identifiers {@link List<Integer>} Identifiers
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> readAttributesCommand(List<AttributeIdentifier> identifiers) {
+    public Future<CommandResult> readAttributesCommand(List<Integer> identifiers) {
         ReadAttributesCommand command = new ReadAttributesCommand();
 
         // Set the fields

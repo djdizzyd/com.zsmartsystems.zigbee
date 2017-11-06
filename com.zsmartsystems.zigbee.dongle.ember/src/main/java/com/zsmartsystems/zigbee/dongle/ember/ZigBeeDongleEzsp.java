@@ -12,19 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zsmartsystems.zigbee.*;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zsmartsystems.zigbee.ExtendedPanId;
-import com.zsmartsystems.zigbee.IeeeAddress;
-import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
-import com.zsmartsystems.zigbee.ZigBeeDeviceStatus;
-import com.zsmartsystems.zigbee.ZigBeeException;
-import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
-import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
@@ -133,7 +126,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     /**
      * The network address of the dongle
      */
-    private ZigBeeDeviceAddress networkAddress;
+    private ZigBeeAddress networkAddress;
 
 
     /**
@@ -180,11 +173,10 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
             logger.error("Unable to open Ember serial port");
             return ZigBeeInitializeResponse.FAILED;
         }
-        ashHandler = new AshFrameHandler(this, serialPort);
-        //ashHandler = new AshFrameHandler(serialPort, this);
+        ashHandler = new AshFrameHandler(this);
 
         // Connect to the ASH handler and NCP
-        ashHandler.start();
+        ashHandler.start(serialPort);
         ashHandler.connect();
 
         // We MUST send the version command first.
@@ -246,7 +238,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
         // get the ieee address of the dongle
         ieeeAddress = getEui64Address();
-        networkAddress = new ZigBeeDeviceAddress(getNodeId());
+        networkAddress = new ZigBeeEndpointAddress(getNodeId());
 
         zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.INITIALISING);
 
@@ -310,7 +302,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
     @Override
     public void shutdown() {
-        ashHandler.close();
+        serialPort.close();
     }
 
     /**
@@ -566,36 +558,35 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         if (response instanceof EzspTrustCenterJoinHandler) {
             EzspTrustCenterJoinHandler joinHandler = (EzspTrustCenterJoinHandler) response;
 
-            ZigBeeDeviceStatus status;
+            ZigBeeNodeStatus status;
             switch (joinHandler.getStatus()) {
                 case EMBER_HIGH_SECURITY_UNSECURED_JOIN:
                 case EMBER_STANDARD_SECURITY_UNSECURED_JOIN:
-                    status = ZigBeeDeviceStatus.UNSECURED_JOIN;
+                    status = ZigBeeNodeStatus.UNSECURED_JOIN;
                     break;
                 case EMBER_HIGH_SECURITY_UNSECURED_REJOIN:
                 case EMBER_STANDARD_SECURITY_UNSECURED_REJOIN:
-                    status = ZigBeeDeviceStatus.UNSECURED_REJOIN;
+                    status = ZigBeeNodeStatus.UNSECURED_REJOIN;
                     break;
                 case EMBER_HIGH_SECURITY_SECURED_REJOIN:
                 case EMBER_STANDARD_SECURITY_SECURED_REJOIN:
-                    status = ZigBeeDeviceStatus.SECURED_REJOIN;
+                    status = ZigBeeNodeStatus.SECURED_REJOIN;
                     break;
                 case EMBER_DEVICE_LEFT:
-                    status = ZigBeeDeviceStatus.DEVICE_LEFT;
+                    status = ZigBeeNodeStatus.DEVICE_LEFT;
                     break;
                 default:
                     logger.debug("Unknown state in trust centre join handler {}", joinHandler.getStatus());
                     return;
             }
 
-            zigbeeTransportReceive.deviceStatusUpdate(status, joinHandler.getNewNodeId(),
-                    joinHandler.getNewNodeEui64());
+            zigbeeTransportReceive.nodeStatusUpdate(status, joinHandler.getNewNodeId(), joinHandler.getNewNodeEui64());
 
         }
 
         if (response instanceof EzspChildJoinHandler) {
             EzspChildJoinHandler joinHandler = (EzspChildJoinHandler) response;
-            zigbeeTransportReceive.deviceStatusUpdate(ZigBeeDeviceStatus.UNSECURED_JOIN, joinHandler.getChildId(),
+            zigbeeTransportReceive.nodeStatusUpdate(ZigBeeNodeStatus.UNSECURED_JOIN, joinHandler.getChildId(),
                     joinHandler.getChildEui64());
 
             /*
@@ -711,10 +702,9 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
      *
      * @return Integer the 16 bit address
      */
-    public ZigBeeDeviceAddress getNetworkAddress() {
+    public ZigBeeAddress getNetworkAddress() {
         return networkAddress;
     }
-
 
     @Override
     public boolean setZigBeeLinkKey(ZigBeeKey key) {

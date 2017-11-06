@@ -14,11 +14,12 @@ import org.slf4j.LoggerFactory;
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
+import com.zsmartsystems.zigbee.ZigBeeNetworkMeshMonitor;
 import com.zsmartsystems.zigbee.ZigBeeNetworkStateSerializer;
 import com.zsmartsystems.zigbee.dongle.cc2531.ZigBeeDongleTiCc2531;
 import com.zsmartsystems.zigbee.dongle.ember.ZigBeeDongleEzsp;
 import com.zsmartsystems.zigbee.dongle.telegesis.ZigBeeDongleTelegesis;
-import com.zsmartsystems.zigbee.serial.SerialPortImpl;
+import com.zsmartsystems.zigbee.serial.ZigBeeSerialPort;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
 import com.zsmartsystems.zigbee.serialization.DefaultSerializer;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
@@ -99,7 +100,7 @@ public class ZigBeeConsoleMain {
             flowControl = true;
         }
 
-        final ZigBeePort serialPort = new SerialPortImpl(serialPortName, serialBaud, flowControl);
+        final ZigBeePort serialPort = new ZigBeeSerialPort(serialPortName, serialBaud, flowControl);
 
         System.out.println("Initialising console...");
 
@@ -158,7 +159,13 @@ public class ZigBeeConsoleMain {
             System.out.println("ZigBee API starting up ... [OK]");
         }
 
+        // Start the mesh monitor
+        ZigBeeNetworkMeshMonitor meshMonitor = new ZigBeeNetworkMeshMonitor(networkManager);
+        // meshMonitor.startup(60);
+
         console.start();
+
+        System.out.println("Console closed.");
     }
 
     /**

@@ -311,6 +311,20 @@ public class ZclProtocolCodeGenerator {
         outputClassJavaDoc(out);
         out.println("public enum " + className + " {");
 
+        DataType newDataType = new DataType();
+
+        newDataType = new DataType();
+        newDataType.dataTypeName = "Unsigned 8 bit Integer Array";
+        newDataType.dataTypeType = "UNSIGNED_8_BIT_INTEGER_ARRAY";
+        newDataType.dataTypeClass = ZclDataType.getDataTypeMapping().get("UNSIGNED_8_BIT_INTEGER_ARRAY").dataClass;
+        dataTypes.add(newDataType);
+
+        newDataType = new DataType();
+        newDataType.dataTypeName = "ZigBee Data Type";
+        newDataType.dataTypeType = "ZIGBEE_DATA_TYPE";
+        newDataType.dataTypeClass = ZclDataType.getDataTypeMapping().get("ZIGBEE_DATA_TYPE").dataClass;
+        dataTypes.add(newDataType);
+
         // final LinkedList<DataType> dataTypes = new LinkedList<DataType>(context.dataTypes.values());
         for (final DataType dataType : dataTypes) {
             DataTypeMap zclDataType = ZclDataType.getDataTypeMapping().get(dataType.dataTypeType);
@@ -823,6 +837,7 @@ public class ZclProtocolCodeGenerator {
                             case "Object":
                             case "Long":
                             case "String":
+                            case "int[]":
                                 continue;
                             case "IeeeAddress":
                                 out.println("import " + packageRootPrefix + "." + typeName + ";");
@@ -1269,6 +1284,7 @@ public class ZclProtocolCodeGenerator {
                             case "Object":
                             case "Long":
                             case "String":
+                            case "int[]":
                                 continue;
                             case "IeeeAddress":
                                 imports.add(packageRootPrefix + "." + typeName);
@@ -1323,13 +1339,12 @@ public class ZclProtocolCodeGenerator {
                 // imports.add(packageRoot + packageZcl + ".ZclCommandMessage");
 
                 // imports.add(packageRoot + ".ZigBeeDestination");
-                imports.add(packageRoot + ".ZigBeeDevice");
-                // imports.add(packageRoot + ".ZigBeeDeviceAddress");
+                imports.add(packageRoot + ".ZigBeeEndpoint");
                 imports.add(packageRoot + ".ZigBeeNetworkManager");
                 if (!cluster.attributes.isEmpty() | !commands.isEmpty()) {
                     imports.add(packageRoot + ".CommandResult");
                 }
-                // imports.add(packageRoot + ".ZigBeeDevice");
+                // imports.add(packageRoot + ".ZigBeeEndpoint");
                 imports.add(packageRoot + packageZcl + ".ZclAttribute");
                 imports.add("java.util.Map");
                 imports.add("java.util.concurrent.ConcurrentHashMap");
@@ -1424,10 +1439,10 @@ public class ZclProtocolCodeGenerator {
                 out.println("     * Default constructor to create a " + cluster.clusterName + " cluster.");
                 out.println("     *");
                 out.println("     * @param zigbeeManager {@link ZigBeeNetworkManager}");
-                out.println("     * @param zigbeeEndpoint the {@link ZigBeeDevice}");
+                out.println("     * @param zigbeeEndpoint the {@link ZigBeeEndpoint}");
                 out.println("     */");
                 out.println("    public " + className
-                        + "(final ZigBeeNetworkManager zigbeeManager, final ZigBeeDevice zigbeeEndpoint) {");
+                        + "(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {");
                 out.println("        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);");
                 out.println("    }");
                 out.println();
@@ -1732,7 +1747,7 @@ public class ZclProtocolCodeGenerator {
                     }
 
                     if (command.responseCommand != null && command.responseCommand.length() != 0) {
-                        out.println("import " + packageRootPrefix + ".Command;");
+                        out.println("import " + packageRootPrefix + ".ZigBeeCommand;");
                         out.println("import " + packageRootPrefix + ".CommandResponseMatcher;");
                         out.println("import " + packageRootPrefix + packageZdpCommand + "." + command.responseCommand
                                 + ";");
@@ -1973,7 +1988,7 @@ public class ZclProtocolCodeGenerator {
                     if (command.responseCommand != null && command.responseCommand.length() != 0) {
                         out.println();
                         out.println("    @Override");
-                        out.println("    public boolean isMatch(Command request, Command response) {");
+                        out.println("    public boolean isMatch(ZigBeeCommand request, ZigBeeCommand response) {");
                         out.println("        if (!(response instanceof " + command.responseCommand + ")) {");
                         out.println("            return false;");
                         out.println("        }");
