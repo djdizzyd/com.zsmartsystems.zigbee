@@ -7,7 +7,6 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,6 +41,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.*;
+import com.zsmartsystems.zigbee.transport.ZigBeePort;
 
 /**
  * Frame parser for the Silicon Labs Asynchronous Serial Host (ASH) protocol.
@@ -91,7 +91,6 @@ public class AshFrameHandler {
     private final int ASH_OFF_BYTE = 0x13;
     private final int ASH_TIMEOUT = -1;
 
-
     private final int ASH_MAX_LENGTH = 131;
 
     private Integer ackNum = 0;
@@ -126,11 +125,9 @@ public class AshFrameHandler {
     // private final InputStream inputStream;
 
     /**
-     * The output stream.
+     * The port.
      */
-
-    //private OutputStream outputStream;
-    private ZigBeePort zigBeePort;
+    private ZigBeePort port;
 
     /**
      * The parser parserThread.
@@ -149,10 +146,7 @@ public class AshFrameHandler {
      * @param frameHandler
      *            the packet handler
      */
-
-
-    public AshFrameHandler(final EzspFrameHandler frameHandler, ZigBeePort zigBeePort) {
-        this.zigBeePort = zigBeePort;
+    public AshFrameHandler(final EzspFrameHandler frameHandler) {
         this.frameHandler = frameHandler;
     }
 
@@ -161,124 +155,110 @@ public class AshFrameHandler {
      * handler which further processes the received packet.
      *
      */
-    public void start() {
-        //this.outputStream = outputStream;
-        if(zigBeePort != null)
-            zigBeePort.open();
+    public void start(final ZigBeePort port) {
+        this.port = port;
 
-        parserThread = new ZigBeeParserThread();
-        //parserThread.setDaemon(true);
-        parserThread.start();
-    }
+        parserThread = new Thread("AshFrameHandler") {
+            @Override
+            public void run() {
+                logger.trace("AshFrameHandler thread started");
 
-    private class ZigBeeParserThread extends Thread {
-        private final Logger logger = LoggerFactory.getLogger(ZigBeeParserThread.class);
+                int exceptionCnt = 0;
 
-        ZigBeeParserThread() {
-            super("AshFrameHandler");
-        }
+                while (!close) {
+                    try {
+                        int[] packetData = getPacket();
+                        if (packetData == null) {
+                            continue;
+                        }
 
-        /**
-         * Run method. Runs the actual parser process.
-         */
-        @Override
-        public void run() {
+                        final AshFrame packet = AshFrame.createFromInput(packetData);
+                        AshFrame responseFrame = null;
+                        if (packet == null) {
+                            logger.error("<-- RX ASH frame: BAD PACKET {}", AshFrame.frameToString(packetData));
 
-            logger.trace("AshFrameHandler thread started");
+                            // Send a NAK
+                            responseFrame = new AshFrameNak(ackNum);
+                        } else {
+                            logger.debug("<-- RX ASH frame: {}", packet.toString());
 
-            int exceptionCnt = 0;
+                            // Reset the exception counter
+                            exceptionCnt = 0;
 
-            while (!interrupted()) {
-                try {
-                    int[] packetData = getPacket();
+                            // Extract the flags for DATA/ACK/NAK frames
+                            switch (packet.getFrameType()) {
+                                case DATA:
+                                    // Always use the ackNum - even if this frame is discarded
+                                    ackSentQueue(packet.getAckNum());
 
-                    if (packetData == null) {
-                        continue;
-                    }
+                                    // Check for out of sequence frame number
+                                    if (packet.getFrmNum() != ackNum) {
+                                        // Send a NAK
+                                        responseFrame = new AshFrameNak(ackNum);
+                                    } else {
+                                        // Frame was in sequence
 
-                    final AshFrame packet = AshFrame.createFromInput(packetData);
-                    AshFrame responseFrame = null;
-                    if (packet == null) {
-                        logger.error("<-- RX ASH frame: BAD PACKET {}", AshFrame.frameToString(packetData));
-
-                        // Send a NAK
-                        responseFrame = new AshFrameNak(ackNum);
-                    } else {
-                        logger.debug("<-- RX ASH frame: {}", packet.toString());
-
-                        // Reset the exception counter
-                        exceptionCnt = 0;
-
-                        // Extract the flags for DATA/ACK/NAK frames
-                        switch (packet.getFrameType()) {
-                            case DATA:
-                                // Always use the ackNum - even if this frame is discarded
-                                ackSentQueue(packet.getAckNum());
-
-                                // Check for out of sequence frame number
-                                if (packet.getFrmNum() != ackNum) {
-                                    // Send a NAK
-                                    responseFrame = new AshFrameNak(ackNum);
-                                } else {
-                                    // Frame was in sequence
-
-                                    // Get the EZSP frame
-                                    EzspFrameResponse response = EzspFrame.createHandler((AshFrameData) packet);
-                                    logger.debug("RX EZSP: " + response);
-                                    if (response == null) {
-                                        logger.debug("No frame handler created for {}", packet);
-                                    } else if (response != null && !notifyTransactionComplete(response)) {
-                                        // No transactions owned this response, so we pass it to
-                                        // our unhandled response handler
-                                        EzspFrame ezspFrame = EzspFrame.createHandler(((AshFrameData) packet));
-                                        if (ezspFrame != null) {
-                                            frameHandler.handlePacket(ezspFrame);
+                                        // Get the EZSP frame
+                                        EzspFrameResponse response = EzspFrame.createHandler((AshFrameData) packet);
+                                        logger.debug("RX EZSP: " + response);
+                                        if (response == null) {
+                                            logger.debug("No frame handler created for {}", packet);
+                                        } else if (response != null && !notifyTransactionComplete(response)) {
+                                            // No transactions owned this response, so we pass it to
+                                            // our unhandled response handler
+                                            EzspFrame ezspFrame = EzspFrame.createHandler(((AshFrameData) packet));
+                                            if (ezspFrame != null) {
+                                                frameHandler.handlePacket(ezspFrame);
+                                            }
                                         }
+
+                                        // Update our next expected data frame
+                                        ackNum = (ackNum + 1) & 0x07;
+
+                                        responseFrame = new AshFrameAck(ackNum);
                                     }
+                                    break;
+                                case ACK:
+                                    ackSentQueue(packet.getAckNum());
+                                    break;
+                                case NAK:
+                                    sendRetry();
+                                    break;
+                                case RSTACK:
+                                    // Stack has been reset!
+                                    handleReset((AshFrameRstAck) packet);
 
-                                    // Update our next expected data frame
-                                    ackNum = (ackNum + 1) & 0x07;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
 
-                                    responseFrame = new AshFrameAck(ackNum);
-                                }
-                                break;
-                            case ACK:
-                                ackSentQueue(packet.getAckNum());
-                                break;
-                            case NAK:
-                                sendRetry();
-                                break;
-                            case RSTACK:
-                                // Stack has been reset!
-                                handleReset((AshFrameRstAck) packet);
+                        // Send the response
+                        if (responseFrame != null) {
+                            sendFrame(responseFrame);
+                        }
 
-                                break;
-                            default:
-                                break;
+                        // Send the next frame
+                        sendNextFrame();
+
+                    } catch (final IOException e) {
+                        logger.error("AshFrameHandler IOException: ", e);
+
+                        if (exceptionCnt++ > 10) {
+                            logger.error("AshFrameHandler exception count exceeded");
+                            // if (!close) {
+                            // frameHandler.error(e);
+                            close = true;
                         }
                     }
-
-                    // Send the response
-                    if (responseFrame != null) {
-                        sendFrame(responseFrame);
-                    }
-
-                    // Send the next frame
-                    sendNextFrame();
-
-                } catch (final IOException e) {
-                    logger.error("AshFrameHandler IOException: ", e);
-
-                    if (exceptionCnt++ > 10) {
-                        logger.error("AshFrameHandler exception count exceeded");
-                        // if (!close) {
-                        // frameHandler.error(e);
-                        close = true;
-                    }
                 }
+                logger.debug("AshFrameHandler exited.");
             }
-            logger.debug("AshFrameHandler exited.");
-        }
+        };
+
+        parserThread.setDaemon(true);
+        parserThread.start();
     }
 
     private int[] getPacket() throws IOException {
@@ -287,7 +267,7 @@ public class AshFrameHandler {
         boolean inputError = false;
 
         while (!close) {
-            int val = zigBeePort.getInputStream().read();
+            int val = port.read();
             logger.trace("ASH RX: " + String.format("%02X", val));
             switch (val) {
                 case ASH_CANCEL_BYTE:
@@ -371,26 +351,12 @@ public class AshFrameHandler {
      */
     public void close() {
         this.close = true;
-
-        if (parserThread != null) {
+        try {
             parserThread.interrupt();
-            try {
-                parserThread.join();
-            } catch (InterruptedException e) {
-            }
-            parserThread = null;
+            parserThread.join();
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted in packet parser thread shutdown join.");
         }
-        if (zigBeePort != null) {
-            zigBeePort.close();
-            zigBeePort = null;
-        }
-        logger.info("Stopped Ash serial handler");
-//        try {
-//            parserThread.interrupt();
-//            parserThread.join();
-//        } catch (InterruptedException e) {
-//            logger.warn("Interrupted in packet parser thread shutdown join.");
-//        }
     }
 
     /**
@@ -472,15 +438,11 @@ public class AshFrameHandler {
         logger.debug("--> TX ASH frame: {}", ashFrame);
 
         // Send the data
-        try {
-            for (int b : ashFrame.getOutputBuffer()) {
-                // result.append(" ");
-                // result.append(String.format("%02X", b));
-                // logger.debug("ASH TX: " + String.format("%02X", b));
-                zigBeePort.getOutputStream().write(b);
-            }
-        } catch (IOException e) {
-            logger.debug(e.getMessage());
+        for (int b : ashFrame.getOutputBuffer()) {
+            // result.append(" ");
+            // result.append(String.format("%02X", b));
+            // logger.debug("ASH TX: " + String.format("%02X", b));
+            port.write(b);
         }
 
         // logger.debug(result.toString());

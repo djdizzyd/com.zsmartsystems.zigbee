@@ -13,13 +13,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.zsmartsystems.zigbee.transport.ZigBeePort;
 import org.junit.Test;
+
+import com.zsmartsystems.zigbee.transport.ZigBeePort;
 
 /**
  *
@@ -28,54 +31,28 @@ import org.junit.Test;
  */
 public class AshFrameHandlerTest {
 
-    private class ZigBeePortLocal implements ZigBeePort {
-
-        @Override
-        public boolean open() {
-            return false;
-        }
-
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            return null;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return myStream;
-        }
-
-        private ByteArrayInputStream myStream;
-
-        public void setMyStream(ByteArrayInputStream myStream1) {
-            myStream = myStream1;
-        }
-    }
     private int[] getPacket(int[] data) {
-        ZigBeePortLocal zbp = new ZigBeePortLocal();
-        AshFrameHandler frameHandler = new AshFrameHandler(null, zbp);
+        AshFrameHandler frameHandler = new AshFrameHandler(null);
         byte[] bytedata = new byte[data.length];
         int cnt = 0;
         for (int value : data) {
             bytedata[cnt++] = (byte) value;
         }
         ByteArrayInputStream stream = new ByteArrayInputStream(bytedata);
-
-        zbp.setMyStream(stream);
+        ZigBeePort port = new TestPort(stream, null);
 
         Method privateMethod;
         try {
-            privateMethod = AshFrameHandler.class.getDeclaredMethod("getPacket", null);
+            Field field = frameHandler.getClass().getDeclaredField("port");
+            field.setAccessible(true);
+            field.set(frameHandler, port);
+
+            privateMethod = AshFrameHandler.class.getDeclaredMethod("getPacket");
             privateMethod.setAccessible(true);
 
-            return (int[]) privateMethod.invoke(frameHandler, null);
+            return (int[]) privateMethod.invoke(frameHandler);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
-                | InvocationTargetException e) {
+                | InvocationTargetException | NoSuchFieldException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -125,11 +102,48 @@ public class AshFrameHandlerTest {
 
     @Test
     public void testRunning() {
-        AshFrameHandler frameHandler = new AshFrameHandler(null, null);
-        frameHandler.start();
+        AshFrameHandler frameHandler = new AshFrameHandler(null);
+        frameHandler.start(null);
+
         assertTrue(frameHandler.isAlive());
         frameHandler.close();
         assertFalse(frameHandler.isAlive());
     }
 
+    class TestPort implements ZigBeePort {
+        InputStream input;
+        OutputStream output;
+
+        TestPort(InputStream input, OutputStream output) {
+            this.input = input;
+            this.output = output;
+        }
+
+        @Override
+        public boolean open() {
+            return true;
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public void write(int value) {
+        }
+
+        @Override
+        public int read(int timeout) {
+            return read();
+        }
+
+        @Override
+        public int read() {
+            try {
+                return input.read();
+            } catch (IOException e) {
+                return -1;
+            }
+        }
+    }
 }
