@@ -82,8 +82,6 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 buffer[length++] = address[6];
                 buffer[length++] = address[7];
                 break;
-            case N_X_ATTRIBUTE_IDENTIFIER:
-                break;
             case N_X_ATTRIBUTE_INFORMATION:
                 break;
             case N_X_ATTRIBUTE_RECORD:
@@ -112,10 +110,29 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 }
                 break;
             case N_X_UNSIGNED_8_BIT_INTEGER:
-                List<Integer> intArray8 = (List<Integer>) data;
-                buffer[length++] = intArray8.size();
-                for (int value : intArray8) {
+                List<Integer> intArrayNX8 = (List<Integer>) data;
+                buffer[length++] = intArrayNX8.size();
+                for (int value : intArrayNX8) {
                     buffer[length++] = value & 0xFF;
+                }
+                break;
+            case UNSIGNED_8_BIT_INTEGER_ARRAY:
+                int[] intArrayN8 = (int[]) data;
+                for (int value : intArrayN8) {
+                    buffer[length++] = value & 0xFF;
+                }
+                break;
+            case X_UNSIGNED_8_BIT_INTEGER:
+                List<Integer> intArrayX8 = (List<Integer>) data;
+                for (int value : intArrayX8) {
+                    buffer[length++] = value & 0xFF;
+                }
+                break;
+            case N_X_ATTRIBUTE_IDENTIFIER:
+                List<Integer> intArrayX16 = (List<Integer>) data;
+                for (int value : intArrayX16) {
+                    buffer[length++] = value & 0xFF;
+                    buffer[length++] = (value >> 8) & 0xFF;
                 }
                 break;
             case N_X_WRITE_ATTRIBUTE_RECORD:
@@ -148,6 +165,9 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 break;
             case ZDO_STATUS:
                 buffer[length++] = ((ZdoStatus) data).getId();
+                break;
+            case ZIGBEE_DATA_TYPE:
+                buffer[length++] = ((ZclDataType) data).getId();
                 break;
             default:
                 throw new IllegalArgumentException("No writer defined in " + ZigBeeDeserializer.class.getSimpleName()
