@@ -12,17 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zsmartsystems.zigbee.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zsmartsystems.zigbee.ExtendedPanId;
-import com.zsmartsystems.zigbee.IeeeAddress;
-import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeException;
-import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
-import com.zsmartsystems.zigbee.ZigBeeNodeStatus;
-import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
@@ -131,7 +125,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     /**
      * The network address of the dongle
      */
-    private ZigBeeDeviceAddress networkAddress;
+    private ZigBeeAddress networkAddress;
 
 
     /**
@@ -243,7 +237,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
         // get the ieee address of the dongle
         ieeeAddress = getEui64Address();
-        networkAddress = new ZigBeeDeviceAddress(getNodeId());
+        networkAddress = new ZigBeeEndpointAddress(getNodeId());
 
         zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.INITIALISING);
 
@@ -685,7 +679,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
      *
      * @return Integer the 16 bit address
      */
-    public ZigBeeDeviceAddress getNetworkAddress() {
+    public ZigBeeAddress getNetworkAddress() {
         return networkAddress;
     }
 
