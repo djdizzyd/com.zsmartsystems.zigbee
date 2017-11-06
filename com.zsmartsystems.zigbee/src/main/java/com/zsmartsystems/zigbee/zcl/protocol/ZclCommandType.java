@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.zcl.protocol;
 
 import java.lang.reflect.Constructor;
@@ -76,6 +83,12 @@ import com.zsmartsystems.zigbee.zcl.clusters.doorlock.LockDoorResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.UnlockDoorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.UnlockDoorResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.thermostat.SetpointRaiseLowerCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.GetWeeklyScheduleResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.SetWeeklySchedule;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.GetRelayStatusLogResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.GetWeeklySchedule;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.ClearWeeklySchedule;
+import com.zsmartsystems.zigbee.zcl.clusters.thermostat.GetRelayStatusLog;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.MoveToHueCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.MoveHueCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.StepHueCommand;
@@ -119,6 +132,12 @@ import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverAttributesResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.general.ReadAttributesStructuredCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesStructuredCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesStructuredResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverCommandsReceived;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverCommandsReceivedResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverCommandsGenerated;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverCommandsGeneratedResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverAttributesExtended;
+import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverAttributesExtendedResponse;
 
 
 /**
@@ -186,6 +205,12 @@ public enum ZclCommandType {
      */
     BYPASS_COMMAND(0x0501, 1, BypassCommand.class, true),
     /**
+     * CLEAR_WEEKLY_SCHEDULE: Clear Weekly Schedule
+     * <p>
+     * See {@link ClearWeeklySchedule}
+     */
+    CLEAR_WEEKLY_SCHEDULE(0x0201, 3, ClearWeeklySchedule.class, true),
+    /**
      * COMPACT_LOCATION_DATA_NOTIFICATION_COMMAND: Compact Location Data Notification Command
      * <p>
      * See {@link CompactLocationDataNotificationCommand}
@@ -222,11 +247,47 @@ public enum ZclCommandType {
      */
     DISCOVER_ATTRIBUTES_COMMAND(0xFFFF, 12, DiscoverAttributesCommand.class, true),
     /**
+     * DISCOVER_ATTRIBUTES_EXTENDED: Discover Attributes Extended
+     * <p>
+     * See {@link DiscoverAttributesExtended}
+     */
+    DISCOVER_ATTRIBUTES_EXTENDED(0xFFFF, 21, DiscoverAttributesExtended.class, true),
+    /**
+     * DISCOVER_ATTRIBUTES_EXTENDED_RESPONSE: Discover Attributes Extended Response
+     * <p>
+     * See {@link DiscoverAttributesExtendedResponse}
+     */
+    DISCOVER_ATTRIBUTES_EXTENDED_RESPONSE(0xFFFF, 22, DiscoverAttributesExtendedResponse.class, true),
+    /**
      * DISCOVER_ATTRIBUTES_RESPONSE: Discover Attributes Response
      * <p>
      * See {@link DiscoverAttributesResponse}
      */
     DISCOVER_ATTRIBUTES_RESPONSE(0xFFFF, 13, DiscoverAttributesResponse.class, true),
+    /**
+     * DISCOVER_COMMANDS_GENERATED: Discover Commands Generated
+     * <p>
+     * See {@link DiscoverCommandsGenerated}
+     */
+    DISCOVER_COMMANDS_GENERATED(0xFFFF, 19, DiscoverCommandsGenerated.class, true),
+    /**
+     * DISCOVER_COMMANDS_GENERATED_RESPONSE: Discover Commands Generated Response
+     * <p>
+     * See {@link DiscoverCommandsGeneratedResponse}
+     */
+    DISCOVER_COMMANDS_GENERATED_RESPONSE(0xFFFF, 20, DiscoverCommandsGeneratedResponse.class, true),
+    /**
+     * DISCOVER_COMMANDS_RECEIVED: Discover Commands Received
+     * <p>
+     * See {@link DiscoverCommandsReceived}
+     */
+    DISCOVER_COMMANDS_RECEIVED(0xFFFF, 17, DiscoverCommandsReceived.class, true),
+    /**
+     * DISCOVER_COMMANDS_RECEIVED_RESPONSE: Discover Commands Received Response
+     * <p>
+     * See {@link DiscoverCommandsReceivedResponse}
+     */
+    DISCOVER_COMMANDS_RECEIVED_RESPONSE(0xFFFF, 18, DiscoverCommandsReceivedResponse.class, true),
     /**
      * EMERGENCY_COMMAND: Emergency Command
      * <p>
@@ -276,6 +337,18 @@ public enum ZclCommandType {
      */
     GET_LOCATION_DATA_COMMAND(0x000B, 3, GetLocationDataCommand.class, true),
     /**
+     * GET_RELAY_STATUS_LOG: Get Relay Status Log
+     * <p>
+     * See {@link GetRelayStatusLog}
+     */
+    GET_RELAY_STATUS_LOG(0x0201, 4, GetRelayStatusLog.class, true),
+    /**
+     * GET_RELAY_STATUS_LOG_RESPONSE: Get Relay Status Log Response
+     * <p>
+     * See {@link GetRelayStatusLogResponse}
+     */
+    GET_RELAY_STATUS_LOG_RESPONSE(0x0201, 1, GetRelayStatusLogResponse.class, false),
+    /**
      * GET_SCENE_MEMBERSHIP_COMMAND: Get Scene Membership Command
      * <p>
      * See {@link GetSceneMembershipCommand}
@@ -287,6 +360,18 @@ public enum ZclCommandType {
      * See {@link GetSceneMembershipResponse}
      */
     GET_SCENE_MEMBERSHIP_RESPONSE(0x0005, 5, GetSceneMembershipResponse.class, false),
+    /**
+     * GET_WEEKLY_SCHEDULE: Get Weekly Schedule
+     * <p>
+     * See {@link GetWeeklySchedule}
+     */
+    GET_WEEKLY_SCHEDULE(0x0201, 2, GetWeeklySchedule.class, true),
+    /**
+     * GET_WEEKLY_SCHEDULE_RESPONSE: Get Weekly Schedule Response
+     * <p>
+     * See {@link GetWeeklyScheduleResponse}
+     */
+    GET_WEEKLY_SCHEDULE_RESPONSE(0x0201, 0, GetWeeklyScheduleResponse.class, false),
     /**
      * GET_ZONE_ID_MAP_COMMAND: Get Zone ID Map Command
      * <p>
@@ -653,6 +738,12 @@ public enum ZclCommandType {
      * See {@link SetDeviceConfigurationCommand}
      */
     SET_DEVICE_CONFIGURATION_COMMAND(0x000B, 1, SetDeviceConfigurationCommand.class, true),
+    /**
+     * SET_WEEKLY_SCHEDULE: Set Weekly Schedule
+     * <p>
+     * See {@link SetWeeklySchedule}
+     */
+    SET_WEEKLY_SCHEDULE(0x0201, 1, SetWeeklySchedule.class, true),
     /**
      * SQUAWK_COMMAND: Squawk Command
      * <p>

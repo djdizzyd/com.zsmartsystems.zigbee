@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee;
 
 import java.lang.reflect.Constructor;
@@ -269,8 +276,8 @@ public class ZigBeeDevice implements CommandListener {
                 Constructor<? extends ZclCluster> constructor;
                 try {
                     constructor = clusterType.getClusterClass().getConstructor(ZigBeeNetworkManager.class,
-                            ZigBeeDeviceAddress.class);
-                    clusterClass = constructor.newInstance(networkManager, networkAddress);
+                            ZigBeeDevice.class);
+                    clusterClass = constructor.newInstance(networkManager, this);
                 } catch (Exception e) {
                     logger.debug("{}: Error instantiating cluster {}", networkAddress, clusterType);
                 }

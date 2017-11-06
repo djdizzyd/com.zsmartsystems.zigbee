@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.ember;
 
 import java.util.Arrays;
@@ -9,9 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
+import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
 import com.zsmartsystems.zigbee.ZigBeeDeviceStatus;
 import com.zsmartsystems.zigbee.ZigBeeException;
+import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
 import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
@@ -22,6 +32,10 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRespons
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Request;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Response;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
@@ -111,6 +125,17 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     private EmberNetworkParameters networkParameters = new EmberNetworkParameters();
 
     /**
+     *  The ieee address of the dongle
+     */
+    private IeeeAddress ieeeAddress;
+
+    /**
+     * The network address of the dongle
+     */
+    private ZigBeeDeviceAddress networkAddress;
+
+
+    /**
      * The Ember version used in this system. Set during initialisation and saved in case the client is interested.
      */
     private String versionString = "Unknown";
@@ -154,9 +179,10 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
             logger.error("Unable to open Ember serial port");
             return ZigBeeInitializeResponse.FAILED;
         }
-        ashHandler = new AshFrameHandler(serialPort.getInputStream(), serialPort.getOutputStream(), this);
+        ashHandler = new AshFrameHandler(this);
 
         // Connect to the ASH handler and NCP
+        ashHandler.start(serialPort.getInputStream(), serialPort.getOutputStream());
         ashHandler.connect();
 
         // We MUST send the version command first.
@@ -215,6 +241,10 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
         networkParameters = getNetworkParameters();
         getCurrentSecurityState();
+
+        // get the ieee address of the dongle
+        ieeeAddress = getEui64Address();
+        networkAddress = new ZigBeeDeviceAddress(getNodeId());
 
         zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.INITIALISING);
 
@@ -303,10 +333,26 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return getNetworkParametersResponse.getParameters();
     }
 
+    private IeeeAddress getEui64Address() {
+        EzspGetEui64Request getEui64Request = new EzspGetEui64Request();
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getEui64Request, EzspGetEui64Response.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspGetEui64Response getEui64Response = (EzspGetEui64Response) transaction.getResponse();
+        return getEui64Response.getEui64();
+    }
+
+    private Integer getNodeId() {
+        EzspGetNodeIdRequest getNodeIdRequest = new EzspGetNodeIdRequest();
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getNodeIdRequest, EzspGetNodeIdResponse.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspGetNodeIdResponse getNodeIdResponse = (EzspGetNodeIdResponse) transaction.getResponse();
+        return getNodeIdResponse.getNodeId();
+    }
+
     private void createEndpoints() {
         // Create a list of all the clusters we want to register
         final List<Integer> clusterSet = Arrays.asList(ZclClusterType.BASIC.getId(),
-                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId());
+                ZclClusterType.POWER_CONFIGURATION.getId(), ZclClusterType.ON_OFF.getId(), ZclClusterType.IAS_ZONE.getId());
 
         EzspAddEndpointRequest addEndpoint;
 
@@ -449,9 +495,15 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         }
 
         logger.debug(emberCommand.toString());
-        ashHandler.queueFrame(emberCommand);
+        sendEmberCommand(emberCommand);
+        //ashHandler.queueFrame(emberCommand);
 
         // emberUnicast = (EzspSendUnicast) ashHandler.sendEzspRequestAsync(emberUnicast);
+    }
+
+
+    public void sendEmberCommand(EzspFrameRequest emberCommand) {
+        ashHandler.queueFrame(emberCommand);
     }
 
     @Override
@@ -571,9 +623,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     @Override
     public void handleLinkStateChange(boolean linkState) {
         // Handle link changes and notify framework or just reset link with dongle?
-        if (!linkState) {
-            zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.OFFLINE);
-        }
+        zigbeeTransportReceive.setNetworkState(linkState ? ZigBeeTransportState.ONLINE : ZigBeeTransportState.OFFLINE);
     }
 
     @Override
@@ -610,9 +660,39 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     @Override
-    public boolean setZigBeeSecurityKey(int[] keyData) {
-        networkKey.setContents(keyData);
+    public boolean setZigBeeNetworkKey(final ZigBeeKey key) {
+        networkKey.setContents(key.getValue());
 
+        return false;
+    }
+
+    public boolean setChannelMask(int channelMask) {
+        networkParameters.setChannels(channelMask);
+        return true;
+    }
+
+    public int getChannelMask() { return networkParameters.getChannels(); }
+
+    /**
+     * Returns the 64 bit address of the dongle.
+     *
+     * @return IeeeAddress the 64 bit address of the dongle
+     */
+    public IeeeAddress getIeeeAddress() {
+        return ieeeAddress;
+    }
+
+    /**
+     * Returns the network address (16 bit) of the dongle.
+     *
+     * @return Integer the 16 bit address
+     */
+    public ZigBeeDeviceAddress getNetworkAddress() {
+        return networkAddress;
+    }
+
+    @Override
+    public boolean setZigBeeLinkKey(ZigBeeKey key) {
         return false;
     }
 
@@ -621,25 +701,4 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return versionString;
     }
 
-    /*
-     * private EmberStatus removeDevice() {
-     * logger.debug("EZSP removedevice: {}, {}");
-     * EzspRemoveDeviceRequest removeDeviceRequest = new EzspRemoveDeviceRequest();
-     * removeDeviceRequest.setDestLong(new IeeeAddress("001FEE0000000798"));
-     * removeDeviceRequest.setDestShort(37028);
-     * removeDeviceRequest.setTargetLong(new IeeeAddress("001FEE0000000798"));
-     * EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(removeDeviceRequest,
-     * EzspRemoveDeviceResponse.class);
-     * ashHandler.sendEzspTransaction(transaction);
-     * EzspRemoveDeviceResponse removeDeviceResponse = (EzspRemoveDeviceResponse) transaction.getResponse();
-     * logger.debug(removeDeviceResponse.toString());
-     * if (removeDeviceResponse.getStatus() != EmberStatus.EMBER_SUCCESS
-     * && removeDeviceResponse.getStatus() != EmberStatus.EMBER_NOT_JOINED) {
-     * logger.debug("Error during remove device: {}", removeDeviceResponse);
-     * return EmberStatus.UNKNOWN;
-     * }
-     *
-     * return removeDeviceResponse.getStatus();
-     * }
-     */
 }

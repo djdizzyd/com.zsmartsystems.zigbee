@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee;
 
 import java.lang.reflect.Constructor;
@@ -23,19 +30,12 @@ import com.zsmartsystems.zigbee.serialization.ZigBeeSerializer;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportReceive;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportState;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
-import com.zsmartsystems.zigbee.zcl.ZclAttribute;
-import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
-import com.zsmartsystems.zigbee.zcl.ZclCustomResponseMatcher;
 import com.zsmartsystems.zigbee.zcl.ZclFieldDeserializer;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
 import com.zsmartsystems.zigbee.zcl.ZclFrameType;
 import com.zsmartsystems.zigbee.zcl.ZclHeader;
 import com.zsmartsystems.zigbee.zcl.ZclResponseMatcher;
-import com.zsmartsystems.zigbee.zcl.clusters.general.ReadAttributesCommand;
-import com.zsmartsystems.zigbee.zcl.clusters.general.WriteAttributesCommand;
-import com.zsmartsystems.zigbee.zcl.field.AttributeIdentifier;
-import com.zsmartsystems.zigbee.zcl.field.WriteAttributeRecord;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandType;
 import com.zsmartsystems.zigbee.zdo.ZdoCommand;
 import com.zsmartsystems.zigbee.zdo.ZdoCommandType;
@@ -333,19 +333,29 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
     }
 
     /**
-     * Set the current security key in use by the system.
+     * Set the current network key in use by the system.
      * <p>
      * Note that this method may only be called following the {@link #initialize} call, and before the {@link #startup}
      * call.
      *
-     * @param key the new security key as {@link int}[16]
+     * @param key the new network key as {@link ZigBeeKey}
      * @return true if the key was set
      */
-    public boolean setZigBeeSecurityKey(final int key[]) {
-        if (key == null || key.length != 16) {
-            return false;
-        }
-        return transport.setZigBeeSecurityKey(key);
+    public boolean setZigBeeNetworkKey(final ZigBeeKey key) {
+        return transport.setZigBeeNetworkKey(key);
+    }
+
+    /**
+     * Set the current link key in use by the system.
+     * <p>
+     * Note that this method may only be called following the {@link #initialize} call, and before the {@link #startup}
+     * call.
+     *
+     * @param key the new link key as {@link ZigBeeKey}
+     * @return true if the key was set
+     */
+    public boolean setZigBeeLinkKey(final ZigBeeKey key) {
+        return transport.setZigBeeLinkKey(key);
     }
 
     /**
@@ -869,12 +879,12 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
      * Devices can only join the network when joining is enabled. It is not advised to leave joining enabled permanently
      * since it allows devices to join the network without the installer knowing.
      *
-     * @param duration sets the duration of the join enable. Setting this to 0 disables joining. Setting to a value
-     *            greater than 255 seconds will permanently enable joining.
+     * @param duration sets the duration of the join enable. Setting this to 0 disables joining. As per ZigBee 3, a
+     *            value of 255 is not permitted and will be ignored.
      */
-    public void permitJoin(final int duration) {
-        logger.debug("Permit join for {} seconds.", duration);
-        permitJoin(new ZigBeeDeviceAddress(ZigBeeBroadcastDestination.BROADCAST_ROUTERS_AND_COORD.getKey()), duration);
+    public boolean permitJoin(final int duration) {
+        return permitJoin(new ZigBeeDeviceAddress(ZigBeeBroadcastDestination.BROADCAST_ROUTERS_AND_COORD.getKey()),
+                duration);
     }
 
     /**
@@ -884,18 +894,18 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
      * since it allows devices to join the network without the installer knowing.
      *
      * @param destination the {@link ZigBeeDeviceAddress} to send the join request to
-     * @param duration sets the duration of the join enable. Setting this to 0 disables joining. Setting to a value
-     *            greater than 255 seconds will permanently enable joining.
+     * @param duration sets the duration of the join enable. Setting this to 0 disables joining. As per ZigBee 3, a
+     *            value of 255 is not permitted and will be ignored.
      */
-    public void permitJoin(final ZigBeeDeviceAddress destination, final int duration) {
-        final ManagementPermitJoiningRequest command = new ManagementPermitJoiningRequest();
-
-        if (duration > 255) {
-            command.setPermitDuration(255);
-        } else {
-            command.setPermitDuration(duration);
+    public boolean permitJoin(final ZigBeeDeviceAddress destination, final int duration) {
+        if (duration < 0 || duration >= 255) {
+            logger.debug("Permit join to {} invalid period of {} seconds.", destination, duration);
+            return false;
         }
+        logger.debug("Permit join to {} for {} seconds.", destination, duration);
 
+        ManagementPermitJoiningRequest command = new ManagementPermitJoiningRequest();
+        command.setPermitDuration(duration);
         command.setTcSignificance(true);
         command.setDestinationAddress(destination);
         command.setSourceAddress(new ZigBeeDeviceAddress(0));
@@ -903,8 +913,28 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
         try {
             sendCommand(command);
         } catch (final ZigBeeException e) {
-            throw new ZigBeeApiException("Error sending permit join command.", e);
+            logger.debug("Error sending permit join command.", e);
+            return false;
         }
+
+        // If this is a broadcast, then we send it to our own address as well
+        // This seems to be required for some stacks (eg ZNP)
+        if (ZigBeeBroadcastDestination.getBroadcastDestination(destination.getAddress()) != null) {
+            command = new ManagementPermitJoiningRequest();
+            command.setPermitDuration(duration);
+            command.setTcSignificance(true);
+            command.setDestinationAddress(new ZigBeeDeviceAddress(0));
+            command.setSourceAddress(new ZigBeeDeviceAddress(0));
+
+            try {
+                sendCommand(command);
+            } catch (final ZigBeeException e) {
+                logger.debug("Error sending permit join command.", e);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -942,107 +972,6 @@ public class ZigBeeNetworkManager implements ZigBeeNetwork, ZigBeeTransportRecei
                 }
             }
         }.start();
-    }
-
-    /**
-     * Binds two devices.
-     *
-     * @param source
-     *            the source {@link ZigBeeDevice}
-     * @param destination
-     *            the destination {@link ZigBeeDevice}
-     * @param clusterId
-     *            the cluster ID
-     * @return TRUE if no errors occurred in sending.
-     */
-    public Future<CommandResult> bind(final ZigBeeDevice source, final ZigBeeDevice destination, final int clusterId) {
-        /*
-         * final int destinationAddress = source.getNetworkAddress();
-         * final IeeeAddress bindSourceAddress = source.getIeeeAddress();
-         * final int bindSourceEndpoint = source.getEndpoint();
-         * final int bindCluster = clusterId;
-         * final int bindDestinationAddressingMode = 3; // 64 bit addressing
-         * final IeeeAddress bindDestinationAddress = destination.getIeeeAddress();
-         * final int bindDestinationEndpoint = destination.getEndpoint();
-         * final BindRequest command = new BindRequest();
-         * command.setDstAddress(destinationAddress);
-         * command.setSrcAddress(bindSourceAddress.getLong());
-         * command.setSrcEndpoint(bindSourceEndpoint);
-         * command.setClusterId(bindCluster);
-         * command.setDstAddrMode(bindDestinationAddressingMode);
-         * command.setDstAddress(bindDestinationAddress.getLong());
-         * command.setDstEndpoint(bindDestinationEndpoint);
-         * return unicast(command);
-         */
-        return null;
-    }
-
-    /**
-     * Unbinds two devices.
-     *
-     * @param source the source {@link ZigBeeDevice}
-     * @param destination the destination {@link ZigBeeDevice}
-     * @param clusterId the cluster ID
-     * @return true if no errors occurred in sending.
-     */
-    public Future<CommandResult> unbind(final ZigBeeDevice source, final ZigBeeDevice destination,
-            final int clusterId) {
-        /*
-         * final int destinationAddress = source.getNetworkAddress();
-         * final IeeeAddress bindSourceAddress = source.getIeeeAddress();
-         * final int bindSourceEndpoint = source.getEndpoint();
-         * final int bindCluster = clusterId;
-         * final int bindDestinationAddressingMode = 3; // 64 bit addressing
-         * final IeeeAddress bindDestinationAddress = destination.getIeeeAddress();
-         * final int bindDestinationEndpoint = destination.getEndpoint();
-         * final UnbindRequest command = new UnbindRequest(destinationAddress, bindSourceAddress.getLong(),
-         * bindSourceEndpoint, bindCluster, bindDestinationAddressingMode, bindDestinationAddress.getLong(),
-         * bindDestinationEndpoint);
-         * return unicast(command);
-         */
-        return null;
-    }
-
-    /**
-     * Writes attribute to device.
-     *
-     * @param cluster the {@link ZclCluster}
-     * @param attributeId the {@link ZclAttribute} to write to
-     * @param value the value to set (as {@link Object})
-     * @return the command result future
-     */
-    public Future<CommandResult> write(final ZclCluster cluster, final ZclAttribute attribute, final Object value) {
-        final WriteAttributesCommand command = new WriteAttributesCommand();
-
-        command.setClusterId(cluster.getClusterId());
-        final WriteAttributeRecord attributeIdentifier = new WriteAttributeRecord();
-        attributeIdentifier.setAttributeIdentifier(attribute.getId());
-        attributeIdentifier.setAttributeDataType(attribute.getDataType());
-        attributeIdentifier.setAttributeValue(value);
-        command.setRecords(Collections.singletonList(attributeIdentifier));
-        command.setDestinationAddress(cluster.getZigBeeAddress());
-
-        return unicast(command, new ZclCustomResponseMatcher());
-    }
-
-    /**
-     * Reads an attribute from device.
-     *
-     * @param zigbeeAddress the device {@link ZigBeeDeviceAddress}
-     * @param clusterId the cluster ID
-     * @param attributeId the attribute ID
-     * @return the command result future
-     */
-    public Future<CommandResult> read(final ZclCluster cluster, final ZclAttribute attribute) {
-        final ReadAttributesCommand command = new ReadAttributesCommand();
-
-        command.setClusterId(cluster.getClusterId());
-        final AttributeIdentifier attributeIdentifier = new AttributeIdentifier();
-        attributeIdentifier.setAttributeIdentifier(attribute.getId());
-        command.setIdentifiers(Collections.singletonList(attributeIdentifier));
-        command.setDestinationAddress(cluster.getZigBeeAddress());
-
-        return unicast(command, new ZclCustomResponseMatcher());
     }
 
     public void addGroup(final ZigBeeGroupAddress group) {

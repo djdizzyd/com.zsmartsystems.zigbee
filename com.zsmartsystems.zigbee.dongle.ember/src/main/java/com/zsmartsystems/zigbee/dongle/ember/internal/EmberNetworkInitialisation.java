@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.ember.internal;
 
 import java.util.Arrays;
@@ -82,7 +89,7 @@ public class EmberNetworkInitialisation {
         }
 
         // Perform an energy scan to find a clear channel
-        int quietestChannel = doEnergyScan(scanDuration);
+        int quietestChannel = doEnergyScan(scanDuration, networkParameters.getChannels());
         logger.debug("Energy scan reports quietest channel is " + quietestChannel);
 
         // Check if any current networks were found and avoid those channels, PAN ID and especially Extended PAN ID
@@ -111,6 +118,11 @@ public class EmberNetworkInitialisation {
 
         if (networkParameters.getRadioChannel() == 0) {
             networkParameters.setRadioChannel(quietestChannel);
+        }
+
+        // If the channel set is empty, use the single channel defined above
+        if (networkParameters.getChannels() == 0) {
+            networkParameters.setChannels(1 << networkParameters.getRadioChannel());
         }
 
         // Initialise security
@@ -151,9 +163,9 @@ public class EmberNetworkInitialisation {
      * @param scanDuration duration of the scan on each channel
      * @return the quietest channel, or null on error
      */
-    private Integer doEnergyScan(int scanDuration) {
+    private Integer doEnergyScan(int scanDuration, int channelMask) {
         EzspStartScanRequest energyScan = new EzspStartScanRequest();
-        energyScan.setChannelMask(EzspChannelMask.EZSP_CHANNEL_MASK_ALL.getKey());
+        energyScan.setChannelMask(channelMask);
         energyScan.setDuration(scanDuration);
         energyScan.setScanType(EzspNetworkScanType.EZSP_ENERGY_SCAN);
 

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.console;
 
 import org.apache.log4j.xml.DOMConfigurator;
@@ -5,10 +12,12 @@ import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNetworkStateSerializer;
 import com.zsmartsystems.zigbee.dongle.cc2531.ZigBeeDongleTiCc2531;
 import com.zsmartsystems.zigbee.dongle.ember.ZigBeeDongleEzsp;
+import com.zsmartsystems.zigbee.dongle.telegesis.ZigBeeDongleTelegesis;
 import com.zsmartsystems.zigbee.serial.SerialPortImpl;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
 import com.zsmartsystems.zigbee.serialization.DefaultSerializer;
@@ -85,7 +94,12 @@ public class ZigBeeConsoleMain {
             return;
         }
 
-        final ZigBeePort serialPort = new SerialPortImpl(serialPortName, serialBaud);
+        boolean flowControl = false;
+        if (dongleName.toUpperCase().equals("EMBER")) {
+            flowControl = true;
+        }
+
+        final ZigBeePort serialPort = new SerialPortImpl(serialPortName, serialBaud, flowControl);
 
         System.out.println("Initialising console...");
 
@@ -94,6 +108,11 @@ public class ZigBeeConsoleMain {
             dongle = new ZigBeeDongleTiCc2531(serialPort);
         } else if (dongleName.toUpperCase().equals("EMBER")) {
             dongle = new ZigBeeDongleEzsp(serialPort);
+        } else if (dongleName.toUpperCase().equals("TELEGESIS")) {
+            ZigBeeDongleTelegesis telegesisDongle = new ZigBeeDongleTelegesis(serialPort);
+            telegesisDongle.setTelegesisPassword("password");
+            dongle = telegesisDongle;
+
         } else {
             dongle = null;
         }
@@ -128,7 +147,7 @@ public class ZigBeeConsoleMain {
             networkManager.setZigBeePanId(pan);
             networkManager.setZigBeeExtendedPanId(extendedPan);
             if (networkKey != null) {
-                networkManager.setZigBeeSecurityKey(networkKey);
+                networkManager.setZigBeeNetworkKey(new ZigBeeKey(networkKey));
             }
         }
 

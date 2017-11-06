@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.serialization;
 
 import java.util.ArrayList;
@@ -5,13 +12,14 @@ import java.util.List;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
+import com.zsmartsystems.zigbee.zcl.ZclStatus;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor;
-import com.zsmartsystems.zigbee.zdo.descriptors.PowerDescriptor;
-import com.zsmartsystems.zigbee.zdo.descriptors.RoutingTable;
-import com.zsmartsystems.zigbee.zdo.descriptors.SimpleDescriptor;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
+import com.zsmartsystems.zigbee.zdo.field.PowerDescriptor;
+import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
+import com.zsmartsystems.zigbee.zdo.field.SimpleDescriptor;
 
 /**
  * The default implementation of the {@link ZigBeeDeserializer}
@@ -127,6 +135,7 @@ public class DefaultDeserializer implements ZigBeeDeserializer {
                 break;
             case N_X_WRITE_ATTRIBUTE_STATUS_RECORD:
                 break;
+            case CLUSTERID:
             case NWK_ADDRESS:
             case BITMAP_16_BIT:
             case ENUMERATION_16_BIT:
@@ -176,6 +185,9 @@ public class DefaultDeserializer implements ZigBeeDeserializer {
                 SimpleDescriptor simpleDescriptor = new SimpleDescriptor();
                 simpleDescriptor.deserialize(this);
                 value[0] = simpleDescriptor;
+                break;
+            case ZCL_STATUS:
+                value[0] = ZclStatus.getStatus(payload[index++]);
                 break;
             case ZDO_STATUS:
                 value[0] = ZdoStatus.getStatus(payload[index++]);

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.zcl;
 
 import static org.junit.Assert.assertEquals;
@@ -10,6 +17,7 @@ import org.mockito.Mockito;
 
 import com.zsmartsystems.zigbee.Command;
 import com.zsmartsystems.zigbee.CommandResponseMatcher;
+import com.zsmartsystems.zigbee.ZigBeeDevice;
 import com.zsmartsystems.zigbee.ZigBeeDeviceAddress;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
@@ -43,7 +51,9 @@ public class ZclClusterTest {
     public void getReporting() {
         createNetworkManager();
 
-        ZclCluster cluster = new ZclOnOffCluster(networkManager, new ZigBeeDeviceAddress(1));
+        ZigBeeDevice device = new ZigBeeDevice(networkManager);
+        device.setDeviceAddress(new ZigBeeDeviceAddress(1));
+        ZclCluster cluster = new ZclOnOffCluster(networkManager, device);
         ZclAttribute attribute = cluster.getAttribute(0);
         cluster.getReporting(attribute);
         assertEquals(1, commandCapture.getAllValues().size());
@@ -61,7 +71,9 @@ public class ZclClusterTest {
     public void setReporting() {
         createNetworkManager();
 
-        ZclCluster cluster = new ZclOnOffCluster(networkManager, new ZigBeeDeviceAddress(1));
+        ZigBeeDevice device = new ZigBeeDevice(networkManager);
+        device.setDeviceAddress(new ZigBeeDeviceAddress(1));
+        ZclCluster cluster = new ZclOnOffCluster(networkManager, device);
         ZclAttribute attribute = cluster.getAttribute(0);
         cluster.setReporting(attribute, 22, 33);
         assertEquals(1, commandCapture.getAllValues().size());
@@ -79,7 +91,9 @@ public class ZclClusterTest {
     public void getClusterId() {
         createNetworkManager();
 
-        ZclCluster cluster = new ZclOnOffCluster(networkManager, new ZigBeeDeviceAddress(1));
+        ZigBeeDevice device = new ZigBeeDevice(networkManager);
+        device.setDeviceAddress(new ZigBeeDeviceAddress(1));
+        ZclCluster cluster = new ZclOnOffCluster(networkManager, device);
         assertEquals(Integer.valueOf(6), cluster.getClusterId());
     }
 
@@ -87,7 +101,9 @@ public class ZclClusterTest {
     public void getClusterName() {
         createNetworkManager();
 
-        ZclCluster cluster = new ZclLevelControlCluster(networkManager, new ZigBeeDeviceAddress(1));
+        ZigBeeDevice device = new ZigBeeDevice(networkManager);
+        device.setDeviceAddress(new ZigBeeDeviceAddress(1));
+        ZclCluster cluster = new ZclLevelControlCluster(networkManager, device);
         assertEquals("Level Control", cluster.getClusterName());
     }
 }

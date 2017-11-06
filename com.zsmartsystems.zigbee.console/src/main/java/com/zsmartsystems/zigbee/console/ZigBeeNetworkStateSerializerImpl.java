@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.console;
 
 import java.io.BufferedReader;
@@ -25,10 +32,10 @@ import com.zsmartsystems.zigbee.ZigBeeNetworkStateSerializer;
 import com.zsmartsystems.zigbee.ZigBeeNode;
 import com.zsmartsystems.zigbee.dao.ZigBeeDeviceDao;
 import com.zsmartsystems.zigbee.dao.ZigBeeNodeDao;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.FrequencyBandType;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.MacCapabilitiesType;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.ServerCapabilitiesType;
-import com.zsmartsystems.zigbee.zdo.descriptors.PowerDescriptor.PowerSourceType;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.FrequencyBandType;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.MacCapabilitiesType;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.ServerCapabilitiesType;
+import com.zsmartsystems.zigbee.zdo.field.PowerDescriptor.PowerSourceType;
 
 /**
  * Serializes and deserializes the ZigBee network state.

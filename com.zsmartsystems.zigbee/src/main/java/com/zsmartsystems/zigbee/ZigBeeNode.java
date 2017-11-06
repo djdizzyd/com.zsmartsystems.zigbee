@@ -1,17 +1,26 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.zsmartsystems.zigbee.zdo.ZdoResponseMatcher;
+import com.zsmartsystems.zigbee.zdo.command.ManagementBindRequest;
 import com.zsmartsystems.zigbee.zdo.command.ManagementPermitJoiningRequest;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.LogicalType;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.MacCapabilitiesType;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.ServerCapabilitiesType;
-import com.zsmartsystems.zigbee.zdo.descriptors.PowerDescriptor;
-import com.zsmartsystems.zigbee.zdo.descriptors.RoutingTable;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
+import com.zsmartsystems.zigbee.zdo.field.PowerDescriptor;
+import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.LogicalType;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.MacCapabilitiesType;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.ServerCapabilitiesType;
 
 /**
  * Defines a ZigBee Node. A node is a physical entity on the network and will
@@ -240,6 +249,17 @@ public class ZigBeeNode {
      */
     public LogicalType getLogicalType() {
         return nodeDescriptor.getLogicalType();
+    }
+
+    /**
+     * Request an update of the binding table for this node
+     * TODO: This needs to handle the response and further requests if required to complete the table
+     */
+    public void updateBindingTable() {
+        ManagementBindRequest bindingRequest = new ManagementBindRequest();
+        bindingRequest.setDestinationAddress(new ZigBeeDeviceAddress(networkAddress));
+        bindingRequest.setStartIndex(0);
+        networkManager.unicast(bindingRequest, new ZdoResponseMatcher());
     }
 
     /**

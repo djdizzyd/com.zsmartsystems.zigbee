@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2017 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.zdo.command;
 
 import static org.junit.Assert.assertEquals;
@@ -10,11 +17,11 @@ import com.zsmartsystems.zigbee.CommandTest;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
 import com.zsmartsystems.zigbee.zcl.ZclFieldDeserializer;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable.NeighborTableJoining;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable.NeighborTableRelationship;
-import com.zsmartsystems.zigbee.zdo.descriptors.NeighborTable.NeighborTableRxState;
-import com.zsmartsystems.zigbee.zdo.descriptors.NodeDescriptor.LogicalType;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable.NeighborTableJoining;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable.NeighborTableRelationship;
+import com.zsmartsystems.zigbee.zdo.field.NeighborTable.NeighborTableRxState;
+import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.LogicalType;
 
 /**
  *
