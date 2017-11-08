@@ -346,10 +346,14 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     public EmberStatus sendManyToOneRouteRequest() {
+        return sendManyToOneRouteRequest(0xFFF9);
+    }
+
+    public EmberStatus sendManyToOneRouteRequest(int concentratorType) {
         EzspSendManyToOneRouteRequestRequest sendManyToOneRouteRequestRequest = new EzspSendManyToOneRouteRequestRequest();
         sendManyToOneRouteRequestRequest.setRadius(0x1E);
         // EMBER_HIGH_RAM_CONCENTRATOR
-        sendManyToOneRouteRequestRequest.setConcentratorType(0xFFF9);
+        sendManyToOneRouteRequestRequest.setConcentratorType(concentratorType);
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(sendManyToOneRouteRequestRequest, EzspSendManyToOneRouteRequestResponse.class);
         ashHandler.sendEzspTransaction(transaction);
         EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
