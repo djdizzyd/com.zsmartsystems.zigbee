@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.zsmartsystems.zigbee.*;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,6 +359,12 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         ashHandler.sendEzspTransaction(transaction);
         EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
         return sendManyToOneRouteRequestResponse.getStatus();
+    }
+
+    public EzspFrameResponse sendFrameRequest(EzspFrameRequest request, Class responseType) {
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(request, responseType);
+        ashHandler.sendEzspTransaction(transaction);
+        return transaction.getResponse();
     }
 
 

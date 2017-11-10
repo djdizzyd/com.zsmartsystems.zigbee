@@ -75,6 +75,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendReplyResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetBindingRemoteNodeIdResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetBindingResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetConcentratorResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetConfigurationValueResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetExtendedTimeoutResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetInitialSecurityStateResponse;
@@ -178,6 +179,7 @@ public abstract class EzspFrame {
     protected static final int FRAME_ID_STOP_SCAN = 0x1D;
     protected static final int FRAME_ID_TRUST_CENTER_JOIN_HANDLER = 0x24;
     protected static final int FRAME_ID_VERSION = 0x00;
+    protected static final int FRAME_ID_SET_CONCENTRATOR = 0x10;
 
     protected int sequenceNumber;
     protected int frameControl;
@@ -256,6 +258,7 @@ public abstract class EzspFrame {
         ezspHandlerMap.put(FRAME_ID_STOP_SCAN, EzspStopScanResponse.class);
         ezspHandlerMap.put(FRAME_ID_TRUST_CENTER_JOIN_HANDLER, EzspTrustCenterJoinHandler.class);
         ezspHandlerMap.put(FRAME_ID_VERSION, EzspVersionResponse.class);
+        ezspHandlerMap.put(FRAME_ID_SET_CONCENTRATOR, EzspSetConcentratorResponse.class);
     }
 
     /**
