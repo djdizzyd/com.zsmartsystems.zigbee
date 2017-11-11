@@ -372,7 +372,6 @@ public class AshFrameHandler {
             if(timerTask == null) {
                 startRetryTimer();
             }
-
             return;
         }
 
@@ -538,7 +537,8 @@ public class AshFrameHandler {
                 // We should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
-                logger.debug("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Error: number of retries exceeded [{}].", retries);
+                logger.warn("Dropping message: {}", sentQueue.poll());
                 retries = 0;
             }
             try {
