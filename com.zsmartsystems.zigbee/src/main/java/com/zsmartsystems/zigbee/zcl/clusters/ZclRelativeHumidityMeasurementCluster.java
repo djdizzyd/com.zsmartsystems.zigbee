@@ -166,7 +166,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Get the <i>MinMeasuredValue</i> attribute [attribute ID <b>1</b>].
      * <p>
      * The MinMeasuredValue attribute indicates the minimum value of MeasuredValue
-     * <p>
      * that can be measured. A value of 0xffff means this attribute is not defined
      * <p>
      * The attribute is of type {@link Integer}.
@@ -184,7 +183,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Synchronously get the <i>MinMeasuredValue</i> attribute [attribute ID <b>1</b>].
      * <p>
      * The MinMeasuredValue attribute indicates the minimum value of MeasuredValue
-     * <p>
      * that can be measured. A value of 0xffff means this attribute is not defined
      * <p>
      * This method can return cached data if the attribute has already been received.
@@ -216,7 +214,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Get the <i>MaxMeasuredValue</i> attribute [attribute ID <b>2</b>].
      * <p>
      * The MaxMeasuredValue attribute indicates the maximum value of MeasuredValue
-     * <p>
      * that can be measured. A value of 0xffff means this attribute is not defined.
      * <p>
      * MaxMeasuredValue shall be greater than MinMeasuredValue.
@@ -238,7 +235,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Synchronously get the <i>MaxMeasuredValue</i> attribute [attribute ID <b>2</b>].
      * <p>
      * The MaxMeasuredValue attribute indicates the maximum value of MeasuredValue
-     * <p>
      * that can be measured. A value of 0xffff means this attribute is not defined.
      * <p>
      * MaxMeasuredValue shall be greater than MinMeasuredValue.
@@ -274,7 +270,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Get the <i>Tolerance</i> attribute [attribute ID <b>3</b>].
      * <p>
      * The Tolerance attribute indicates the magnitude of the possible error that is
-     * <p>
      * associated with MeasuredValue . The true value is located in the range
      * (MeasuredValue – Tolerance) to (MeasuredValue + Tolerance).
      * <p>
@@ -293,7 +288,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Synchronously get the <i>Tolerance</i> attribute [attribute ID <b>3</b>].
      * <p>
      * The Tolerance attribute indicates the magnitude of the possible error that is
-     * <p>
      * associated with MeasuredValue . The true value is located in the range
      * (MeasuredValue – Tolerance) to (MeasuredValue + Tolerance).
      * <p>
@@ -327,7 +321,6 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      * Set reporting for the <i>Tolerance</i> attribute [attribute ID <b>3</b>].
      * <p>
      * The Tolerance attribute indicates the magnitude of the possible error that is
-     * <p>
      * associated with MeasuredValue . The true value is located in the range
      * (MeasuredValue – Tolerance) to (MeasuredValue + Tolerance).
      * <p>
@@ -342,14 +335,5 @@ public class ZclRelativeHumidityMeasurementCluster extends ZclCluster {
      */
     public Future<CommandResult> setToleranceReporting(final int minInterval, final int maxInterval, final Object reportableChange) {
         return setReporting(attributes.get(ATTR_TOLERANCE), minInterval, maxInterval, reportableChange);
-    }
-
-    /**
-     * Add a binding for this cluster to the local node
-     *
-     * @return the {@link Future<CommandResult>} command result future
-     */
-    public Future<CommandResult> bind() {
-        return bind();
     }
 }
