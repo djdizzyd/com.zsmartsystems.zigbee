@@ -12,51 +12,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.zsmartsystems.zigbee.*;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.*;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zsmartsystems.zigbee.ExtendedPanId;
-import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeException;
-import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
-import com.zsmartsystems.zigbee.ZigBeeNodeStatus;
-import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Request;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetEui64Response;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNodeIdResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendBroadcastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendMulticastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStackStatusHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspTrustCenterJoinHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspVersionResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsOption;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberCurrentSecurityState;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberKeyData;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNetworkParameters;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNetworkStatus;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberOutgoingMessageType;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberStatus;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspConfigId;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspDecisionId;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspPolicyId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspSingleResponseTransaction;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
 import com.zsmartsystems.zigbee.dongle.ember.internal.EmberNetworkInitialisation;
@@ -355,14 +321,14 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         EzspSendManyToOneRouteRequestRequest sendManyToOneRouteRequestRequest = new EzspSendManyToOneRouteRequestRequest();
         sendManyToOneRouteRequestRequest.setRadius(0x1E);
         // EMBER_HIGH_RAM_CONCENTRATOR
-        sendManyToOneRouteRequestRequest.setConcentratorType(concentratorType);
+        sendManyToOneRouteRequestRequest.setConcentratorType(EmberConcentratorType.getEmberConcentratorType(concentratorType));
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(sendManyToOneRouteRequestRequest, EzspSendManyToOneRouteRequestResponse.class);
         ashHandler.sendEzspTransaction(transaction);
         EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
         return sendManyToOneRouteRequestResponse.getStatus();
     }
 
-    public EzspFrameResponse sendFrameRequest(EzspFrameRequest request, Class responseType) {
+    protected EzspFrameResponse sendFrameRequest(EzspFrameRequest request, Class responseType) {
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(request, responseType);
         ashHandler.sendEzspTransaction(transaction);
         return transaction.getResponse();
