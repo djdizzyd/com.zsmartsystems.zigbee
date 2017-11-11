@@ -87,17 +87,6 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     private EmberNetworkParameters networkParameters = new EmberNetworkParameters();
 
     /**
-     *  The ieee address of the dongle
-     */
-    private IeeeAddress ieeeAddress;
-
-    /**
-     * The network address of the dongle
-     */
-    private ZigBeeAddress networkAddress;
-
-
-    /**
      * The Ember version used in this system. Set during initialisation and saved in case the client is interested.
      */
     private String versionString = "Unknown";
@@ -204,10 +193,6 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         networkParameters = getNetworkParameters();
         getCurrentSecurityState();
 
-        // get the ieee address of the dongle
-        ieeeAddress = getEui64Address();
-        networkAddress = new ZigBeeEndpointAddress(getNodeId());
-
         zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.INITIALISING);
 
         logger.debug("EZSP dongle initialize done: Initialised {}",
@@ -295,37 +280,6 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         }
 
         return getNetworkParametersResponse.getParameters();
-    }
-
-    private IeeeAddress getEui64Address() {
-        EzspGetEui64Request getEui64Request = new EzspGetEui64Request();
-        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getEui64Request, EzspGetEui64Response.class);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspGetEui64Response getEui64Response = (EzspGetEui64Response) transaction.getResponse();
-        return getEui64Response.getEui64();
-    }
-
-    private Integer getNodeId() {
-        EzspGetNodeIdRequest getNodeIdRequest = new EzspGetNodeIdRequest();
-        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getNodeIdRequest, EzspGetNodeIdResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspGetNodeIdResponse getNodeIdResponse = (EzspGetNodeIdResponse) transaction.getResponse();
-        return getNodeIdResponse.getNodeId();
-    }
-
-    public EmberStatus sendManyToOneRouteRequest() {
-        return sendManyToOneRouteRequest(0xFFF9);
-    }
-
-    public EmberStatus sendManyToOneRouteRequest(int concentratorType) {
-        EzspSendManyToOneRouteRequestRequest sendManyToOneRouteRequestRequest = new EzspSendManyToOneRouteRequestRequest();
-        sendManyToOneRouteRequestRequest.setRadius(0x1E);
-        // EMBER_HIGH_RAM_CONCENTRATOR
-        sendManyToOneRouteRequestRequest.setConcentratorType(EmberConcentratorType.getEmberConcentratorType(concentratorType));
-        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(sendManyToOneRouteRequestRequest, EzspSendManyToOneRouteRequestResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspSendManyToOneRouteRequestResponse sendManyToOneRouteRequestResponse = (EzspSendManyToOneRouteRequestResponse) transaction.getResponse();
-        return sendManyToOneRouteRequestResponse.getStatus();
     }
 
     protected EzspFrameResponse sendFrameRequest(EzspFrameRequest request, Class responseType) {
@@ -668,24 +622,6 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
     }
 
     public int getChannelMask() { return networkParameters.getChannels(); }
-
-    /**
-     * Returns the 64 bit address of the dongle.
-     *
-     * @return IeeeAddress the 64 bit address of the dongle
-     */
-    public IeeeAddress getIeeeAddress() {
-        return ieeeAddress;
-    }
-
-    /**
-     * Returns the network address (16 bit) of the dongle.
-     *
-     * @return Integer the 16 bit address
-     */
-    public ZigBeeAddress getNetworkAddress() {
-        return networkAddress;
-    }
 
     @Override
     public boolean setZigBeeLinkKey(ZigBeeKey key) {
