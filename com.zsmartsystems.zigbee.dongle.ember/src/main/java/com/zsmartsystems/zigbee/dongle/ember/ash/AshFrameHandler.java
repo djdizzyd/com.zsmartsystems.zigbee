@@ -33,15 +33,6 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
-import com.zsmartsystems.zigbee.transport.ZigBeePort;
 
 /**
  * Frame parser for the Silicon Labs Asynchronous Serial Host (ASH) protocol.
@@ -120,11 +111,6 @@ public class AshFrameHandler {
     private final EzspFrameHandler frameHandler;
 
     /**
-     * The input stream.
-     */
-    // private final InputStream inputStream;
-
-    /**
      * The port.
      */
     private ZigBeePort port;
@@ -154,6 +140,7 @@ public class AshFrameHandler {
      * Starts the handler. Sets input stream where the packet is read from the and
      * handler which further processes the received packet.
      *
+     * @param port the {@link ZigBeePort}
      */
     public void start(final ZigBeePort port) {
         this.port = port;
@@ -383,13 +370,7 @@ public class AshFrameHandler {
             logger.debug("Sent queue larger than window [{} > {}].", sentQueue.size(), TX_WINDOW);
             // check timer task
             if(timerTask == null) {
-                logger.debug("Timer task not set, restarting it");
                 startRetryTimer();
-            } else {
-                if(logger.isDebugEnabled()) {
-                    logger.debug("Timer task is set to run at {}, current time: {}", timerTask.scheduledExecutionTime(), new Date().getTime());
-                }
-
             }
 
             return;
@@ -530,11 +511,9 @@ public class AshFrameHandler {
         // Create the timer task
         timerTask = new AshRetryTimer();
         timer.schedule(timerTask, receiveTimeout);
-        logger.debug("Scheduled new Timer Task");
     }
 
     private synchronized void resetRetryTimer() {
-        logger.debug("Resetting retry timer");
         // Stop any existing timer
         if (timerTask != null) {
             timerTask.cancel();
@@ -559,8 +538,7 @@ public class AshFrameHandler {
                 // We should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
-                logger.warn("Error: number of retries exceeded [{}].", retries);
-                logger.warn("Dropping message: {}", sentQueue.poll());
+                logger.debug("Error: number of retries exceeded [{}].", retries);
                 retries = 0;
             }
             try {
