@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,17 +26,21 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.zsmartsystems.zigbee.CommandListener;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeCommand;
+import com.zsmartsystems.zigbee.ZigBeeCommandListener;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
 import com.zsmartsystems.zigbee.ZigBeeGroupAddress;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNetworkNodeListener;
 import com.zsmartsystems.zigbee.ZigBeeNetworkStateListener;
 import com.zsmartsystems.zigbee.ZigBeeNode;
+import com.zsmartsystems.zigbee.otaserver.ZigBeeOtaFile;
+import com.zsmartsystems.zigbee.otaserver.ZigBeeOtaServer;
+import com.zsmartsystems.zigbee.otaserver.ZigBeeOtaServerStatus;
+import com.zsmartsystems.zigbee.otaserver.ZigBeeOtaStatusCallback;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareCallback;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareStatus;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareUpdate;
@@ -45,6 +50,7 @@ import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclStatus;
 import com.zsmartsystems.zigbee.zcl.clusters.ZclBasicCluster;
+import com.zsmartsystems.zigbee.zcl.clusters.ZclOtaUpgradeCluster;
 import com.zsmartsystems.zigbee.zcl.clusters.general.ConfigureReportingResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverAttributesResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverCommandsGeneratedResponse;
@@ -124,8 +130,6 @@ public final class ZigBeeConsole {
         commands.put("help", new HelpCommand());
         commands.put("desc", new DescribeCommand());
         commands.put("descriptor", new SetDescriptorCommand());
-        commands.put("bind", new BindCommand());
-        commands.put("unbind", new UnbindCommand());
         commands.put("on", new OnCommand());
         commands.put("off", new OffCommand());
         commands.put("color", new ColorCommand());
@@ -135,6 +139,13 @@ public final class ZigBeeConsole {
         commands.put("unlisten", new UnlistenCommand());
         commands.put("subscribe", new SubscribeCommand());
         commands.put("unsubscribe", new UnsubscribeCommand());
+
+        commands.put("bind", new BindCommand());
+        commands.put("unbind", new UnbindCommand());
+        commands.put("bindtable", new BindTableCommand());
+
+        commands.put("ota", new OtaCommand());
+        commands.put("otafile", new OtaFileCommand());
 
         commands.put("read", new ReadCommand());
         commands.put("write", new WriteCommand());
@@ -197,7 +208,7 @@ public final class ZigBeeConsole {
             }
         });
 
-        zigBeeApi.getNetwork().addCommandListener(new CommandListener() {
+        zigBeeApi.getNetwork().addCommandListener(new ZigBeeCommandListener() {
             @Override
             public void commandReceived(ZigBeeCommand command) {
                 if (printAttributeReports && command instanceof ReportAttributesCommand) {
@@ -626,11 +637,11 @@ public final class ZigBeeConsole {
          * Prints out clusters.
          *
          * @param device the device
-         * @param list the cluster IDs
+         * @param collection the cluster IDs
          * @param out the output print stream
          */
-        private void printClusters(final ZigBeeEndpoint device, final List<Integer> list, PrintStream out) {
-            for (int clusterId : list) {
+        private void printClusters(final ZigBeeEndpoint device, final Collection<Integer> collection, PrintStream out) {
+            for (int clusterId : collection) {
                 ZclCluster cluster = device.getCluster(clusterId);
                 if (cluster != null) {
                     print("                 : " + clusterId + " " + cluster.getClusterName(), out);
@@ -796,6 +807,47 @@ public final class ZigBeeConsole {
             }
             final CommandResult response = zigBeeApi.unbind(source, destination, clusterId).get();
             return defaultResponseProcessing(response, out);
+        }
+    }
+
+    /**
+     * Reads the binding table for a node
+     */
+    private class BindTableCommand implements ConsoleCommand {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getDescription() {
+            return "Reads the binding table from a node.";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getSyntax() {
+            return "bindtable [NODE]";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean process(final ZigBeeApi zigbeeApi, final String[] args, PrintStream out) throws Exception {
+            if (args.length != 2) {
+                return false;
+            }
+
+            ZigBeeNode node = networkManager.getNode(Integer.parseInt(args[1]));
+            if (node == null) {
+                print("Can't find node " + args[1], out);
+                return false;
+            }
+
+            node.updateBindingTable();
+
+            return true;
         }
     }
 
@@ -1440,6 +1492,106 @@ public final class ZigBeeConsole {
     }
 
     /**
+     * Support for OTA server.
+     */
+    private class OtaCommand implements ConsoleCommand {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getDescription() {
+            return "Upgrade the firmware of a node using the OTA server.";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getSyntax() {
+            return "ota [ENDPOINT] [COMPLETE | FILE]";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean process(final ZigBeeApi zigbeeApi, final String[] args, final PrintStream out) throws Exception {
+            if (args.length != 3) {
+                return false;
+            }
+
+            final ZigBeeEndpoint endpoint = getDevice(zigbeeApi, args[1]);
+            if (endpoint == null) {
+                print("Endpoint not found.", out);
+                return false;
+            }
+
+            // Check if the OTA server is already set
+            ZigBeeOtaServer otaServer = (ZigBeeOtaServer) endpoint.getServer(ZclOtaUpgradeCluster.CLUSTER_ID);
+            if (otaServer == null) {
+                // Create and add the server
+                otaServer = new ZigBeeOtaServer();
+
+                endpoint.addServer(otaServer);
+
+                otaServer.addListener(new ZigBeeOtaStatusCallback() {
+                    @Override
+                    public void otaStatusUpdate(ZigBeeOtaServerStatus status) {
+                        print("OTA status callback: " + status, out);
+                    }
+                });
+            }
+
+            if (args[2].toLowerCase().equals("complete")) {
+                otaServer.completeUpgrade();
+            } else {
+                File file = new File(args[2]);
+                ZigBeeOtaFile otaFile = new ZigBeeOtaFile(file);
+                print("OTA File: " + otaFile, out);
+
+                otaServer.setFirmware(otaFile);
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Support for OTA server.
+     */
+    private class OtaFileCommand implements ConsoleCommand {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getDescription() {
+            return "Dump information about an OTA file.";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getSyntax() {
+            return "ota [FILE]";
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean process(final ZigBeeApi zigbeeApi, final String[] args, PrintStream out) throws Exception {
+            if (args.length != 2) {
+                return false;
+            }
+
+            File file = new File(args[2]);
+            ZigBeeOtaFile otaFile = new ZigBeeOtaFile(file);
+            print("OTA File: " + otaFile, out);
+            return true;
+        }
+    }
+
+    /**
      * Reads an attribute from a device.
      */
     private class ReadCommand implements ConsoleCommand {
@@ -1481,14 +1633,34 @@ public final class ZigBeeConsole {
                 return false;
             }
 
-            final ZigBeeEndpoint device = getDevice(zigbeeApi, args[1]);
-            if (device == null) {
-                print("Device not found.", out);
+            final ZigBeeEndpoint endpoint = getDevice(zigbeeApi, args[1]);
+            if (endpoint == null) {
+                print("Endpoint not found.", out);
                 return false;
             }
 
-            final CommandResult result = zigbeeApi.read(device.getEndpointAddress(), clusterId, attributeId).get();
+            ZclCluster cluster = endpoint.getInputCluster(clusterId);
+            if (cluster != null) {
+                print("Using input cluster", out);
+            } else {
+                cluster = endpoint.getOutputCluster(clusterId);
+                if (cluster != null) {
+                    print("Using output cluster", out);
+                } else {
+                    print("Cluster not found", out);
+                    return false;
+                }
 
+            }
+            ZclAttribute attribute = cluster.getAttribute(attributeId);
+            if (attribute == null) {
+                print("Attribute not found", out);
+                return false;
+            }
+
+            print("Reading " + cluster.getClusterName() + ", " + attribute.getName(), out);
+
+            final CommandResult result = cluster.read(attribute).get();
             if (result.isSuccess()) {
                 final ReadAttributesResponse response = result.getResponse();
 
@@ -1708,10 +1880,13 @@ public final class ZigBeeConsole {
                 return false;
             }
 
-            ZclCluster cluster = device.getCluster(clusterId);
+            ZclCluster cluster = device.getInputCluster(clusterId);
             if (cluster == null) {
-                print("Cluster not found.", out);
-                return false;
+                cluster = device.getOutputCluster(clusterId);
+                if (cluster == null) {
+                    print("Cluster not found.", out);
+                    return false;
+                }
             }
 
             Future<CommandResult> future = cluster.discoverCommandsReceived();
@@ -1787,10 +1962,13 @@ public final class ZigBeeConsole {
                 return false;
             }
 
-            ZclCluster cluster = device.getCluster(clusterId);
+            ZclCluster cluster = device.getInputCluster(clusterId);
             if (cluster == null) {
-                print("Cluster not found.", out);
-                return false;
+                cluster = device.getOutputCluster(clusterId);
+                if (cluster == null) {
+                    print("Cluster not found.", out);
+                    return false;
+                }
             }
 
             final Future<CommandResult> future = cluster.discoverAttributes();
@@ -1800,8 +1978,13 @@ public final class ZigBeeConsole {
                 final DiscoverAttributesResponse response = result.getResponse();
 
                 for (AttributeInformation info : response.getInformation()) {
+                    ZclAttribute attribute = cluster.getAttribute(info.getIdentifier());
+                    String name = "unknown";
+                    if (attribute != null) {
+                        name = attribute.getName();
+                    }
                     out.println("Cluster " + response.getClusterId() + ", Attribute=" + info.getIdentifier()
-                            + ",  Type=" + info.getDataType());
+                            + ",  Type=" + info.getDataType() + ", " + name);
                 }
 
                 return true;

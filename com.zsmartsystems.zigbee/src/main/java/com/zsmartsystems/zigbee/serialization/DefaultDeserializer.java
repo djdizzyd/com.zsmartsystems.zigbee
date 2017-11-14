@@ -13,8 +13,10 @@ import java.util.List;
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.zcl.ZclStatus;
+import com.zsmartsystems.zigbee.zcl.field.ByteArray;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
+import com.zsmartsystems.zigbee.zdo.field.BindingTable;
 import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
 import com.zsmartsystems.zigbee.zdo.field.PowerDescriptor;
@@ -202,6 +204,11 @@ public class DefaultDeserializer implements ZigBeeDeserializer {
                 powerDescriptor.deserialize(this);
                 value[0] = powerDescriptor;
                 break;
+            case BINDING_TABLE:
+                BindingTable bindingTable = new BindingTable();
+                bindingTable.deserialize(this);
+                value[0] = bindingTable;
+                break;
             case SIMPLE_DESCRIPTOR:
                 SimpleDescriptor simpleDescriptor = new SimpleDescriptor();
                 simpleDescriptor.deserialize(this);
@@ -215,6 +222,14 @@ public class DefaultDeserializer implements ZigBeeDeserializer {
                 break;
             case ZIGBEE_DATA_TYPE:
                 value[0] = ZclDataType.getType(payload[index++]);
+                break;
+            case BYTE_ARRAY:
+                int cntB8 = Integer.valueOf((byte) payload[index++] & 0xFF);
+                byte[] arrayB8 = new byte[cntB8];
+                for (int arrayIndex = 0; arrayIndex < cntB8; arrayIndex++) {
+                    arrayB8[arrayIndex] = (byte) (payload[index++] & 0xff);
+                }
+                value[0] = new ByteArray(arrayB8);
                 break;
             default:
                 throw new IllegalArgumentException("No reader defined in " + ZigBeeDeserializer.class.getSimpleName()

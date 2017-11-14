@@ -13,15 +13,24 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.internal.NotificationService;
 import com.zsmartsystems.zigbee.zdo.ZdoResponseMatcher;
+import com.zsmartsystems.zigbee.zdo.ZdoStatus;
 import com.zsmartsystems.zigbee.zdo.command.ManagementBindRequest;
+import com.zsmartsystems.zigbee.zdo.command.ManagementBindResponse;
 import com.zsmartsystems.zigbee.zdo.command.ManagementPermitJoiningRequest;
+import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorRequest;
+import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorResponse;
+import com.zsmartsystems.zigbee.zdo.field.BindingTable;
 import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.LogicalType;
@@ -37,7 +46,7 @@ import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
  * @author Chris Jackson
  *
  */
-public class ZigBeeNode {
+public class ZigBeeNode implements ZigBeeCommandListener {
     /**
      * The {@link Logger}.
      */
@@ -90,6 +99,11 @@ public class ZigBeeNode {
     private final List<RoutingTable> routes = new ArrayList<RoutingTable>();
 
     /**
+     * List of binding records
+     */
+    private final List<BindingTable> bindingTable = new ArrayList<BindingTable>();
+
+    /**
      * List of endpoints this node exposes
      */
     private final Map<Integer, ZigBeeEndpoint> endpoints = new ConcurrentHashMap<Integer, ZigBeeEndpoint>();
@@ -113,6 +127,8 @@ public class ZigBeeNode {
      */
     public ZigBeeNode(ZigBeeNetworkManager networkManager) {
         this.networkManager = networkManager;
+
+        networkManager.addCommandListener(this);
     }
 
     /**
@@ -295,15 +311,64 @@ public class ZigBeeNode {
         return nodeDescriptor.getLogicalType();
     }
 
+    private void setBindingTable(List<BindingTable> bindingTable) {
+        synchronized (this.bindingTable) {
+            this.bindingTable.clear();
+            this.bindingTable.addAll(bindingTable);
+            logger.debug("{}: Binding table updated: {}", ieeeAddress, bindingTable);
+        }
+    }
+
+    /**
+     * Gets the current binding table for the device. Note that this doesn't retrieve the table from the device, to do
+     * this use the {@link #updateBindingTable()} method.
+     *
+     * @return {@link List} of {@link BindingTable} for the device
+     */
+    public List<BindingTable> getBindingTable() {
+        synchronized (bindingTable) {
+            return new ArrayList<BindingTable>(bindingTable);
+        }
+    }
+
     /**
      * Request an update of the binding table for this node
      * TODO: This needs to handle the response and further requests if required to complete the table
      */
-    public void updateBindingTable() {
-        ManagementBindRequest bindingRequest = new ManagementBindRequest();
-        bindingRequest.setDestinationAddress(new ZigBeeEndpointAddress(networkAddress));
-        bindingRequest.setStartIndex(0);
-        networkManager.unicast(bindingRequest, new ZdoResponseMatcher());
+    public Future<Boolean> updateBindingTable() {
+        RunnableFuture<Boolean> future = new FutureTask<Boolean>(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                int index = 0;
+                int tableSize = 0;
+                List<BindingTable> bindingTable = new ArrayList<BindingTable>();
+
+                do {
+                    ManagementBindRequest bindingRequest = new ManagementBindRequest();
+                    bindingRequest.setDestinationAddress(new ZigBeeEndpointAddress(networkAddress));
+                    bindingRequest.setStartIndex(index);
+
+                    CommandResult result = networkManager.unicast(bindingRequest, new ZdoResponseMatcher()).get();
+                    if (result.isError()) {
+                        return false;
+                    }
+
+                    ManagementBindResponse response = (ManagementBindResponse) result.getResponse();
+                    if (response.getStartIndex() == index) {
+                        tableSize = response.getBindingTableEntries();
+                        index += response.getBindingTableListCount();
+                        bindingTable.addAll(response.getBindingTableList());
+                    }
+                } while (index < tableSize);
+
+                setBindingTable(bindingTable);
+                return true;
+            }
+        });
+
+        // start the thread to execute it
+        new Thread(future).start();
+        return future;
     }
 
     /**
@@ -598,6 +663,56 @@ public class ZigBeeNode {
      */
     public Date getLastUpdateTime() {
         return lastUpdateTime;
+    }
+
+    @Override
+    public void commandReceived(ZigBeeCommand command) {
+        // This gets called for all received commands
+        // Check if it's our address
+        if (command.getSourceAddress().getAddress() != networkAddress) {
+            return;
+        }
+
+        // If we have local servers matching the request, then we need to respond
+        if (command instanceof MatchDescriptorRequest) {
+            MatchDescriptorRequest matchRequest = (MatchDescriptorRequest) command;
+            if (matchRequest.getProfileId() != 0x104) {
+                // TODO: Remove this constant ?
+                return;
+            }
+
+            // We want to match any of our local servers (ie our input clusters) with any
+            // requested clusters in the requests cluster list
+            boolean matched = false;
+            for (ZigBeeEndpoint endpoint : endpoints.values()) {
+                for (int clusterId : matchRequest.getInClusterList()) {
+                    if (endpoint.getServer(clusterId) != null) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (matched) {
+                    break;
+                }
+            }
+
+            if (!matched) {
+                return;
+            }
+
+            MatchDescriptorResponse matchResponse = new MatchDescriptorResponse();
+            matchResponse.setStatus(ZdoStatus.SUCCESS);
+            List<Integer> matchList = new ArrayList<Integer>();
+            matchList.add(1);
+            matchResponse.setMatchList(matchList);
+
+            matchResponse.setDestinationAddress(command.getSourceAddress());
+            try {
+                networkManager.sendCommand(matchResponse);
+            } catch (ZigBeeException e) {
+                logger.debug("Error sending MatchDescriptorResponse ", e);
+            }
+        }
     }
 
     @Override
