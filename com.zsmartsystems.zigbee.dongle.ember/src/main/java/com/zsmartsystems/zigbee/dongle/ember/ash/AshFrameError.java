@@ -38,11 +38,6 @@ public class AshFrameError extends AshFrame {
         return errorCode;
     }
 
-    public boolean isResetError() {
-        return (errorCode == 0x00 || errorCode == 0x01 || errorCode == 0x02 || errorCode == 0x03 ||
-                errorCode == 0x06 || errorCode == 0x09 || errorCode == 0x0B);
-    }
-
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();

@@ -8,8 +8,6 @@
 package com.zsmartsystems.zigbee.dongle.ember.ash;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -216,6 +214,8 @@ public class AshFrameHandler {
                                     handleReset((AshFrameRstAck) packet);
 
                                     break;
+                                case ERROR:
+                                    responseFrame = new AshFrameRst();
                                 default:
                                     break;
                             }
