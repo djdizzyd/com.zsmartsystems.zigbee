@@ -338,6 +338,8 @@ public class AshFrameHandler {
      */
     public void close() {
         this.close = true;
+        stopRetryTimer();
+
         try {
             parserThread.interrupt();
             parserThread.join();
@@ -369,7 +371,7 @@ public class AshFrameHandler {
         if (sentQueue.size() >= TX_WINDOW) {
             logger.debug("Sent queue larger than window [{} > {}].", sentQueue.size(), TX_WINDOW);
             // check timer task
-            if(timerTask == null) {
+            if (timerTask == null) {
                 startRetryTimer();
             }
             return;
@@ -483,7 +485,7 @@ public class AshFrameHandler {
     private void ackSentQueue(int ackNum) {
         // Handle the timer if it's running
         if (sentTime != 0) {
-            resetRetryTimer();
+            stopRetryTimer();
             receiveTimeout = (int) ((receiveTimeout * 7 / 8) + ((System.nanoTime() - sentTime) / 2000000));
             if (receiveTimeout < T_RX_ACK_MIN) {
                 receiveTimeout = T_RX_ACK_MIN;
@@ -505,14 +507,14 @@ public class AshFrameHandler {
 
     private synchronized void startRetryTimer() {
         // Stop any existing timer
-        resetRetryTimer();
+        stopRetryTimer();
 
         // Create the timer task
         timerTask = new AshRetryTimer();
         timer.schedule(timerTask, receiveTimeout);
     }
 
-    private synchronized void resetRetryTimer() {
+    private synchronized void stopRetryTimer() {
         // Stop any existing timer
         if (timerTask != null) {
             timerTask.cancel();
@@ -537,13 +539,15 @@ public class AshFrameHandler {
                 // We should alert the upper layer so they can reset the link?
                 frameHandler.handleLinkStateChange(false);
 
-                logger.warn("Error: number of retries exceeded [{}].", retries);
-                logger.warn("Dropping message: {}", sentQueue.poll());
+                logger.debug("Error: number of retries exceeded [{}].", retries);
+                // drop message from queue
+                sentQueue.poll();
                 retries = 0;
             }
+
             try {
                 sendRetry();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 logger.warn("Caught exception while attempting to retry message in AshRetryTimer", e);
             }
         }
