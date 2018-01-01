@@ -8,22 +8,26 @@
 package com.zsmartsystems.zigbee.dongle.telegesis;
 
 import java.io.InputStream;
+import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeException;
+import com.zsmartsystems.zigbee.ZigBeeChannelMask;
 import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
 import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
+import com.zsmartsystems.zigbee.ZigBeeProfileType;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.TelegesisEventListener;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.TelegesisFirmwareUpdateHandler;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.TelegesisFrameHandler;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisBecomeNetworkManagerCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisBecomeTrustCentreCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisBootloadCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisChangeChannelCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisCreatePanCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisDeviceType;
@@ -39,20 +43,24 @@ import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisNetw
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisReceiveMessageEvent;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSendMulticastCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSendUnicastCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetChannelMaskCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetEpanIdCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetExtendedFunctionCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetInputClustersCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetMainFunctionCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetNetworkKeyCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetOutputClustersCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetPanIdCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetPromptEnable1Command;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetPromptEnable2Command;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetRegisterBitCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetRegisterCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSetTrustCentreLinkKeyCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisStatusCode;
 import com.zsmartsystems.zigbee.transport.TransportConfig;
 import com.zsmartsystems.zigbee.transport.TransportConfigOption;
 import com.zsmartsystems.zigbee.transport.TransportConfigResult;
-import com.zsmartsystems.zigbee.transport.TrustCentreLinkMode;
+import com.zsmartsystems.zigbee.transport.TrustCentreJoinMode;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareCallback;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareStatus;
@@ -126,6 +134,11 @@ public class ZigBeeDongleTelegesis
     private ExtendedPanId extendedPanId;
 
     /**
+     * The IeeeAddress of the Telegesis radio
+     */
+    private IeeeAddress ieeeAddress;
+
+    /**
      * The Telegesis version used in this system.
      */
     private String versionString = "Unknown";
@@ -163,7 +176,7 @@ public class ZigBeeDongleTelegesis
      * <br>
      * + Bit 4: Set: Send Network key encrypted with the link key to nodes joining
      * <br>
-     * - Bit 3: Set: Do not allow nodes to re-join unsecured
+     * + Bit 3: Set: Do not allow nodes to re-join unsecured
      * <br>
      * + Bit 2: Set: Send Network key encrypted with the link key to nodes re-joining unsecured
      * <br>
@@ -171,7 +184,7 @@ public class ZigBeeDongleTelegesis
      * <br>
      * - Bit 0: Set: Do not allow other nodes to join the network via this node
      */
-    private final int defaultS0A = 0x0156;
+    private final int defaultS0A = 0x015E;
 
     /**
      * S0E – Prompt Enable 1
@@ -353,6 +366,8 @@ public class ZigBeeDongleTelegesis
             builder.append("Version=R");
             builder.append(productInfo.getFirmwareRevision());
             versionString = builder.toString();
+
+            ieeeAddress = productInfo.getIeeeAddress();
         }
 
         // Get network information
@@ -418,6 +433,11 @@ public class ZigBeeDongleTelegesis
         logger.debug("Telegesis dongle shutdown.");
     }
 
+    @Override
+    public IeeeAddress getIeeeAddress() {
+        return ieeeAddress;
+    }
+
     private void initialiseNetwork() {
         TelegesisDisplayNetworkInformationCommand networkInfo = new TelegesisDisplayNetworkInformationCommand();
         if (frameHandler.sendRequest(networkInfo) == null || networkInfo.getStatus() != TelegesisStatusCode.SUCCESS) {
@@ -462,8 +482,13 @@ public class ZigBeeDongleTelegesis
             logger.debug("Error setting Telegesis EPAN ID");
         }
 
-        // TelegesisSetChannelMaskCommand channelMaskCommand = new TelegesisSetChannelMaskCommand();
-        // channelMaskCommand.setChannelMask(channelMask);
+        // Set the profile to HA
+        TelegesisSetRegisterCommand setRegister = new TelegesisSetRegisterCommand();
+        setRegister.setRegister(0x48);
+        setRegister.setValue(ZigBeeProfileType.HOME_AUTOMATION.getId());
+        if (frameHandler.sendRequest(setRegister) == null) {
+            logger.debug("Error setting Telegesis profile ID");
+        }
 
         TelegesisCreatePanCommand createNetwork = new TelegesisCreatePanCommand();
         if (frameHandler.sendRequest(createNetwork) == null) {
@@ -482,7 +507,7 @@ public class ZigBeeDongleTelegesis
     }
 
     @Override
-    public void sendCommand(final ZigBeeApsFrame apsFrame) throws ZigBeeException {
+    public void sendCommand(final ZigBeeApsFrame apsFrame) {
         if (frameHandler == null) {
             logger.debug("Telegesis frame handler not set for send.");
             return;
@@ -568,7 +593,24 @@ public class ZigBeeDongleTelegesis
 
     @Override
     public boolean setZigBeeChannel(int channel) {
-        this.radioChannel = channel;
+        ZigBeeChannelMask channelMask = new ZigBeeChannelMask();
+        channelMask.addChannel(channel);
+
+        TelegesisSetChannelMaskCommand maskCommand = new TelegesisSetChannelMaskCommand();
+        maskCommand.setChannelMask(channelMask.getChannelMask() >> 11);
+        if (frameHandler.sendRequest(maskCommand) == null || maskCommand.getStatus() != TelegesisStatusCode.SUCCESS) {
+            zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.OFFLINE);
+            return false;
+        }
+
+        TelegesisChangeChannelCommand channelCommand = new TelegesisChangeChannelCommand();
+        channelCommand.setChannel(channel);
+        if (frameHandler.sendRequest(channelCommand) == null
+                || channelCommand.getStatus() != TelegesisStatusCode.SUCCESS) {
+            zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.OFFLINE);
+            return false;
+        }
+
         return false;
     }
 
@@ -579,6 +621,8 @@ public class ZigBeeDongleTelegesis
 
     @Override
     public boolean setZigBeePanId(int panId) {
+        // Note that Telegesis dongle will not set a PAN ID if it detects the same PAN is already in use.
+        // This can cause issues when trying to create a new coordinator on the same PAN.
         this.panId = panId;
         return true;
     }
@@ -677,18 +721,44 @@ public class ZigBeeDongleTelegesis
     public boolean setTcLinkKey(ZigBeeKey key) {
         linkKey = key;
 
-        return false;
+        TelegesisSetTrustCentreLinkKeyCommand linkKeyCommand = new TelegesisSetTrustCentreLinkKeyCommand();
+        linkKeyCommand.setLinkKey(linkKey);
+        linkKeyCommand.setPassword(telegesisPassword);
+        if (frameHandler.sendRequest(linkKeyCommand) == null) {
+            logger.debug("Error setting Telegesis link key");
+            return false;
+        }
+
+        return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void updateTransportConfig(TransportConfig configuration) {
         for (TransportConfigOption option : configuration.getOptions()) {
             try {
                 switch (option) {
+                    case SUPPORTED_INPUT_CLUSTERS:
+                        configuration.setResult(option,
+                                setSupportedInputClusters((Collection<Integer>) configuration.getValue(option)));
+                        break;
+
+                    case SUPPORTED_OUTPUT_CLUSTERS:
+                        configuration.setResult(option,
+                                setSupportedOutputClusters((Collection<Integer>) configuration.getValue(option)));
+                        break;
+
                     case TRUST_CENTRE_JOIN_MODE:
                         configuration.setResult(option,
-                                setTcJoinMode((TrustCentreLinkMode) configuration.getValue(option)));
+                                setTcJoinMode((TrustCentreJoinMode) configuration.getValue(option)));
                         break;
+
+                    case TRUST_CENTRE_LINK_KEY:
+                        configuration.setResult(option,
+                                setTcLinkKey((ZigBeeKey) configuration.getValue(option)) ? TransportConfigResult.SUCCESS
+                                        : TransportConfigResult.FAILURE);
+                        break;
+
                     default:
                         configuration.setResult(option, TransportConfigResult.ERROR_UNSUPPORTED);
                         logger.debug("Unsupported configuration option \"{}\" in Telegesis dongle", option);
@@ -700,24 +770,46 @@ public class ZigBeeDongleTelegesis
         }
     }
 
-    private TransportConfigResult setTcJoinMode(TrustCentreLinkMode linkMode) {
+    private TransportConfigResult setSupportedInputClusters(Collection<Integer> supportedClusters) {
+        TelegesisSetInputClustersCommand inputClusters = new TelegesisSetInputClustersCommand();
+        inputClusters.setClusterList(supportedClusters);
+        if (frameHandler.sendRequest(inputClusters) == null) {
+            logger.debug("Error setting Telegesis input clusters");
+            return TransportConfigResult.ERROR_INVALID_VALUE;
+        }
+
+        return TransportConfigResult.SUCCESS;
+    }
+
+    private TransportConfigResult setSupportedOutputClusters(Collection<Integer> supportedClusters) {
+        TelegesisSetOutputClustersCommand outputClusters = new TelegesisSetOutputClustersCommand();
+        outputClusters.setClusterList(supportedClusters);
+        if (frameHandler.sendRequest(outputClusters) == null) {
+            logger.debug("Error setting Telegesis output clusters");
+            return TransportConfigResult.ERROR_INVALID_VALUE;
+        }
+
+        return TransportConfigResult.SUCCESS;
+    }
+
+    private TransportConfigResult setTcJoinMode(TrustCentreJoinMode linkMode) {
         logger.debug("Setting Telegesis trust centre link mode: {}", linkMode);
 
         TelegesisDisallowTcJoinCommand disallowJoinCommand = new TelegesisDisallowTcJoinCommand();
         switch (linkMode) {
             case TC_JOIN_DENY:
-                disallowJoinCommand.setJoin(true);
+                disallowJoinCommand.setDisallowJoin(true);
                 disallowJoinCommand.setPassword(telegesisPassword);
                 frameHandler.sendRequest(disallowJoinCommand);
                 break;
             case TC_JOIN_SECURE:
             case TC_JOIN_INSECURE:
-                disallowJoinCommand.setJoin(false);
+                disallowJoinCommand.setDisallowJoin(false);
                 disallowJoinCommand.setPassword(telegesisPassword);
                 frameHandler.sendRequest(disallowJoinCommand);
 
                 TelegesisDisallowUnsecuredRejoinCommand unsecuredRejoinCommand = new TelegesisDisallowUnsecuredRejoinCommand();
-                unsecuredRejoinCommand.setRejoin(linkMode == TrustCentreLinkMode.TC_JOIN_SECURE ? true : false);
+                unsecuredRejoinCommand.setDisallowRejoin(linkMode == TrustCentreJoinMode.TC_JOIN_SECURE ? true : false);
                 unsecuredRejoinCommand.setPassword(telegesisPassword);
                 frameHandler.sendRequest(unsecuredRejoinCommand);
                 break;

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.dongle.telegesis.ZigBeeDongleTelegesis;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
+import com.zsmartsystems.zigbee.transport.ZigBeePort.FlowControl;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareCallback;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareStatus;
 
@@ -28,7 +29,7 @@ public class TelegesisFirmwareUpdateHandler {
     /**
      * The logger.
      */
-    private final Logger logger = LoggerFactory.getLogger(TelegesisFrameHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(TelegesisFirmwareUpdateHandler.class);
 
     private final InputStream firmware;
     private final ZigBeePort serialPort;
@@ -45,6 +46,7 @@ public class TelegesisFirmwareUpdateHandler {
     private final int EOT = 0x04;
     private final int ACK = 0x06;
     private final int NAK = 0x15;
+    private final int CAN = 0x18;
 
     /**
      * Flag to stop the current transfer
@@ -83,7 +85,12 @@ public class TelegesisFirmwareUpdateHandler {
             @Override
             public void run() {
                 logger.debug("Telegesis bootloader: Starting.");
-                if (!serialPort.open(BOOTLOAD_BAUD_RATE)) {
+                try {
+                    sleep(1500);
+                } catch (InterruptedException e) {
+                    // Eat me!
+                }
+                if (!serialPort.open(BOOTLOAD_BAUD_RATE, FlowControl.FLOWCONTROL_OUT_NONE)) {
                     logger.debug("Telegesis bootloader: Failed to open serial port.");
                     transferComplete(ZigBeeTransportFirmwareStatus.FIRMWARE_UPDATE_FAILED);
                     return;
@@ -229,6 +236,7 @@ public class TelegesisFirmwareUpdateHandler {
         int response;
         int frame = 1;
         boolean done;
+        boolean cancelTransfer = false;
 
         // Clear all input in the input stream before starting the transfer
         try {
@@ -236,7 +244,7 @@ public class TelegesisFirmwareUpdateHandler {
             serialPort.purgeRxBuffer();
 
             logger.debug("Telegesis bootloader: Starting transfer.");
-            while (!stopBootload) {
+            while (!stopBootload && !cancelTransfer) {
                 retries = 0;
 
                 do {
@@ -277,8 +285,12 @@ public class TelegesisFirmwareUpdateHandler {
 
                     // Wait for the acknowledgment
                     response = getTransferResponse();
-                    if (response != ACK) {
-                        logger.debug("Telegesis bootloader: Response {}.", response);
+                    logger.trace("Telegesis bootloader: Response {}.", response);
+                    if (response == CAN) {
+                        logger.debug("Telegesis bootloader: Received CAN.");
+                        retries = XMODEM_MAX_RETRIES;
+                        cancelTransfer = true;
+                        break;
                     }
                 } while (response != ACK);
 

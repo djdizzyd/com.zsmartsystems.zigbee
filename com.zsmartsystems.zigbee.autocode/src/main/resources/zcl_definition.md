@@ -97,9 +97,23 @@ additional attributes available.
 The Configure Reporting Response command is generated in response to a
 Configure Reporting command. 
 
-|Field Name                 |Data Type                  |
-|---------------------------|---------------------------|
-|Records                    |N X Attribute status record|
+|Field Name                 |Data Type                    |
+|---------------------------|-----------------------------|
+|Status                     |Zcl Status [status-response] |
+|Records                    |N X Attribute status record  |
+
+
+##### Status
+Status is only provided if the command was successful, and the 
+attribute status records are not included for successfully
+written attributes, in order to save bandwidth.
+
+##### Records
+Note that attribute status records are not included for successfully
+configured attributes in order to save bandwidth.  In the case of successful
+configuration of all attributes, only a single attribute status record SHALL
+be included in the command, with the status field set to SUCCESS and the direction and
+attribute identifier fields omitted.
 
 #### Read Reporting Configuration Command [0x08]
 
@@ -153,6 +167,15 @@ within the cluster to which this command is directed.
 |Start attribute identifier    |Unsigned 16-bit integer    |
 |Maximum attribute identifiers |Unsigned 8-bit integer     |
 
+##### Start attribute identifier
+The start attribute identifier field is 16 bits in length and specifies the value
+of the identifier at which to begin the attribute discovery.
+
+##### Maximum attribute identifiers
+The  maximum attribute identifiers field is 8 bits in length and specifies the
+maximum number of attribute identifiers that are to be returned in the resulting
+Discover Attributes Response command.
+
 #### Discover Attributes Response Command [0x0d]
 
 The discover attributes response command is generated in response to a discover
@@ -160,8 +183,21 @@ attributes command.
 
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
-|Command identifier         |Boolean                    |
-|Information                |N X Attribute information  |
+|Discovery Complete         |Boolean                    |
+|Attribute Information      |N X Attribute information  |
+
+
+##### Discovery Complete
+The discovery complete field is a Boolean field. A value of 0 indicates that there
+are more attributes to be discovered that have an attribute identifier value greater
+than the last attribute identifier in the last attribute information field. A value
+of 1 indicates that there are no more attributes to be discovered.
+
+##### Attribute Identifier
+The attribute identifier field SHALL contain the identifier of a discovered attribute.
+Attributes SHALL be included in ascending order, starting with the lowest attribute
+identifier that is greater than or equal to the start attribute identifier field of the
+received Discover Attributes command.
 
 #### Read Attributes Structured Command [0x0e]
 
@@ -181,19 +217,45 @@ change the values of one or more attributes located on another device. Each writ
 attribute record shall contain the identifier and the actual value of the attribute, or
 element thereof, to be written.
 
-|Field Name                 |Data Type                  |
-|---------------------------|---------------------------|
-|Attribute selectors        |N X Attribute selector     |
+|Field Name                 |Data Type                    |
+|---------------------------|-----------------------------|
+|Status                     |Zcl Status [status-response] |
+|Attribute selectors        |N X Attribute selector       |
+
+
+##### Status
+Status is only provided if the command was successful, and the 
+attribute selector records are not included for successfully
+written attributes, in order to save bandwidth.
+
+##### Attribute selectors
+Note that write attribute status records are not included for successfully
+written attributes, in order to save bandwidth. In the case of successful 
+writing of all attributes, only a single  write attribute status record
+SHALL be included in the command, with the status field set to SUCCESS and the
+attribute identifier and selector fields omitted.
 
 #### Write Attributes Structured Response Command [0x10]
 
 The write attributes structured response command is generated in response to a
 write attributes structured command.
 
-|Field Name                 |Data Type                  |
-|---------------------------|---------------------------|
+|Field Name                 |Data Type                         |
+|---------------------------|----------------------------------|
+|Status                     |Zcl Status[status-response]       |
 |Records                    |N X Write attribute status record |
 
+##### Status
+Status is only provided if the command was successful, and the write
+attribute status records are not included for successfully
+written attributes, in order to save bandwidth.
+
+##### Records
+Note that write attribute status records are not included for successfully
+written attributes, in order to save bandwidth.  In the case of successful
+writing of all attributes, only a single write attribute status record
+SHALL be included in the command, with the status field set to SUCCESS and the
+attribute identifier field omitted.
 
 #### Discover Commands Received [0x11]
 
@@ -213,7 +275,7 @@ command.
 
 |Field Name                   |Data Type                    |
 |-----------------------------|-----------------------------|
-|Discovery complete           |Unsigned 8-bit integer       |
+|Discovery complete           |Boolean                      |
 |Command identifiers          |X Unsigned 8-bit integer     |
 
 
@@ -234,7 +296,7 @@ command.
 
 |Field Name                   |Data Type                    |
 |-----------------------------|-----------------------------|
-|Discovery complete           |Unsigned 8-bit integer       |
+|Discovery complete           |Boolean                      |
 |Command identifiers          |X Unsigned 8-bit integer     |
 
 
@@ -255,10 +317,10 @@ command is directed, including whether the attribute is readable, writeable or r
 The Discover Attributes Extended Response command is generated in response to a Discover Attributes
 Extended command. 
 
-|Field Name                   |Data Type                   |
-|-----------------------------|----------------------------|
-|Discovery complete           |Unsigned 8-bit integer             |
-|Command identifiers          |N x Extended Attribute Information |
+|Field Name                   |Data Type                          |
+|-----------------------------|-----------------------------------|
+|Discovery complete           |Boolean                            |
+|Attribute Information        |N x Extended Attribute Information |
 
 
 
@@ -369,13 +431,22 @@ and for configuring under/over voltage alarms.
 |0x0012 |MainsVoltageMaxThreshold  |Unsigned 16-bit integer    |Read/Write |Optional  |          |
 |0x0013 |MainsVoltageDwellTripPoint|Unsigned 16-bit integer    |Read/Write |Optional  |          |
 |0x0020 |BatteryVoltage            |Unsigned 8-bit integer     |Read       |Optional  |          |
-|0x0030 |BatteryManufacturer       |Character string           |Read/Write |Optional  |          |
-|0x0031 |BatterySize               |8-bit Enumeration          |Read/Write |Optional  |          |
-|0x0032 |BatteryAHrRating          |Unsigned 16-bit integer    |Read/Write |Optional  |          |
-|0x0033 |BatteryQuantity           |Unsigned 8-bit integer     |Read/Write |Optional  |          |
-|0x0034 |BatteryRatedVoltage       |Unsigned 8-bit integer     |Read/Write |Optional  |          |
-|0x0035 |BatteryAlarmMask          |8-bit Bitmap               |Read/Write |Optional  |          |
-|0x0036 |BatteryVoltageMinThreshold|Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0021 |BatteryPercentageRemaining   |Unsigned 8-bit integer     |Read       |Optional  |Mandatory |
+|0x0030 |BatteryManufacturer          |Character string           |Read/Write |Optional  |          |
+|0x0031 |BatterySize                  |8-bit Enumeration          |Read/Write |Optional  |          |
+|0x0032 |BatteryAHrRating             |Unsigned 16-bit integer    |Read/Write |Optional  |          |
+|0x0033 |BatteryQuantity              |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0034 |BatteryRatedVoltage          |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0035 |BatteryAlarmMask             |8-bit Bitmap               |Read/Write |Optional  |          |
+|0x0036 |BatteryVoltageMinThreshold   |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0037 |BatteryVoltageThreshold1     |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0038 |BatteryVoltageThreshold2     |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0039 |BatteryVoltageThreshold3     |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x003A |BatteryPercentageMinThreshold|Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x003B |BatteryPercentageThreshold1  |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x003C |BatteryPercentageThreshold2  |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x003D |BatteryPercentageThreshold3  |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x003E |BatteryAlarmState            |32-bit Bitmap              |Read       |Optional  |          |
 
 
 
@@ -456,6 +527,20 @@ specifies the name of the battery manufacturer as a ZigBee character string.
 #### BatterySize Attribute
 The BatterySize attribute is an enumeration which specifies the type of battery
 being used by the device.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |No Battery                |
+|0x0001 |Build In                  |
+|0x0002 |Other                     |
+|0x0003 |AA  Cell                  |
+|0x0004 |AAA Cell                  |
+|0x0005 |C Cell                    |
+|0x0006 |D Cell                    |
+|0x0007 |CR2 Cell                  |
+|0x0008 |CR123A Cell               |
+|0x00FF |Unknown                   |
+
 
 #### BatteryAHrRating Attribute
 The BatteryAHrRating attribute is 16-bits in length and specifies the Ampere-hour
@@ -855,10 +940,13 @@ a door, or the power output of a heater.
 |0x0001 |RemainingTime        |Unsigned 16-bit integer    |Read Only  |Optional  |          |
 |0x0010 |OnOffTransitionTime  |Unsigned 16-bit integer    |Read/Write |Optional  |          |
 |0x0011 |OnLevel              |Unsigned 8-bit integer     |Read/Write |Optional  |          |
+|0x0012 |OnTransitionTime     |Unsigned 16-bit integer    |Read/Write |Optional  |          |
+|0x0013 |OffTransitionTime    |Unsigned 16-bit integer    |Read/Write |Optional  |          |
+|0x0014 |DefaultMoveRate      |Unsigned 16-bit integer    |Read/Write |Optional  |          |
 
 #### CurrentLevel Attribute
 The CurrentLevel attribute represents the current level of this device. The
-meaning of 'level' is device dependent.
+meaning of 'level' is device dependent. Value is between 0 and 254.
 
 #### RemainingTime Attribute
 The RemainingTime attribute represents the time remaining until the current
@@ -878,9 +966,36 @@ The OnLevel attribute determines the value that the CurrentLevel attribute is se
 when the OnOff attribute of an On/Off cluster on the same endpoint is set to On. If
 the OnLevel attribute is not implemented, or is set to 0xff, it has no effect. 
 
+#### OnTransitionTime Attribute
+The OnTransitionTime attribute represents the time taken to move the current level from the
+minimum level to the maximum level when an On command is received by an On/Off cluster on
+the same endpoint.  It is specified in 10ths of a second.  If this command is not implemented,
+or contains a value of 0xffff, the OnOffTransitionTime will be used instead.
+
+#### OffTransitionTime Attribute
+The OffTransitionTime attribute represents the time taken to move the current level from the
+maximum level to the minimum level when an Off command is received by an On/Off cluster on
+the same endpoint.  It is specified in 10ths of a second.  If this command is not implemented,
+or contains a value of 0xffff, the OnOffTransitionTime will be used instead.
+
+#### DefaultMoveRate Attribute
+The DefaultMoveRate attribute determines the movement rate, in units per second, when a Move
+command is received with a Rate parameter of 0xFF.
+
 ### Received
 
 #### Move to Level Command [0x00]
+On receipt of this command, a device SHALL move from its current level to the 
+value given in the Level field. The meaning of ‘level’ is device dependent –e.g.,
+for a light it MAY mean brightness level.The movement SHALL be as continuous as
+technically practical, i.e., not a step function, and the time taken to move to
+the new level SHALL be equal to the value of the Transition time field, in tenths
+of a second, or as close to this as the device is able.If the Transition time field
+takes the value 0xffff then the time taken to move to the new level SHALL instead
+be determined by the OnOffTransitionTimeattribute. If OnOffTransitionTime, which is
+an optional attribute, is not present, the device SHALL move to its new level as fast
+as it is able.
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Level                      |Unsigned 8-bit integer     |
@@ -1698,6 +1813,7 @@ x,y values, as defined by this specification.
 |0x0007 |ColorTemperature      |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
 |0x0008 |ColorMode             |8-bit Enumeration          |Read only  |Optional  |          |
 
+
 #### CurrentHue Attribute
 The CurrentHue attribute contains the current hue value of the light. It is updated
 as fast as practical during commands that change the hue.
@@ -1763,8 +1879,14 @@ The value ColorTemperature = 0 indicates an undefined value. The value
 ColorTemperature = 65535 indicates an invalid value. 
 
 #### ColorMode Attribute
-The ColorMode attribute indicates which attributes are currently determining the
-color of the device
+The ColorMode attribute indicates which attributes are currently determining the color of the device.
+If either the CurrentHue or CurrentSaturation attribute is implemented, this attribute SHALL also be
+implemented, otherwise it is optional. The value of the ColorMode attribute cannot be written directly
+- it is set upon reception of another command in to the appropriate mode for that command.
+
+0x00 CurrentHue and CurrentSaturation
+0x01 CurrentX and CurrentY
+0x02 ColorTemperatureMireds
 
 ### Received
 
@@ -1958,9 +2080,9 @@ No cluster specific commands.
 ### Attributes
 |Id     |Name                  |Type                       |Access     |Implement |Reporting |
 |-------|----------------------|---------------------------|-----------|----------|----------|
-|0x0000 |MeasuredValue         |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
-|0x0001 |MinMeasuredValue      |Unsigned 16-bit Integer    |Read only  |Mandatory |          |
-|0x0002 |MaxMeasuredValue      |Unsigned 16-bit Integer    |Read only  |Mandatory |          |
+|0x0000 |MeasuredValue         |Signed 16-bit Integer      |Read only  |Mandatory |Mandatory |
+|0x0001 |MinMeasuredValue      |Signed 16-bit Integer      |Read only  |Mandatory |          |
+|0x0002 |MaxMeasuredValue      |Signed 16-bit Integer      |Read only  |Mandatory |          |
 |0x0003 |Tolerance             |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
 
 #### MeasuredValue Attribute
@@ -2012,13 +2134,13 @@ including configuration and provision of notifications of pressure measurements.
 ### Attributes
 |Id     |Name                  |Type                       |Access     |Implement |Reporting |
 |-------|----------------------|---------------------------|-----------|----------|----------|
-|0x0000 |MeasuredValue         |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
-|0x0001 |MinMeasuredValue      |Unsigned 16-bit Integer    |Read only  |Mandatory |          |
-|0x0002 |MaxMeasuredValue      |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
+|0x0000 |MeasuredValue         |Signed 16-bit Integer      |Read only  |Mandatory |Mandatory |
+|0x0001 |MinMeasuredValue      |Signed 16-bit Integer      |Read only  |Mandatory |          |
+|0x0002 |MaxMeasuredValue      |Signed 16-bit Integer      |Read only  |Mandatory |Mandatory |
 |0x0003 |Tolerance             |Unsigned 16-bit Integer    |Read only  |Optional  |          |
-|0x0010 |ScaledValue           |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
-|0x0011 |MinScaledValue        |Unsigned 16-bit Integer    |Read only  |Optional  |          |
-|0x0012 |MaxScaledValue        |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0010 |ScaledValue           |Signed 16-bit Integer      |Read only  |Optional  |Mandatory |
+|0x0011 |MinScaledValue        |Signed 16-bit Integer      |Read only  |Optional  |          |
+|0x0012 |MaxScaledValue        |Signed 16-bit Integer      |Read only  |Optional  |          |
 |0x0013 |ScaledTolerance       |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
 |0x0014 |Scale                 |Unsigned 8-bit Integer     |Read only  |Optional  |          |
 
@@ -2238,12 +2360,18 @@ reports and supervision of the IAS network.
 |0x0000 |ZoneState                                   |8-bit Enumeration          |Read only  |Mandatory |          |
 |0x0001 |ZoneType                                    |16-bit Enumeration         |Read only  |Mandatory |          |
 |0x0002 |ZoneStatus                                  |16-bit Bitmap              |Read only  |Mandatory |          |
-|0x0010 |IASCIEAddress                             |IEEE Address               |Read/Write |Mandatory |          |
-|0x0011 |ZoneID                                     |Unsigned 8-bit Integer     |Read only  |Mandatory |          |
-|0x0012 |NumberOfZoneSensitivityLevelsSupported |Unsigned 8-bit Integer     |Read only  |Optional  |          |
-|0x0013 |CurrentZoneSensitivityLevel              |Unsigned 8-bit Integer     |Read/Write |Optional  |          |
+|0x0010 |IASCIEAddress                               |IEEE Address               |Read/Write |Mandatory |          |
+|0x0011 |ZoneID                                      |Unsigned 8-bit Integer     |Read only  |Mandatory |          |
+|0x0012 |NumberOfZoneSensitivityLevelsSupported      |Unsigned 8-bit Integer     |Read only  |Optional  |          |
+|0x0013 |CurrentZoneSensitivityLevel                 |Unsigned 8-bit Integer     |Read/Write |Optional  |          |
 
 #### ZoneState Attribute
+The Zone State attribute defines if the device is currently enrolled with a CIE or not.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Not Enrolled              |
+|0x0001 |Enrolled                  |
 
 #### ZoneType Attribute
 The Zone Type dictates the meaning of Alarm1 and Alarm2 bits of the ZoneStatus attribute 
@@ -2266,7 +2394,7 @@ The Zone Type dictates the meaning of Alarm1 and Alarm2 bits of the ZoneStatus a
 |0x0229 |Security Repeater         |
 
 #### ZoneStatus Attribute
-The ZoneStatus attribute is a bit map.
+The ZoneStatus attribute is a bit map. Each bit defines the state of an alarm.
 
 #### IASCIEAddress Attribute
 The IAS_CIE_Address attribute specifies the address that commands generated by
@@ -2287,6 +2415,16 @@ intervention of a CT in order to configure this attribute during installation.
 |Enroll response code       |8-bit Enumeration          |
 |Zone ID                    |Unsigned 8-bit Integer     |
 
+##### Enroll response code
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Success                   |
+|0x0001 |Not Supported             |
+|0x0002 |No Enroll Permit          |
+|0x0003 |Too Many Zones            |
+
+
 ### Generated
 
 #### Zone Status Change Notification Command [0x00]
@@ -2296,6 +2434,10 @@ intervention of a CT in order to configure this attribute during installation.
 |Extended Status            |8-bit Enumeration          |
 
 #### Zone Enroll Request Command [0x01]
+The Zone Enroll Request command is generated when a device embodying the Zone server cluster wishes
+to be  enrolled as an active  alarm device. It  must do this immediately it has joined the network
+(during commissioning).
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Zone Type                  |16-bit Enumeration         |
@@ -2564,9 +2706,5 @@ command that is still current.
 |0x011C |LastMessageLQI                   |Unsigned 8-bit Integer     |Read only  |Mandatory |          |
 |0x011D |LastMessageRSSI                  |Signed 8-bit Integer       |Read only  |Mandatory |          |
 
-### Received
-### Generated
-
-## Touchlink [0x1000]
 ### Received
 ### Generated

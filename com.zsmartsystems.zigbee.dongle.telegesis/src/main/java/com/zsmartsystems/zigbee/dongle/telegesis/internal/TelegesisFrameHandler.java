@@ -139,7 +139,6 @@ public class TelegesisFrameHandler {
                 }
                 logger.debug("TelegesisFrameHandler thread exited.");
             }
-
         };
 
         parserThread.setDaemon(true);
@@ -248,7 +247,7 @@ public class TelegesisFrameHandler {
             parserThread.interrupt();
             parserThread.join();
         } catch (InterruptedException e) {
-            logger.warn("Interrupted in packet parser thread shutdown join.");
+            logger.debug("Interrupted in packet parser thread shutdown join.");
         }
         logger.debug("TelegesisFrameHandler closed.");
     }
@@ -314,8 +313,7 @@ public class TelegesisFrameHandler {
     /**
      * Notify any transaction listeners when we receive a response.
      *
-     * @param response
-     *            the response data received
+     * @param response the response data received
      * @return true if the response was processed
      */
     private boolean notifyTransactionComplete(final TelegesisCommand response) {
@@ -324,8 +322,12 @@ public class TelegesisFrameHandler {
         logger.debug("Telegesis command complete: {}", response);
         synchronized (transactionListeners) {
             for (TelegesisListener listener : transactionListeners) {
-                if (listener.transactionEvent(response)) {
-                    processed = true;
+                try {
+                    if (listener.transactionEvent(response)) {
+                        processed = true;
+                    }
+                } catch (Exception e) {
+                    logger.debug("Exception processing Telegesis frame: {}: ", response, e);
                 }
             }
         }
@@ -358,7 +360,11 @@ public class TelegesisFrameHandler {
         logger.debug("Telegesis event received: {}", event);
         synchronized (eventListeners) {
             for (TelegesisEventListener listener : eventListeners) {
-                listener.telegesisEventReceived(event);
+                try {
+                    listener.telegesisEventReceived(event);
+                } catch (Exception e) {
+                    logger.debug("Exception processing Telegesis frame: {}: ", event, e);
+                }
             }
         }
     }

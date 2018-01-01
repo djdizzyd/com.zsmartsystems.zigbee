@@ -7,6 +7,7 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,21 +15,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeException;
 import com.zsmartsystems.zigbee.ZigBeeKey;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
 import com.zsmartsystems.zigbee.ZigBeeNodeStatus;
 import com.zsmartsystems.zigbee.ZigBeeNwkAddressMode;
+import com.zsmartsystems.zigbee.ZigBeeProfileType;
 import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetCurrentSecurityStateResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspIncomingMessageHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspLaunchStandaloneBootloaderRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspLaunchStandaloneBootloaderResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkInitResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateRequest;
@@ -51,14 +57,19 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberStatus;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspConfigId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspDecisionId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspPolicyId;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspStatus;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspSingleResponseTransaction;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
+import com.zsmartsystems.zigbee.dongle.ember.internal.EmberFirmwareUpdateHandler;
 import com.zsmartsystems.zigbee.dongle.ember.internal.EmberNetworkInitialisation;
 import com.zsmartsystems.zigbee.dongle.ember.internal.EmberStackConfiguration;
 import com.zsmartsystems.zigbee.transport.TransportConfig;
 import com.zsmartsystems.zigbee.transport.TransportConfigOption;
 import com.zsmartsystems.zigbee.transport.TransportConfigResult;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
+import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareCallback;
+import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareStatus;
+import com.zsmartsystems.zigbee.transport.ZigBeeTransportFirmwareUpdate;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportReceive;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportState;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
@@ -69,7 +80,7 @@ import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
  * @author Chris Jackson
  *
  */
-public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandler {
+public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, ZigBeeTransportFirmwareUpdate, EzspFrameHandler {
     /**
      * The {@link Logger}.
      */
@@ -84,6 +95,11 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
      * The ASH protocol handler used to send and receive EZSP packets
      */
     private AshFrameHandler ashHandler;
+
+    /**
+     * The Ember bootload handler
+     */
+    private EmberFirmwareUpdateHandler bootloadHandler;
 
     /**
      * The stack configuration we need for the NCP
@@ -109,6 +125,11 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
      * The current network parameters as {@link EmberNetworkParameters}
      */
     private EmberNetworkParameters networkParameters = new EmberNetworkParameters();
+
+    /**
+     * The IeeeAddress of the Ember NCP
+     */
+    private IeeeAddress ieeeAddress;
 
     /**
      * The Ember version used in this system. Set during initialisation and saved in case the client is interested.
@@ -168,13 +189,18 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         EzspVersionResponse versionResponse = (EzspVersionResponse) versionTransaction.getResponse();
         logger.debug(versionResponse.toString());
 
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder(60);
         builder.append("EZSP Version=");
         builder.append(versionResponse.getProtocolVersion());
         builder.append(", Stack Type=");
         builder.append(versionResponse.getStackType());
         builder.append(", Stack Version=");
-        builder.append(String.format("%04X", versionResponse.getStackVersion()));
+        for (int cnt = 3; cnt >= 0; cnt--) {
+            builder.append((versionResponse.getStackVersion() >> (cnt * 4)) & 0x0F);
+            if (cnt != 0) {
+                builder.append('.');
+            }
+        }
         versionString = builder.toString();
 
         // Perform any stack configuration
@@ -210,6 +236,18 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
                 new EzspSingleResponseTransaction(networkInitRequest, EzspNetworkInitResponse.class));
         EzspNetworkInitResponse networkInitResponse = (EzspNetworkInitResponse) networkInitTransaction.getResponse();
         logger.debug(networkInitResponse.toString());
+
+        EzspAddEndpointRequest addEndpoint = new EzspAddEndpointRequest();
+        addEndpoint.setEndpoint(1);
+        addEndpoint.setDeviceId(0);
+        addEndpoint.setProfileId(ZigBeeProfileType.HOME_AUTOMATION.getId());
+        addEndpoint.setInputClusterList(new int[] { 0 });
+        addEndpoint.setOutputClusterList(new int[] { 0 });
+        logger.debug(addEndpoint.toString());
+        EzspTransaction addEndpointTransaction = ashHandler
+                .sendEzspTransaction(new EzspSingleResponseTransaction(addEndpoint, EzspAddEndpointResponse.class));
+        EzspAddEndpointResponse addEndpointResponse = (EzspAddEndpointResponse) addEndpointTransaction.getResponse();
+        logger.debug(addEndpointResponse.toString());
 
         networkParameters = getNetworkParameters();
         getCurrentSecurityState();
@@ -268,18 +306,24 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
 
         logger.debug("EZSP dongle startup done.");
 
-        // Mainly for debug we run a task to periodically download the neighbor table
-        // new EzspNeighborTable(ashHandler, 31);
-
         return true;
     }
 
     @Override
     public void shutdown() {
+        if (ashHandler == null) {
+            return;
+        }
+
         ashHandler.setClosing();
         serialPort.close();
         ashHandler.close();
         ashHandler = null;
+    }
+
+    @Override
+    public IeeeAddress getIeeeAddress() {
+        return ieeeAddress;
     }
 
     /**
@@ -336,19 +380,8 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return currentSecurityStateResponse.getState();
     }
 
-    // private void permitJoin() {
-    // EzspPermitJoiningRequest request = new EzspPermitJoiningRequest();
-    // request.setDuration(255);
-    // EzspTransaction transaction = ashHandler
-    // .sendEzspTransaction(new EzspSingleResponseTransaction(request, EzspPermitJoiningResponse.class));
-    // EzspPermitJoiningResponse response = (EzspPermitJoiningResponse) transaction.getResponse();
-    // logger.debug(response.toString());
-
-    // zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.ONLINE);
-    // }
-
     @Override
-    public void sendCommand(final ZigBeeApsFrame apsFrame) throws ZigBeeException {
+    public void sendCommand(final ZigBeeApsFrame apsFrame) {
         if (ashHandler == null) {
             return;
         }
@@ -581,7 +614,7 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
                 switch (option) {
                     default:
                         configuration.setResult(option, TransportConfigResult.ERROR_UNSUPPORTED);
-                        logger.debug("Unsupported configuration option \"{}\" in Telegesis dongle", option);
+                        logger.debug("Unsupported configuration option \"{}\" in EZSP dongle", option);
                         break;
                 }
             } catch (ClassCastException e) {
@@ -595,4 +628,84 @@ public class ZigBeeDongleEzsp implements ZigBeeTransportTransmit, EzspFrameHandl
         return versionString;
     }
 
+    @Override
+    public boolean updateFirmware(final InputStream firmware, final ZigBeeTransportFirmwareCallback callback) {
+        if (ashHandler != null) {
+            logger.debug("ashHandler is operating in updateFirmware");
+            return false;
+        }
+
+        if (!serialPort.open()) {
+            logger.error("Unable to open EZSP serial port");
+            return false;
+        }
+
+        AshFrameHandler ashHandler = new AshFrameHandler(this);
+
+        // Connect to the ASH handler and NCP
+        ashHandler.start(serialPort);
+        ashHandler.connect();
+
+        // We MUST send the version command first.
+        EzspVersionRequest version = new EzspVersionRequest();
+        version.setDesiredProtocolVersion(4);
+        EzspTransaction versionTransaction = ashHandler
+                .sendEzspTransaction(new EzspSingleResponseTransaction(version, EzspVersionResponse.class));
+        EzspVersionResponse versionResponse = (EzspVersionResponse) versionTransaction.getResponse();
+        logger.debug(versionResponse.toString());
+
+        zigbeeTransportReceive.setNetworkState(ZigBeeTransportState.OFFLINE);
+        callback.firmwareUpdateCallback(ZigBeeTransportFirmwareStatus.FIRMWARE_UPDATE_STARTED);
+
+        // Send the bootload command, but ignore the response since there doesn't seem to be one
+        // despite what the documentation seems to indicate
+        EzspLaunchStandaloneBootloaderRequest bootloadCommand = new EzspLaunchStandaloneBootloaderRequest();
+        EzspTransaction bootloadTransaction = ashHandler.sendEzspTransaction(
+                new EzspSingleResponseTransaction(bootloadCommand, EzspLaunchStandaloneBootloaderResponse.class));
+        EzspLaunchStandaloneBootloaderResponse bootloadResponse = (EzspLaunchStandaloneBootloaderResponse) bootloadTransaction
+                .getResponse();
+        logger.debug(bootloadResponse.toString());
+        logger.debug("EZSP bootloadResponse {}", bootloadResponse.getStatus());
+
+        if (bootloadResponse.getStatus() != EzspStatus.EZSP_SUCCESS) {
+            callback.firmwareUpdateCallback(ZigBeeTransportFirmwareStatus.FIRMWARE_UPDATE_FAILED);
+            logger.debug("EZSP bootload failed: bootloadResponse {}", bootloadResponse.getStatus());
+            return false;
+        }
+
+        // Stop the handler and close the serial port
+        logger.debug("EZSP closing frame handler");
+        ashHandler.setClosing();
+        serialPort.close();
+        ashHandler.close();
+        ashHandler = null;
+
+        bootloadHandler = new EmberFirmwareUpdateHandler(this, firmware, serialPort, callback);
+        bootloadHandler.startBootload();
+
+        return true;
+    }
+
+    // Callback from the bootload handler when the transfer is completed/aborted/failed
+    public void bootloadComplete() {
+        bootloadHandler = null;
+    }
+
+    @Override
+    public String getFirmwareVersion() {
+        int versionIndex = versionString.indexOf("Stack Version=");
+        if (versionIndex == -1) {
+            return "";
+        }
+        return versionString.substring(versionIndex + 14);
+    }
+
+    @Override
+    public boolean cancelUpdateFirmware() {
+        if (bootloadHandler == null) {
+            return false;
+        }
+        bootloadHandler.cancelUpdate();
+        return true;
+    }
 }

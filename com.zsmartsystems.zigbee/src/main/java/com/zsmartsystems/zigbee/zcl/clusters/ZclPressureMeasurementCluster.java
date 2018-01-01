@@ -28,34 +28,78 @@ import java.util.concurrent.Future;
  * Code is auto-generated. Modifications may be overwritten!
  */
 public class ZclPressureMeasurementCluster extends ZclCluster {
-    // Cluster ID
+    /**
+     * The ZigBee Cluster Library Cluster ID
+     */
     public static final int CLUSTER_ID = 0x0403;
 
-    // Cluster Name
+    /**
+     * The ZigBee Cluster Library Cluster Name
+     */
     public static final String CLUSTER_NAME = "Pressure measurement";
 
     // Attribute constants
+    /**
+     * MeasuredValue represents the pressure in kPa as follows:-
+     * <p>
+     * MeasuredValue = 10 x Pressure
+     * <p>
+     * Where -3276.7 kPa <= Pressure <= 3276.7 kPa, corresponding to a
+     * MeasuredValue in the range 0x8001 to 0x7fff.
+     * <p>
+     * Note:- The maximum resolution this format allows is 0.1 kPa.
+     * <p>
+     * A MeasuredValue of 0x8000 indicates that the pressure measurement is invalid.
+     * MeasuredValue is updated continuously as new measurements are made.
+     */
     public static final int ATTR_MEASUREDVALUE = 0x0000;
+    /**
+     * The MinMeasuredValue attribute indicates the minimum value of MeasuredValue
+     * that can be measured. A value of 0x8000 means this attribute is not defined.
+     */
     public static final int ATTR_MINMEASUREDVALUE = 0x0001;
+    /**
+     * The MaxMeasuredValue attribute indicates the maximum value of MeasuredValue
+     * that can be measured. A value of 0x8000 means this attribute is not defined.
+     * <p>
+     * MaxMeasuredValue shall be greater than MinMeasuredValue.
+     * <p>
+     * MinMeasuredValue and MaxMeasuredValue define the range of the sensor.
+     */
     public static final int ATTR_MAXMEASUREDVALUE = 0x0002;
+    /**
+     * The Tolerance attribute indicates the magnitude of the possible error that is
+     * associated with MeasuredValue . The true value is located in the range
+     * (MeasuredValue – Tolerance) to (MeasuredValue + Tolerance).
+     */
     public static final int ATTR_TOLERANCE = 0x0003;
+    /**
+     */
     public static final int ATTR_SCALEDVALUE = 0x0010;
+    /**
+     */
     public static final int ATTR_MINSCALEDVALUE = 0x0011;
+    /**
+     */
     public static final int ATTR_MAXSCALEDVALUE = 0x0012;
+    /**
+     */
     public static final int ATTR_SCALEDTOLERANCE = 0x0013;
+    /**
+     */
     public static final int ATTR_SCALE = 0x0014;
 
     // Attribute initialisation
     protected Map<Integer, ZclAttribute> initializeAttributes() {
         Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(9);
 
-        attributeMap.put(ATTR_MEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MEASUREDVALUE, "MeasuredValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, true, true, false, true));
-        attributeMap.put(ATTR_MINMEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MINMEASUREDVALUE, "MinMeasuredValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, true, true, false, false));
-        attributeMap.put(ATTR_MAXMEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MAXMEASUREDVALUE, "MaxMeasuredValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, true, true, false, true));
+        attributeMap.put(ATTR_MEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MEASUREDVALUE, "MeasuredValue", ZclDataType.SIGNED_16_BIT_INTEGER, true, true, false, true));
+        attributeMap.put(ATTR_MINMEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MINMEASUREDVALUE, "MinMeasuredValue", ZclDataType.SIGNED_16_BIT_INTEGER, true, true, false, false));
+        attributeMap.put(ATTR_MAXMEASUREDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MAXMEASUREDVALUE, "MaxMeasuredValue", ZclDataType.SIGNED_16_BIT_INTEGER, true, true, false, true));
         attributeMap.put(ATTR_TOLERANCE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_TOLERANCE, "Tolerance", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, false));
-        attributeMap.put(ATTR_SCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_SCALEDVALUE, "ScaledValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, true));
-        attributeMap.put(ATTR_MINSCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MINSCALEDVALUE, "MinScaledValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, false));
-        attributeMap.put(ATTR_MAXSCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MAXSCALEDVALUE, "MaxScaledValue", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, false));
+        attributeMap.put(ATTR_SCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_SCALEDVALUE, "ScaledValue", ZclDataType.SIGNED_16_BIT_INTEGER, false, true, false, true));
+        attributeMap.put(ATTR_MINSCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MINSCALEDVALUE, "MinScaledValue", ZclDataType.SIGNED_16_BIT_INTEGER, false, true, false, false));
+        attributeMap.put(ATTR_MAXSCALEDVALUE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_MAXSCALEDVALUE, "MaxScaledValue", ZclDataType.SIGNED_16_BIT_INTEGER, false, true, false, false));
         attributeMap.put(ATTR_SCALEDTOLERANCE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_SCALEDTOLERANCE, "ScaledTolerance", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, true));
         attributeMap.put(ATTR_SCALE, new ZclAttribute(ZclClusterType.PRESSURE_MEASUREMENT, ATTR_SCALE, "Scale", ZclDataType.UNSIGNED_8_BIT_INTEGER, false, true, false, false));
 

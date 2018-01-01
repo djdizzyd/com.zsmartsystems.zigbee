@@ -7,6 +7,9 @@
  */
 package com.zsmartsystems.zigbee.console;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.log4j.xml.DOMConfigurator;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.LoggerFactory;
@@ -17,13 +20,18 @@ import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNetworkMeshMonitor;
 import com.zsmartsystems.zigbee.ZigBeeNetworkStateSerializer;
 import com.zsmartsystems.zigbee.dongle.cc2531.ZigBeeDongleTiCc2531;
+import com.zsmartsystems.zigbee.dongle.conbee.ZigBeeDongleConBee;
 import com.zsmartsystems.zigbee.dongle.ember.ZigBeeDongleEzsp;
 import com.zsmartsystems.zigbee.dongle.telegesis.ZigBeeDongleTelegesis;
 import com.zsmartsystems.zigbee.serial.ZigBeeSerialPort;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
 import com.zsmartsystems.zigbee.serialization.DefaultSerializer;
+import com.zsmartsystems.zigbee.transport.TransportConfig;
+import com.zsmartsystems.zigbee.transport.TransportConfigOption;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
+import com.zsmartsystems.zigbee.transport.ZigBeePort.FlowControl;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
+import com.zsmartsystems.zigbee.zcl.clusters.ZclIasZoneCluster;
 
 /**
  * The ZigBee gateway console. Simple console used as an example and test application.
@@ -39,7 +47,7 @@ public class ZigBeeConsoleMain {
     /**
      * The usage.
      */
-    public static final String USAGE = "Syntax: java -jar zigbee4java-serialPort.jar [EMBER|CC2531] SERIALPORT SERIALBAUD CHANNEL PAN EPAN NETWORK_KEY RESET";
+    public static final String USAGE = "Syntax: java -jar zigbee4java-serialPort.jar [EMBER|CC2531|TELEGESIS|CONBEE] SERIALPORT SERIALBAUD CHANNEL PAN EPAN NETWORK_KEY RESET";
 
     /**
      * Private constructor to disable constructing main class.
@@ -62,6 +70,7 @@ public class ZigBeeConsoleMain {
         final int pan;
         final ExtendedPanId extendedPan;
         final int[] networkKey;
+        final TransportConfig transportOptions = new TransportConfig();
         boolean resetNetwork;
         try {
             dongleName = args[0];
@@ -95,9 +104,9 @@ public class ZigBeeConsoleMain {
             return;
         }
 
-        boolean flowControl = false;
+        FlowControl flowControl = FlowControl.FLOWCONTROL_OUT_NONE;
         if (dongleName.toUpperCase().equals("EMBER")) {
-            flowControl = true;
+            flowControl = FlowControl.FLOWCONTROL_OUT_RTSCTS;
         }
 
         final ZigBeePort serialPort = new ZigBeeSerialPort(serialPortName, serialBaud, flowControl);
@@ -109,11 +118,16 @@ public class ZigBeeConsoleMain {
             dongle = new ZigBeeDongleTiCc2531(serialPort);
         } else if (dongleName.toUpperCase().equals("EMBER")) {
             dongle = new ZigBeeDongleEzsp(serialPort);
+        } else if (dongleName.toUpperCase().equals("CONBEE")) {
+            dongle = new ZigBeeDongleConBee(serialPort);
         } else if (dongleName.toUpperCase().equals("TELEGESIS")) {
             ZigBeeDongleTelegesis telegesisDongle = new ZigBeeDongleTelegesis(serialPort);
             telegesisDongle.setTelegesisPassword("password");
             dongle = telegesisDongle;
 
+            Set<Integer> clusters = new HashSet<Integer>();
+            clusters.add(ZclIasZoneCluster.CLUSTER_ID);
+            transportOptions.addOption(TransportConfigOption.SUPPORTED_OUTPUT_CLUSTERS, clusters);
         } else {
             dongle = null;
         }
@@ -151,6 +165,8 @@ public class ZigBeeConsoleMain {
                 networkManager.setZigBeeNetworkKey(new ZigBeeKey(networkKey));
             }
         }
+
+        dongle.updateTransportConfig(transportOptions);
 
         if (!networkManager.startup(resetNetwork)) {
             System.out.println("ZigBee API starting up ... [FAIL]");

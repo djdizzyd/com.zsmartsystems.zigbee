@@ -30,9 +30,12 @@ import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeCommand;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
 import com.zsmartsystems.zigbee.ZigBeeEndpointAddress;
-import com.zsmartsystems.zigbee.ZigBeeException;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNode;
+import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaFile;
+import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaServer;
+import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaServerStatus;
+import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaStatusCallback;
 import com.zsmartsystems.zigbee.zcl.clusters.ZclOtaUpgradeCluster;
 import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.ImageNotifyCommand;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
@@ -53,9 +56,8 @@ public class ZigBeeOtaServerTest implements ZigBeeOtaStatusCallback {
         IeeeAddress ieeeAddress = new IeeeAddress("1234567890ABCDEF");
         ZigBeeEndpointAddress networkAddress = new ZigBeeEndpointAddress(1234, 56);
         ZigBeeNetworkManager mockedNetworkManager = Mockito.mock(ZigBeeNetworkManager.class);
-        ZigBeeNode node = new ZigBeeNode(mockedNetworkManager);
+        ZigBeeNode node = new ZigBeeNode(mockedNetworkManager, ieeeAddress);
         node.setNetworkAddress(networkAddress.getAddress());
-        node.setIeeeAddress(ieeeAddress);
         node.setNodeDescriptor(nodeDescriptor);
         ZigBeeEndpoint endpoint = new ZigBeeEndpoint(mockedNetworkManager, node, networkAddress.getEndpoint());
         // device.setIeeeAddress(ieeeAddress);
@@ -81,16 +83,12 @@ public class ZigBeeOtaServerTest implements ZigBeeOtaStatusCallback {
         // e.printStackTrace();
         // }
 
-        try {
-            Mockito.doAnswer(new Answer<Integer>() {
-                @Override
-                public Integer answer(InvocationOnMock invocation) {
-                    return 0;
-                }
-            }).when(mockedNetworkManager).sendCommand(mockedCommandCaptor.capture());
-        } catch (ZigBeeException e) {
-            e.printStackTrace();
-        }
+        Mockito.doAnswer(new Answer<Integer>() {
+            @Override
+            public Integer answer(InvocationOnMock invocation) {
+                return 0;
+            }
+        }).when(mockedNetworkManager).sendCommand(mockedCommandCaptor.capture());
 
         Mockito.doAnswer(new Answer<Future<CommandResult>>() {
             @Override

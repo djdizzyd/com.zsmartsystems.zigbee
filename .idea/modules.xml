@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee/com.zsmartsystems.zigbee.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee/com.zsmartsystems.zigbee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.console/com.zsmartsystems.zigbee.console.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.console/com.zsmartsystems.zigbee.console.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.cc2531/com.zsmartsystems.zigbee.dongle.cc2531.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.cc2531/com.zsmartsystems.zigbee.dongle.cc2531.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.conbee/com.zsmartsystems.zigbee.dongle.conbee.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.conbee/com.zsmartsystems.zigbee.dongle.conbee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.ember/com.zsmartsystems.zigbee.dongle.ember.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.ember/com.zsmartsystems.zigbee.dongle.ember.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.telegesis/com.zsmartsystems.zigbee.dongle.telegesis.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.dongle.telegesis/com.zsmartsystems.zigbee.dongle.telegesis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.serial/com.zsmartsystems.zigbee.serial.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.serial/com.zsmartsystems.zigbee.serial.iml" />
+      <module fileurl="file://$PROJECT_DIR$/com.zsmartsystems.zigbee.test/com.zsmartsystems.zigbee.test.iml" filepath="$PROJECT_DIR$/com.zsmartsystems.zigbee.test/com.zsmartsystems.zigbee.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/zigbee.iml" filepath="$PROJECT_DIR$/zigbee.iml" />
+    </modules>
+  </component>
+</project>

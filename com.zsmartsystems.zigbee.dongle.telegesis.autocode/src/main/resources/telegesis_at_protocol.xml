@@ -600,6 +600,33 @@
 	</command>
 
 	<command>
+		<name>Set Register</name>
+		<description>Sets an S register</description>
+		<command_parameters>
+			<prompt>ATS</prompt>
+			<parameter>
+				<data_type>Int8</data_type>
+				<name>register</name>
+				<terminator></terminator>
+				<description></description>
+			</parameter>
+			<parameter>
+				<data_type>Int16</data_type>
+				<name>value</name>
+				<terminator>=</terminator>
+				<description></description>
+			</parameter>
+			<parameter>
+				<data_type>String</data_type>
+				<name>password</name>
+				<description></description>
+				<terminator>:</terminator>
+				<optional>true</optional>
+			</parameter>
+		</command_parameters>
+	</command>
+
+	<command>
 		<name>Set Register Bit</name>
 		<description>Sets a bit in an S register</description>
 		<command_parameters>
@@ -628,6 +655,34 @@
 				<description></description>
 				<terminator>:</terminator>
 				<optional>true</optional>
+			</parameter>
+		</command_parameters>
+	</command>
+
+	<command>
+		<name>Set Input Clusters</name>
+		<description>Sets the list of input clusters supported by endpoint 2. Up to 12 clusters can be set</description>
+		<command_parameters>
+			<prompt>ATS4B=</prompt>
+			<parameter>
+				<data_type>Int16</data_type>
+				<name>cluster list</name>
+				<multiple>true</multiple>
+				<description></description>
+			</parameter>
+		</command_parameters>
+	</command>
+
+	<command>
+		<name>Set Output Clusters</name>
+		<description>Sets the list of output clusters supported by endpoint 2. Up to 12 clusters can be set</description>
+		<command_parameters>
+			<prompt>ATS4C=</prompt>
+			<parameter>
+				<data_type>Int16</data_type>
+				<name>cluster list</name>
+				<multiple>true</multiple>
+				<description></description>
 			</parameter>
 		</command_parameters>
 	</command>
@@ -819,7 +874,7 @@
 			<prompt>ATS0A3=</prompt>
 			<parameter>
 				<data_type>Boolean</data_type>
-				<name>rejoin</name>
+				<name>Disallow Rejoin</name>
 				<description></description>
 			</parameter>
 			<parameter>
@@ -832,12 +887,12 @@
 
 	<command>
 		<name>Disallow TC Join</name>
-		<description>Set: Don’t allow nodes to join(TC setting)</description>
+		<description>Set: Don’t allow nodes to join (TC setting)</description>
 		<command_parameters>
 			<prompt>ATS0A5=</prompt>
 			<parameter>
 				<data_type>Boolean</data_type>
-				<name>join</name>
+				<name>Disallow Join</name>
 				<description></description>
 			</parameter>
 			<parameter>
@@ -1161,7 +1216,7 @@
 		<command_parameters>
 			<prompt>AT+CCHANGE</prompt>
 			<parameter>
-				<data_type>Int8</data_type>
+				<data_type>Integer</data_type>
 				<name>channel</name>
 				<description></description>
 				<optional>true</optional>

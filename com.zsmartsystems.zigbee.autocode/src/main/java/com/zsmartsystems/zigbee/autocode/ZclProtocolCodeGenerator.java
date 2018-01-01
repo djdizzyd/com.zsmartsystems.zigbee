@@ -55,16 +55,10 @@ public class ZclProtocolCodeGenerator {
      *            the command line arguments
      */
     public static void main(final String[] args) {
-        final String definitionFilePathZcl;
-        final String definitionFilePathZdp;
-        final String definitionFilePathOta;
-        // if (args.length != 0) {
-        // definitionFilePathZcl = args[0];
-        // } else {
-        definitionFilePathZcl = "./src/main/resources/zcl_definition.md";
-        definitionFilePathZdp = "./src/main/resources/zdp_definition.md";
-        definitionFilePathOta = "./src/main/resources/ota_definition.md";
-        // }
+        final String definitionFilePathZcl = "./src/main/resources/zcl_definition.md";
+        final String definitionFilePathZll = "./src/main/resources/zll_definition.md";
+        final String definitionFilePathZdp = "./src/main/resources/zdp_definition.md";
+        final String definitionFilePathOta = "./src/main/resources/ota_definition.md";
 
         final String sourceRootPath;
         if (args.length != 0) {
@@ -93,12 +87,14 @@ public class ZclProtocolCodeGenerator {
         final Context contextZcl = new Context();
         final File definitionFileZcl = new File(definitionFilePathZcl);
         final File definitionFileOta = new File(definitionFilePathOta);
-        if (!(definitionFileZcl.exists() && definitionFileOta.exists())) {
+        final File definitionFileZll = new File(definitionFilePathZll);
+        if (!(definitionFileZcl.exists() && definitionFileOta.exists() && definitionFileZll.exists())) {
             System.out.println("Definition file does not exist: " + definitionFilePathZcl);
         } else {
             try {
                 contextZcl.lines = new ArrayList<String>(FileUtils.readLines(definitionFileZcl, "UTF-8"));
                 contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileOta, "UTF-8")));
+                contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileZll, "UTF-8")));
                 generateZclCode(contextZcl, sourceRootFile, packageRoot);
             } catch (final IOException e) {
                 System.out.println(
@@ -215,6 +211,14 @@ public class ZclProtocolCodeGenerator {
         // e.printStackTrace();
         // return;
         // }
+
+        try {
+            generateAttributeEnumeration(context, packageRoot, sourceRootPath);
+        } catch (final IOException e) {
+            System.out.println("Failed to generate attribute enum classes.");
+            e.printStackTrace();
+            return;
+        }
 
         try {
             generateFieldEnumeration(context, packageRoot, sourceRootPath);
@@ -411,10 +415,10 @@ public class ZclProtocolCodeGenerator {
 
     private static void generateZclProfileTypeEnumeration(Context context, String packageRootPrefix,
             File sourceRootPath) throws IOException {
-        final String className = "ZclProfileType";
+        final String className = "ZigBeeProfileType";
 
-        final String packageRoot = packageRootPrefix + packageZclProtocol;
-        final String packagePath = getPackagePath(sourceRootPath, packageZclProtocol);
+        final String packageRoot = packageRootPrefix;
+        final String packagePath = getPackagePath(sourceRootPath, "");
         final File packageFile = getPackageFile(packagePath);
 
         final PrintWriter out = getClassOut(packageFile, className);
@@ -429,28 +433,81 @@ public class ZclProtocolCodeGenerator {
 
         out.println("package " + packageRoot + ";");
         out.println();
+        out.println("import java.util.Map;");
+        out.println("import java.util.HashMap;");
+
+        out.println();
         outputClassJavaDoc(out, "Enumeration of ZigBee profile types");
         out.println("public enum " + className + " {");
 
+        out.println("    UNKNOWN(-1, \"Unknown Profile\"),");
         final LinkedList<Profile> profiles = new LinkedList<Profile>(context.profiles.values());
         for (final Profile profile : profiles) {
-            out.print("    " + profile.profileType + "(" + profile.profileId + ", \"" + profile.profileName + "\")");
+            out.print("    " + profile.profileType + "(" + String.format("0x%04x", profile.profileId) + ", \""
+                    + profile.profileName + "\")");
             out.println(profiles.getLast().equals(profile) ? ';' : ',');
         }
 
         out.println();
-        out.println("    private final int id;");
+        out.println("    /*");
+        out.println("     * The ZigBee profile ID");
+        out.println("     */");
+        out.println("    private final int profileId;");
+        out.println();
+        out.println("    /*");
+        out.println("     * The ZigBee profile label");
+        out.println("     */");
         out.println("    private final String label;");
         out.println();
-        out.println("    " + className + "(final int id, final String label) {");
-        out.println("        this.id = id;");
+        out.println("    /**");
+        out.println("     * Map containing the link of profile type value to the enum");
+        out.println("     */");
+        out.println("    private static Map<Integer, ZigBeeProfileType> map = null;");
+        out.println();
+        out.println("    " + className + "(final int profileId, final String label) {");
+        out.println("        this.profileId = profileId;");
         out.println("        this.label = label;");
         out.println("    }");
         out.println();
-        out.println("    public int getId() { return id; }");
-        out.println("    public String getLabel() { return label; }");
-        out.println("    public String toString() { return label; }");
+        out.println("    /*");
+        out.println("     * Get the ZigBee profile ID");
+        out.println("     *");
+        out.println("     * @ return the profile ID");
+        out.println("     */");
+        out.println("    public int getId() {");
+        out.println("        return profileId;");
+        out.println("    }");
         out.println();
+        out.println("    /*");
+        out.println("     * Get the ZigBee profile label");
+        out.println("     *");
+        out.println("     * @ return the profile label");
+        out.println("     */");
+        out.println("    public String getLabel() {");
+        out.println("        return label;");
+        out.println("    }");
+        out.println();
+
+        out.println("    /**");
+        out.println("     * Get a {@link " + className + "} from an integer");
+        out.println("     *");
+        out.println("     * @param profileTypeValue integer value defining the profile type");
+        out.println("     * @return {@link " + className + "} or {@link #UNKNOWN} if the value could not be converted");
+        out.println("     */");
+        out.println("    public static " + className + " getProfileType(int profileTypeValue) {");
+        out.println("        if (map == null) {");
+        out.println("            map = new HashMap<Integer, ZigBeeProfileType>();");
+        out.println("            for (" + className + " profileType : values()) {");
+        out.println("                map.put(profileType.profileId, profileType);");
+        out.println("            }");
+        out.println("        }");
+        out.println();
+        out.println("        if (map.get(profileTypeValue) == null) {");
+        out.println("            return UNKNOWN;");
+        out.println("        }");
+        out.println("        return map.get(profileTypeValue);");
+        out.println("    }");
+
         out.println("}");
 
         out.flush();
@@ -477,6 +534,7 @@ public class ZclProtocolCodeGenerator {
 
         out.println("package " + packageRoot + ";");
         out.println();
+        out.println("import " + packageRootPrefix + ".ZigBeeProfileType;");
         out.println("import " + packageRootPrefix + packageZcl + ".ZclCluster;");
         out.println("import " + packageRootPrefix + packageZclCluster + ".*;");
         out.println();
@@ -487,29 +545,34 @@ public class ZclProtocolCodeGenerator {
         outputClassJavaDoc(out, "Enumeration of ZigBee Clusters");
         out.println("public enum " + className + " {");
 
+        boolean first = true;
         final LinkedList<Profile> profiles = new LinkedList<Profile>(context.profiles.values());
         for (final Profile profile : profiles) {
             final LinkedList<Cluster> clusters = new LinkedList<Cluster>(profile.clusters.values());
             for (final Cluster cluster : clusters) {
+                if (first == false) {
+                    out.println(",");
+                }
+                first = false;
                 out.print("    " + cluster.clusterType + "(" + String.format("0x%04X", cluster.clusterId)
-                        + ", ZclProfileType." + profile.profileType + ", Zcl" + cluster.nameUpperCamelCase
+                        + ", ZigBeeProfileType." + profile.profileType + ", Zcl" + cluster.nameUpperCamelCase
                         + "Cluster.class, \"" + cluster.clusterName + "\")");
-                out.println(clusters.getLast().equals(cluster) ? ';' : ',');
             }
         }
+        out.println(";");
 
         out.println();
         out.println(
                 "    private static final Map<Integer, ZclClusterType> idValueMap = new HashMap<Integer, ZclClusterType>();");
         out.println();
-        out.println("    private final int id;");
-        out.println("    private final ZclProfileType profileType;");
+        out.println("    private final int clusterId;");
+        out.println("    private final ZigBeeProfileType profileType;");
         out.println("    private final String label;");
         out.println("    private final Class<? extends ZclCluster> clusterClass;");
         out.println();
         out.println("    " + className
-                + "(final int id, final ZclProfileType profileType, final Class<? extends ZclCluster>clusterClass, final String label) {");
-        out.println("        this.id = id;");
+                + "(final int clusterId, final ZigBeeProfileType profileType, final Class<? extends ZclCluster>clusterClass, final String label) {");
+        out.println("        this.clusterId = clusterId;");
         out.println("        this.profileType = profileType;");
         out.println("        this.clusterClass = clusterClass;");
         out.println("        this.label = label;");
@@ -517,15 +580,15 @@ public class ZclProtocolCodeGenerator {
         out.println();
         out.println("    static {");
         out.println("        for (final ZclClusterType value : values()) {");
-        out.println("            idValueMap.put(value.id, value);");
+        out.println("            idValueMap.put(value.clusterId, value);");
         out.println("        }");
         out.println("    }");
         out.println();
         out.println("    public int getId() {");
-        out.println("        return id;");
+        out.println("        return clusterId;");
         out.println("    }");
         out.println();
-        out.println("    public ZclProfileType getProfileType() {");
+        out.println("    public ZigBeeProfileType getProfileType() {");
         out.println("        return profileType;");
         out.println("    }");
         out.println();
@@ -541,8 +604,8 @@ public class ZclProtocolCodeGenerator {
         out.println("        return clusterClass;");
         out.println("    }");
         out.println();
-        out.println("    public static ZclClusterType getValueById(final int id) {");
-        out.println("        return idValueMap.get(id);");
+        out.println("    public static ZclClusterType getValueById(final int clusterId) {");
+        out.println("        return idValueMap.get(clusterId);");
         out.println("    }");
         out.println();
         out.println("}");
@@ -904,6 +967,12 @@ public class ZclProtocolCodeGenerator {
                     for (final Field field : fields) {
                         out.println("    /**");
                         out.println("     * " + field.fieldLabel + " command message field.");
+                        if (field.description.size() != 0) {
+                            out.println("     *");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     */");
                         out.println("    private " + field.dataTypeClass + " " + field.nameLowerCamelCase + ";");
                         out.println();
@@ -985,6 +1054,12 @@ public class ZclProtocolCodeGenerator {
                         out.println();
                         out.println("    /**");
                         out.println("     * Gets " + field.fieldLabel + ".");
+                        if (field.description.size() != 0) {
+                            out.println("     *");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     *");
                         out.println("     * @return the " + field.fieldLabel);
                         out.println("     */");
@@ -994,6 +1069,12 @@ public class ZclProtocolCodeGenerator {
                         out.println();
                         out.println("    /**");
                         out.println("     * Sets " + field.fieldLabel + ".");
+                        if (field.description.size() != 0) {
+                            out.println("     *");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     *");
                         out.println("     * @param " + field.nameLowerCamelCase + " the " + field.fieldLabel);
                         out.println("     */");
@@ -1024,7 +1105,14 @@ public class ZclProtocolCodeGenerator {
                             // if listSizer != null and contains && then check the param bit
 
                             if (field.listSizer != null) {
-                                if (field.conditionOperator != null) {
+                                if (field.listSizer.equals("statusResponse")) {
+                                    // Special case where a ZclStatus may be sent, or, a list of results.
+                                    // This checks for a single response
+                                    out.println("        if (status == ZclStatus.SUCCESS) {");
+                                    out.println("            serializer.serialize(status, ZclDataType.ZCL_STATUS);");
+                                    out.println("            return;");
+                                    out.println("        }");
+                                } else if (field.conditionOperator != null) {
                                     if (field.conditionOperator == "&&") {
                                         out.println("        if ((" + field.listSizer + " & " + field.condition
                                                 + ") != 0) {");
@@ -1054,7 +1142,15 @@ public class ZclProtocolCodeGenerator {
                         out.println("    public void deserialize(final ZclFieldDeserializer deserializer) {");
                         for (final Field field : fields) {
                             if (field.listSizer != null) {
-                                if (field.conditionOperator != null) {
+                                if (field.listSizer.equals("statusResponse")) {
+                                    // Special case where a ZclStatus may be sent, or, a list of results.
+                                    // This checks for a single response
+                                    out.println("        if (deserializer.getRemainingLength() == 1) {");
+                                    out.println(
+                                            "            status = (ZclStatus) deserializer.deserialize(ZclDataType.ZCL_STATUS);");
+                                    out.println("            return;");
+                                    out.println("        }");
+                                } else if (field.conditionOperator != null) {
                                     if (field.conditionOperator == "&&") {
                                         out.println("        if ((" + field.listSizer + " & " + field.condition
                                                 + ") != 0) {");
@@ -1449,16 +1545,27 @@ public class ZclProtocolCodeGenerator {
                 // outputClassJavaDoc(out);
                 out.println("public class " + className + " extends ZclCluster {");
 
-                out.println("    // Cluster ID");
+                out.println("    /**");
+                out.println("     * The ZigBee Cluster Library Cluster ID");
+                out.println("     */");
                 out.println("    public static final int CLUSTER_ID = " + String.format("0x%04X;", cluster.clusterId));
                 out.println();
-                out.println("    // Cluster Name");
+                out.println("    /**");
+                out.println("     * The ZigBee Cluster Library Cluster Name");
+                out.println("     */");
                 out.println("    public static final String CLUSTER_NAME = \"" + cluster.clusterName + "\";");
                 out.println();
 
                 if (cluster.attributes.size() != 0) {
                     out.println("    // Attribute constants");
                     for (final Attribute attribute : cluster.attributes.values()) {
+                        out.println("    /**");
+                        if (attribute.attributeDescription.size() != 0) {
+                            for (String line : attribute.attributeDescription) {
+                                out.println("     * " + line);
+                            }
+                        }
+                        out.println("     */");
                         out.println("    public static final int " + attribute.enumName + " = "
                                 + String.format("0x%04X", attribute.attributeId) + ";");
                     }
@@ -1654,7 +1761,7 @@ public class ZclProtocolCodeGenerator {
         }
     }
 
-    private static void generateFieldEnumeration(Context context, String packageRootPrefix, File sourceRootPath)
+    private static void generateAttributeEnumeration(Context context, String packageRootPrefix, File sourceRootPath)
             throws IOException {
 
         final LinkedList<Profile> profiles = new LinkedList<Profile>(context.profiles.values());
@@ -1669,85 +1776,124 @@ public class ZclProtocolCodeGenerator {
 
                         final String packageRoot = packageRootPrefix + packageZclProtocolCommand + "."
                                 + cluster.clusterType.replace("_", "").toLowerCase();
-                        final String packagePath = getPackagePath(sourceRootPath, packageRoot);
-                        final File packageFile = getPackageFile(packagePath);
 
                         final String className = attribute.nameUpperCamelCase + "Enum";
-                        final PrintWriter out = getClassOut(packageFile, className);
 
-                        out.println("/**");
-                        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-                        out.println(" * All rights reserved. This program and the accompanying materials");
-                        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-                        out.println(" * which accompanies this distribution, and is available at");
-                        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-                        out.println(" */");
-
-                        out.println("package " + packageRoot + ";");
-
-                        out.println();
-                        out.println("import java.util.HashMap;");
-                        out.println("import java.util.Map;");
-
-                        out.println();
-                        outputClassJavaDoc(out, "Enumeration of " + cluster.clusterName + " attribute "
-                                + attribute.attributeLabel + " options.");
-                        out.println("public enum " + className + " {");
-                        boolean first = true;
-                        for (final Integer key : attribute.valueMap.keySet()) {
-                            String value = attribute.valueMap.get(key);
-
-                            if (!first) {
-                                out.println(",");
-                            }
-                            first = false;
-                            // out.println(" /**");
-                            // out.println(" * " + cmd.commandLabel);
-                            // out.println(" * <p>");
-                            // out.println(" * See {@link " + cmd.nameUpperCamelCase + "}");
-                            // out.println(" */");
-                            out.print("    " + CodeGeneratorUtil.labelToEnumerationValue(value)
-                                    + String.format("(0x%04X)", key));
-                        }
-                        out.println(";");
-                        out.println();
-
-                        out.println("    /**");
-                        out.println("     * A mapping between the integer code and its corresponding " + className
-                                + " type to facilitate lookup by value.");
-                        out.println("     */");
-                        out.println("    private static Map<Integer, " + className + "> idMap;");
-
-                        out.println();
-                        out.println("    private final int key;");
-                        out.println();
-                        out.println("    " + className + "(final int key) {");
-                        out.println("        this.key = key;");
-                        // out.println(" this.label = label;");
-                        out.println("    }");
-                        out.println();
-
-                        out.println("    public int getKey() {");
-                        out.println("        return key;");
-                        out.println("    }");
-                        out.println();
-                        out.println("    public static " + className + " getByValue(final int value) {");
-                        out.println("        if (idMap == null) {");
-                        out.println("            idMap = new HashMap<Integer, " + className + ">();");
-                        out.println("            for (" + className + " enumValue : values()) {");
-                        out.println("                idMap.put(enumValue.key, enumValue);");
-                        out.println("            }");
-                        out.println("        }");
-                        out.println("        return idMap.get(value);");
-                        out.println("    }");
-                        out.println("}");
-
-                        out.flush();
-                        out.close();
+                        outputEnum(packageRoot, sourceRootPath, className, attribute.valueMap, cluster.clusterName,
+                                attribute.attributeLabel);
                     }
                 }
             }
         }
+    }
+
+    private static void generateFieldEnumeration(Context context, String packageRootPrefix, File sourceRootPath)
+            throws IOException {
+
+        final LinkedList<Profile> profiles = new LinkedList<Profile>(context.profiles.values());
+        for (final Profile profile : profiles) {
+            final LinkedList<Cluster> clusters = new LinkedList<Cluster>(profile.clusters.values());
+            for (final Cluster cluster : clusters) {
+                final ArrayList<Command> commands = new ArrayList<Command>();
+                commands.addAll(cluster.received.values());
+                commands.addAll(cluster.generated.values());
+
+                if (commands.size() != 0) {
+                    for (final Command command : commands) {
+                        for (final Field field : command.fields.values()) {
+                            if (field.valueMap.isEmpty()) {
+                                continue;
+                            }
+
+                            final String packageRoot = packageRootPrefix + packageZclProtocolCommand + "."
+                                    + cluster.clusterType.replace("_", "").toLowerCase();
+
+                            final String className = field.nameUpperCamelCase + "Enum";
+
+                            outputEnum(packageRoot, sourceRootPath, className, field.valueMap, cluster.clusterName,
+                                    field.fieldLabel);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void outputEnum(String packageRoot, File sourceRootPath, String className,
+            Map<Integer, String> valueMap, String parentName, String label) throws IOException {
+
+        final String packagePath = getPackagePath(sourceRootPath, packageRoot);
+        final File packageFile = getPackageFile(packagePath);
+
+        final PrintWriter out = getClassOut(packageFile, className);
+
+        out.println("/**");
+        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
+        out.println(" * All rights reserved. This program and the accompanying materials");
+        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
+        out.println(" * which accompanies this distribution, and is available at");
+        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
+        out.println(" */");
+
+        out.println("package " + packageRoot + ";");
+
+        out.println();
+        out.println("import java.util.HashMap;");
+        out.println("import java.util.Map;");
+
+        out.println();
+        outputClassJavaDoc(out, "Enumeration of " + parentName + " attribute " + label + " options.");
+        out.println("public enum " + className + " {");
+        boolean first = true;
+        for (final Integer key : valueMap.keySet()) {
+            String value = valueMap.get(key);
+
+            if (!first) {
+                out.println(",");
+            }
+            first = false;
+            // out.println(" /**");
+            // out.println(" * " + cmd.commandLabel);
+            // out.println(" * <p>");
+            // out.println(" * See {@link " + cmd.nameUpperCamelCase + "}");
+            // out.println(" */");
+            out.print("    " + CodeGeneratorUtil.labelToEnumerationValue(value) + String.format("(0x%04X)", key));
+        }
+        out.println(";");
+        out.println();
+
+        out.println("    /**");
+        out.println("     * A mapping between the integer code and its corresponding " + className
+                + " type to facilitate lookup by value.");
+        out.println("     */");
+        out.println("    private static Map<Integer, " + className + "> idMap;");
+
+        out.println();
+        out.println("    private final int key;");
+        out.println();
+        out.println("    " + className + "(final int key) {");
+        out.println("        this.key = key;");
+        // out.println(" this.label = label;");
+        out.println("    }");
+        out.println();
+
+        out.println("    public int getKey() {");
+        out.println("        return key;");
+        out.println("    }");
+        out.println();
+        out.println("    public static " + className + " getByValue(final int value) {");
+        out.println("        if (idMap == null) {");
+        out.println("            idMap = new HashMap<Integer, " + className + ">();");
+        out.println("            for (" + className + " enumValue : values()) {");
+        out.println("                idMap.put(enumValue.key, enumValue);");
+        out.println("            }");
+        out.println("        }");
+        out.println("        return idMap.get(value);");
+        out.println("    }");
+        out.println("}");
+
+        out.flush();
+        out.close();
     }
 
     private static void outputAttributeJavaDoc(PrintWriter out, String type, Attribute attribute,
@@ -1912,7 +2058,6 @@ public class ZclProtocolCodeGenerator {
                     // out.println("import java.util.HashMap;");
 
                     for (final Field field : fields) {
-
                         String packageName;
                         if (field.dataTypeClass.endsWith("Descriptor")) {
                             packageName = packageZdpDescriptors;
@@ -1999,6 +2144,12 @@ public class ZclProtocolCodeGenerator {
 
                         out.println("    /**");
                         out.println("     * " + field.fieldLabel + " command message field.");
+                        if (field.description.size() != 0) {
+                            out.println("     *");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     */");
                         out.println("    private " + getFieldType(field) + " " + field.nameLowerCamelCase + ";");
                         out.println();
@@ -2034,6 +2185,12 @@ public class ZclProtocolCodeGenerator {
                         out.println();
                         out.println("    /**");
                         out.println("     * Gets " + field.fieldLabel + ".");
+                        if (field.description.size() != 0) {
+                            out.println("     * <p>");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     *");
                         out.println("     * @return the " + field.fieldLabel);
                         out.println("     */");
@@ -2043,6 +2200,12 @@ public class ZclProtocolCodeGenerator {
                         out.println();
                         out.println("    /**");
                         out.println("     * Sets " + field.fieldLabel + ".");
+                        if (field.description.size() != 0) {
+                            out.println("     * <p>");
+                            for (String line : field.description) {
+                                out.println("     * " + line);
+                            }
+                        }
                         out.println("     *");
                         out.println("     * @param " + field.nameLowerCamelCase + " the " + field.fieldLabel);
                         out.println("     */");

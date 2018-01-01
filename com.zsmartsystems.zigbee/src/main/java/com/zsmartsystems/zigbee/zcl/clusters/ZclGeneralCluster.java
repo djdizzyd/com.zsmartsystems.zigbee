@@ -57,10 +57,14 @@ import java.util.concurrent.Future;
  * Code is auto-generated. Modifications may be overwritten!
  */
 public class ZclGeneralCluster extends ZclCluster {
-    // Cluster ID
+    /**
+     * The ZigBee Cluster Library Cluster ID
+     */
     public static final int CLUSTER_ID = 0xFFFF;
 
-    // Cluster Name
+    /**
+     * The ZigBee Cluster Library Cluster Name
+     */
     public static final String CLUSTER_NAME = "General";
 
     // Attribute initialisation
@@ -234,13 +238,15 @@ public class ZclGeneralCluster extends ZclCluster {
      * The Configure Reporting Response command is generated in response to a
      * Configure Reporting command.
      *
+     * @param status {@link ZclStatus} Status
      * @param records {@link List<AttributeStatusRecord>} Records
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> configureReportingResponse(List<AttributeStatusRecord> records) {
+    public Future<CommandResult> configureReportingResponse(ZclStatus status, List<AttributeStatusRecord> records) {
         ConfigureReportingResponse command = new ConfigureReportingResponse();
 
         // Set the fields
+        command.setStatus(status);
         command.setRecords(records);
 
         return send(command);
@@ -351,16 +357,16 @@ public class ZclGeneralCluster extends ZclCluster {
      * The discover attributes response command is generated in response to a discover
      * attributes command.
      *
-     * @param commandIdentifier {@link Boolean} Command identifier
-     * @param information {@link List<AttributeInformation>} Information
+     * @param discoveryComplete {@link Boolean} Discovery Complete
+     * @param attributeInformation {@link List<AttributeInformation>} Attribute Information
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> discoverAttributesResponse(Boolean commandIdentifier, List<AttributeInformation> information) {
+    public Future<CommandResult> discoverAttributesResponse(Boolean discoveryComplete, List<AttributeInformation> attributeInformation) {
         DiscoverAttributesResponse command = new DiscoverAttributesResponse();
 
         // Set the fields
-        command.setCommandIdentifier(commandIdentifier);
-        command.setInformation(information);
+        command.setDiscoveryComplete(discoveryComplete);
+        command.setAttributeInformation(attributeInformation);
 
         return send(command);
     }
@@ -393,13 +399,15 @@ public class ZclGeneralCluster extends ZclCluster {
      * attribute record shall contain the identifier and the actual value of the attribute, or
      * element thereof, to be written.
      *
+     * @param status {@link ZclStatus} Status
      * @param attributeSelectors {@link Object} Attribute selectors
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> writeAttributesStructuredCommand(Object attributeSelectors) {
+    public Future<CommandResult> writeAttributesStructuredCommand(ZclStatus status, Object attributeSelectors) {
         WriteAttributesStructuredCommand command = new WriteAttributesStructuredCommand();
 
         // Set the fields
+        command.setStatus(status);
         command.setAttributeSelectors(attributeSelectors);
 
         return send(command);
@@ -411,13 +419,15 @@ public class ZclGeneralCluster extends ZclCluster {
      * The write attributes structured response command is generated in response to a
      * write attributes structured command.
      *
+     * @param status {@link ZclStatus} Status
      * @param records {@link List<WriteAttributeStatusRecord>} Records
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> writeAttributesStructuredResponse(List<WriteAttributeStatusRecord> records) {
+    public Future<CommandResult> writeAttributesStructuredResponse(ZclStatus status, List<WriteAttributeStatusRecord> records) {
         WriteAttributesStructuredResponse command = new WriteAttributesStructuredResponse();
 
         // Set the fields
+        command.setStatus(status);
         command.setRecords(records);
 
         return send(command);
@@ -449,11 +459,11 @@ public class ZclGeneralCluster extends ZclCluster {
      * The Discover Commands Received Response is generated in response to a Discover Commands Received
      * command.
      *
-     * @param discoveryComplete {@link Integer} Discovery complete
+     * @param discoveryComplete {@link Boolean} Discovery complete
      * @param commandIdentifiers {@link List<Integer>} Command identifiers
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> discoverCommandsReceivedResponse(Integer discoveryComplete, List<Integer> commandIdentifiers) {
+    public Future<CommandResult> discoverCommandsReceivedResponse(Boolean discoveryComplete, List<Integer> commandIdentifiers) {
         DiscoverCommandsReceivedResponse command = new DiscoverCommandsReceivedResponse();
 
         // Set the fields
@@ -489,11 +499,11 @@ public class ZclGeneralCluster extends ZclCluster {
      * The Discover Commands Generated Response is generated in response to a Discover Commands Generated
      * command.
      *
-     * @param discoveryComplete {@link Integer} Discovery complete
+     * @param discoveryComplete {@link Boolean} Discovery complete
      * @param commandIdentifiers {@link List<Integer>} Command identifiers
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> discoverCommandsGeneratedResponse(Integer discoveryComplete, List<Integer> commandIdentifiers) {
+    public Future<CommandResult> discoverCommandsGeneratedResponse(Boolean discoveryComplete, List<Integer> commandIdentifiers) {
         DiscoverCommandsGeneratedResponse command = new DiscoverCommandsGeneratedResponse();
 
         // Set the fields
@@ -530,16 +540,16 @@ public class ZclGeneralCluster extends ZclCluster {
      * The Discover Attributes Extended Response command is generated in response to a Discover Attributes
      * Extended command.
      *
-     * @param discoveryComplete {@link Integer} Discovery complete
-     * @param commandIdentifiers {@link List<ExtendedAttributeInformation>} Command identifiers
+     * @param discoveryComplete {@link Boolean} Discovery complete
+     * @param attributeInformation {@link List<ExtendedAttributeInformation>} Attribute Information
      * @return the {@link Future<CommandResult>} command result future
      */
-    public Future<CommandResult> discoverAttributesExtendedResponse(Integer discoveryComplete, List<ExtendedAttributeInformation> commandIdentifiers) {
+    public Future<CommandResult> discoverAttributesExtendedResponse(Boolean discoveryComplete, List<ExtendedAttributeInformation> attributeInformation) {
         DiscoverAttributesExtendedResponse command = new DiscoverAttributesExtendedResponse();
 
         // Set the fields
         command.setDiscoveryComplete(discoveryComplete);
-        command.setCommandIdentifiers(commandIdentifiers);
+        command.setAttributeInformation(attributeInformation);
 
         return send(command);
     }

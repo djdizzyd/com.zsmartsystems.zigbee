@@ -26,6 +26,7 @@ import com.zsmartsystems.zigbee.ExtendedPanId;
  */
 public enum ZclDataType {
     BITMAP_16_BIT("16-bit Bitmap", Integer.class, 0x19, false),
+    BITMAP_32_BIT("32-bit Bitmap", Integer.class, 0x1B, false),
     BITMAP_8_BIT("Bitmap 8-bit", Integer.class, 0x18, false),
     BOOLEAN("Boolean", Boolean.class, 0x10, false),
     BYTE_ARRAY("Byte array", ByteArray.class, 0x00, false),
@@ -50,7 +51,7 @@ public enum ZclDataType {
     N_X_WRITE_ATTRIBUTE_RECORD("N X Write attribute record", WriteAttributeRecord.class, 0x00, false),
     N_X_WRITE_ATTRIBUTE_STATUS_RECORD("N X Write attribute status record", WriteAttributeStatusRecord.class, 0x00, false),
     OCTET_STRING("Octet string", String.class, 0x41, false),
-    SIGNED_16_BIT_INTEGER("Signed 16-bit integer", Integer.class, 0x29, true),
+    SIGNED_16_BIT_INTEGER("Signed 16-bit Integer", Integer.class, 0x29, true),
     SIGNED_32_BIT_INTEGER("Signed 32-bit integer", Integer.class, 0x2B, true),
     SIGNED_8_BIT_INTEGER("Signed 8-bit Integer", Integer.class, 0x28, true),
     UNSIGNED_16_BIT_INTEGER("Unsigned 16-bit integer", Integer.class, 0x21, true),
@@ -61,7 +62,6 @@ public enum ZclDataType {
     ZCL_STATUS("Zcl Status", ZclStatus.class, 0x00, false),
     EXTENDED_PANID("EXTENDED_PANID", ExtendedPanId.class, 0x00, false),
     BINDING_TABLE("Binding Table", BindingTable.class, 0x00, false),
-    BITMAP_32_BIT("Bitmap 32-bit", Integer.class, 0x1B, false),
     CLUSTERID("ClusterId", Integer.class, 0x00, false),
     COMPLEX_DESCRIPTOR("Complex Descriptor", ComplexDescriptor.class, 0x00, false),
     ENDPOINT("Endpoint", Integer.class, 0x00, false),
