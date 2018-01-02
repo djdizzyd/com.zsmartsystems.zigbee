@@ -33,12 +33,8 @@ public enum ZigBeeNodeStatus {
     /**
      * A device has left the network
      */
-    DEVICE_LEFT,
+    DEVICE_LEFT
 
-    /**
-     * A device has updated its network address
-     */
-    NWK_ADDR_UPDATE
     ;
 
 }
