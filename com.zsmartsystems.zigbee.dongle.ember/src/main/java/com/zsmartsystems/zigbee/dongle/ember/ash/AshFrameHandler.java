@@ -109,6 +109,11 @@ public class AshFrameHandler {
     private final EzspFrameHandler frameHandler;
 
     /**
+     * The input stream.
+     */
+    // private final InputStream inputStream;
+
+    /**
      * The port.
      */
     private ZigBeePort port;
