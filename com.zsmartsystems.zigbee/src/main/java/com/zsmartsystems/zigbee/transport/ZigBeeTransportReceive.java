@@ -68,12 +68,4 @@ public interface ZigBeeTransportReceive {
      */
     void nodeStatusUpdate(final ZigBeeNodeStatus deviceStatus, final Integer networkAddress,
             final IeeeAddress ieeeAddress);
-
-    /**
-     * This method gets called any time a message is received for a device with the 64 bit and 16 bit addresses.
-     *
-     * @param networkAddress
-     * @param ieeeAddress
-     */
-    void deviceNetworkAddressUpdate(final Integer networkAddress, final IeeeAddress ieeeAddress);
 }
