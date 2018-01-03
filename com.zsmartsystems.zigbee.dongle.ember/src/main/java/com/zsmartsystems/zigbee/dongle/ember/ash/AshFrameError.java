@@ -20,7 +20,7 @@ public class AshFrameError extends AshFrame {
     /**
      * Constructor to create an ASH frame from a byte buffer.
      *
-     * @param frameBuffer
+     * @param buffer
      */
     public AshFrameError(int[] frameBuffer) {
         this.frameType = FrameType.ERROR;
