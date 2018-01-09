@@ -133,6 +133,38 @@ public class EmberNetworkInitialisation {
                 networkParameters.getRadioChannel());
     }
 
+
+    public void reformNetworkWithNetworkKey(EmberNetworkParameters networkParameters, EmberKeyData networkKey) {
+        // Leave the current network so we can initialise a new network
+        if (checkNetworkJoined()) {
+            doLeaveNetwork();
+        }
+
+        // Read the current network parameters
+        getNetworkParameters();
+
+        // Initialise security
+        setSecurityState(networkKey);
+
+        // And now form the network
+        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
+                networkParameters.getRadioChannel());
+    }
+
+    public void reformNetwork(EmberNetworkParameters networkParameters) {
+        // Leave the current network so we can initialise a new network
+        if (checkNetworkJoined()) {
+            doLeaveNetwork();
+        }
+
+        // Read the current network parameters
+        //getNetworkParameters();
+
+        // And now form the network
+        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
+                networkParameters.getRadioChannel());
+    }
+
     private boolean checkNetworkJoined() {
         // Check if the network is initialised
         EzspNetworkStateRequest networkStateRequest = new EzspNetworkStateRequest();
