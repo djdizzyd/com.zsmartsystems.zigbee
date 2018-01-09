@@ -112,7 +112,6 @@ public class EmberStackConfiguration {
             if (!setConfiguration(configId, configuration.get(configId))) {
                 success = false;
             }
-            try { Thread.sleep(200); } catch (InterruptedException e) { e.printStackTrace(); }
         }
         return success;
     }
