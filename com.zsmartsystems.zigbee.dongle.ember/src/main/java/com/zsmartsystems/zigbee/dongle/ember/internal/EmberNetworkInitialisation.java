@@ -151,6 +151,18 @@ public class EmberNetworkInitialisation {
                 networkParameters.getRadioChannel());
     }
 
+    public void reformNetworkWithoutLeave(EmberNetworkParameters networkParameters, EmberKeyData networkKey) {
+        // Read the current network parameters
+        //getNetworkParameters();
+
+        // Initialise security
+        setSecurityState(networkKey);
+
+        // And now form the network
+        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
+                networkParameters.getRadioChannel());
+    }
+
     public void reformNetwork(EmberNetworkParameters networkParameters) {
         // Leave the current network so we can initialise a new network
         if (checkNetworkJoined()) {
