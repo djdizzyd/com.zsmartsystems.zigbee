@@ -335,7 +335,7 @@ public class ZigBeeNetworkDiscoverer
                         }
 
                         if (success) {
-                            logger.debug("{}: Discovery request {} successfull. Advanced to {}.", nodeNetworkAddress,
+                            logger.debug("{}: Discovery request {} successful. Advanced to {}.", nodeNetworkAddress,
                                     discoveryState, discoveryFlow.get(discoveryState));
                             discoveryState = discoveryFlow.get(discoveryState);
                             if (discoveryState == NodeDiscoveryState.DISCOVERY_END) {
@@ -459,10 +459,8 @@ public class ZigBeeNetworkDiscoverer
                     if (startIndex.equals(ieeeAddressResponse.getStartIndex())) {
                         associatedDevices.addAll(ieeeAddressResponse.getNwkAddrAssocDevList());
 
-                        startIndex += ieeeAddressResponse.getNumAssocDev() == null ? 0
-                                : ieeeAddressResponse.getNumAssocDev();
-                        totalAssociatedDevices = ieeeAddressResponse.getNumAssocDev() == null ? 0
-                                : ieeeAddressResponse.getNumAssocDev();
+                        startIndex += ieeeAddressResponse.getNwkAddrAssocDevList().size();
+                        totalAssociatedDevices = ieeeAddressResponse.getNwkAddrAssocDevList().size();
                     }
                 }
 

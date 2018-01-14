@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.internal.NotificationService;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
-import com.zsmartsystems.zigbee.zdo.ZdoResponseMatcher;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
 import com.zsmartsystems.zigbee.zdo.command.ManagementBindRequest;
 import com.zsmartsystems.zigbee.zdo.command.ManagementBindResponse;
@@ -348,7 +347,7 @@ public class ZigBeeNode implements ZigBeeCommandListener {
                     bindingRequest.setDestinationAddress(new ZigBeeEndpointAddress(networkAddress));
                     bindingRequest.setStartIndex(index);
 
-                    CommandResult result = networkManager.unicast(bindingRequest, new ZdoResponseMatcher()).get();
+                    CommandResult result = networkManager.unicast(bindingRequest, new ManagementBindRequest()).get();
                     if (result.isError()) {
                         return false;
                     }
@@ -356,7 +355,7 @@ public class ZigBeeNode implements ZigBeeCommandListener {
                     ManagementBindResponse response = (ManagementBindResponse) result.getResponse();
                     if (response.getStartIndex() == index) {
                         tableSize = response.getBindingTableEntries();
-                        index += response.getBindingTableListCount();
+                        index += response.getBindingTableList().size();
                         bindingTable.addAll(response.getBindingTableList());
                     }
                 } while (index < tableSize);
@@ -571,7 +570,9 @@ public class ZigBeeNode implements ZigBeeCommandListener {
 
         synchronized (this.routes) {
             this.routes.clear();
-            this.routes.addAll(routes);
+            if (routes != null) {
+                this.routes.addAll(routes);
+            }
         }
 
         return true;

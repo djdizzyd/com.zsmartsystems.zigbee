@@ -47,7 +47,6 @@ import com.zsmartsystems.zigbee.zcl.field.AttributeReportingConfigurationRecord;
 import com.zsmartsystems.zigbee.zcl.field.ReadAttributeStatusRecord;
 import com.zsmartsystems.zigbee.zcl.field.WriteAttributeRecord;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
-import com.zsmartsystems.zigbee.zdo.ZdoResponseMatcher;
 import com.zsmartsystems.zigbee.zdo.command.BindRequest;
 import com.zsmartsystems.zigbee.zdo.command.UnbindRequest;
 
@@ -125,6 +124,13 @@ public abstract class ZclCluster {
     protected Map<Integer, ZclAttribute> attributes = initializeAttributes();
 
     /**
+     * The {@link ZclAttributeNormalizer} is used to normalize attribute data types to ensure that data types are
+     * consistent with the ZCL definition. This ensures that the application can rely on consistent and deterministic
+     * data type when listening to attribute updates.
+     */
+    private final ZclAttributeNormalizer normalizer;
+
+    /**
      * Abstract method called when the cluster starts to initialise the list of attributes defined in this cluster by
      * the cluster library
      *
@@ -138,6 +144,7 @@ public abstract class ZclCluster {
         this.zigbeeEndpoint = zigbeeEndpoint;
         this.clusterId = clusterId;
         this.clusterName = clusterName;
+        this.normalizer = new ZclAttributeNormalizer();
     }
 
     protected Future<CommandResult> send(ZclCommand command) {
@@ -146,7 +153,7 @@ public abstract class ZclCluster {
             command.setCommandDirection(ZclCommandDirection.SERVER_TO_CLIENT);
         }
 
-        return zigbeeManager.unicast(command, new ZclResponseMatcher());
+        return zigbeeManager.unicast(command, new ZclTransactionMatcher());
     }
 
     /**
@@ -184,7 +191,6 @@ public abstract class ZclCluster {
         command.setDestinationAddress(zigbeeEndpoint.getEndpointAddress());
 
         return send(command);
-        // return zigbeeManager.unicast(command, new ZclCustomResponseMatcher());
     }
 
     /**
@@ -199,12 +205,10 @@ public abstract class ZclCluster {
         try {
             result = read(attribute).get();
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.debug("readSync interrupted", e);
+            logger.debug("readSync interrupted");
             return null;
         } catch (ExecutionException e) {
-            e.printStackTrace();
-            logger.debug("readSync exception", e);
+            logger.debug("readSync exception ", e);
             return null;
         }
 
@@ -213,8 +217,9 @@ public abstract class ZclCluster {
         }
 
         ReadAttributesResponse response = result.getResponse();
-        if (response.getRecords().get(0).getStatus() == 0) {
-            return response.getRecords().get(0).getAttributeValue();
+        if (response.getRecords().get(0).getStatus() == ZclStatus.SUCCESS) {
+            ReadAttributeStatusRecord attributeRecord = response.getRecords().get(0);
+            return normalizer.normalizeZclData(attribute.getDataType(), attributeRecord.getAttributeValue());
         }
 
         return null;
@@ -267,7 +272,6 @@ public abstract class ZclCluster {
         command.setDestinationAddress(zigbeeEndpoint.getEndpointAddress());
 
         return send(command);
-        // return zigbeeManager.unicast(command, new ZclResponseMatcher());
     }
 
     /**
@@ -313,7 +317,6 @@ public abstract class ZclCluster {
         command.setDestinationAddress(zigbeeEndpoint.getEndpointAddress());
 
         return send(command);
-        // return zigbeeManager.unicast(command, new ZclResponseMatcher());
     }
 
     /**
@@ -421,7 +424,7 @@ public abstract class ZclCluster {
         command.setDstAddrMode(3); // 64 bit addressing
         command.setDstAddress(address);
         command.setDstEndpoint(endpointId);
-        return zigbeeManager.unicast(command, new ZdoResponseMatcher());
+        return zigbeeManager.unicast(command, new BindRequest());
     }
 
     /**
@@ -449,7 +452,7 @@ public abstract class ZclCluster {
         command.setDstAddrMode(3); // 64 bit addressing
         command.setDstAddress(address);
         command.setDstEndpoint(endpointId);
-        return zigbeeManager.unicast(command, new ZdoResponseMatcher());
+        return zigbeeManager.unicast(command, new UnbindRequest());
     }
 
     /**
@@ -823,10 +826,12 @@ public abstract class ZclCluster {
         for (AttributeReport report : reports) {
             ZclAttribute attribute = attributes.get(report.getAttributeIdentifier());
             if (attribute == null) {
-                return;
+                logger.debug("{}: Unknown attribute {} in cluster {}", zigbeeEndpoint.getEndpointAddress(),
+                        report.getAttributeIdentifier(), clusterId);
+            } else {
+                attribute.updateValue(normalizer.normalizeZclData(attribute.getDataType(), report.getAttributeValue()));
+                notifyAttributeListener(attribute);
             }
-            attribute.updateValue(report.getAttributeValue());
-            notifyAttributeListener(attribute);
         }
     }
 
@@ -837,9 +842,20 @@ public abstract class ZclCluster {
      */
     public void handleAttributeStatus(List<ReadAttributeStatusRecord> records) {
         for (ReadAttributeStatusRecord record : records) {
+            if (record.getStatus() != ZclStatus.SUCCESS) {
+                logger.debug("{}: Error reading attribute {} in cluster {} - {}", zigbeeEndpoint.getEndpointAddress(),
+                        record.getAttributeIdentifier(), clusterId, record.getStatus());
+                continue;
+            }
+
             ZclAttribute attribute = attributes.get(record.getAttributeIdentifier());
-            attribute.updateValue(record.getAttributeValue());
-            notifyAttributeListener(attribute);
+            if (attribute == null) {
+                logger.debug("{}: Unknown attribute {} in cluster {}", zigbeeEndpoint.getEndpointAddress(),
+                        record.getAttributeIdentifier(), clusterId);
+            } else {
+                attribute.updateValue(normalizer.normalizeZclData(attribute.getDataType(), record.getAttributeValue()));
+                notifyAttributeListener(attribute);
+            }
         }
     }
 

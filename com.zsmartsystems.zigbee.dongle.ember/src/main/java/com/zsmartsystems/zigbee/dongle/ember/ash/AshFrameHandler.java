@@ -10,12 +10,12 @@ package com.zsmartsystems.zigbee.dongle.ember.ash;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,12 +88,12 @@ public class AshFrameHandler {
     /**
      * The queue of {@link EzspFrameRequest} frames waiting to be sent
      */
-    private final Queue<EzspFrameRequest> sendQueue = new LinkedList<EzspFrameRequest>();
+    private final Queue<EzspFrameRequest> sendQueue = new ConcurrentLinkedQueue<EzspFrameRequest>();
 
     /**
      * The queue of {@link AshFrameData} frames that we have sent. These are kept in case a resend is required.
      */
-    private final Queue<AshFrameData> sentQueue = new LinkedList<AshFrameData>();
+    private final Queue<AshFrameData> sentQueue = new ConcurrentLinkedQueue<AshFrameData>();
 
     private final Timer timer = new Timer();
     private TimerTask timerTask = null;
@@ -109,11 +109,6 @@ public class AshFrameHandler {
     private final EzspFrameHandler frameHandler;
 
     /**
-     * The input stream.
-     */
-    // private final InputStream inputStream;
-
-    /**
      * The port.
      */
     private ZigBeePort port;
@@ -127,7 +122,7 @@ public class AshFrameHandler {
      * Flag reflecting that parser has been closed and parser parserThread
      * should exit.
      */
-    private boolean close = false;
+    private boolean closeHandler = false;
 
     /**
      * Construct the handler and provide the {@link EzspFrameHandler}
@@ -151,11 +146,11 @@ public class AshFrameHandler {
         parserThread = new Thread("AshFrameHandler") {
             @Override
             public void run() {
-                logger.trace("AshFrameHandler thread started");
+                logger.debug("AshFrameHandler thread started");
 
                 int exceptionCnt = 0;
 
-                while (!close) {
+                while (!closeHandler) {
                     try {
                         int[] packetData = getPacket();
                         if (packetData == null) {
@@ -217,7 +212,6 @@ public class AshFrameHandler {
                                 case RSTACK:
                                     // Stack has been reset!
                                     handleReset((AshFrameRstAck) packet);
-
                                     break;
                                 case ERROR:
                                     responseFrame = new AshFrameRst();
@@ -233,7 +227,6 @@ public class AshFrameHandler {
 
                         // Send the next frame
                         sendNextFrame();
-
                     } catch (final IOException e) {
                         logger.error("AshFrameHandler IOException: ", e);
 
@@ -241,8 +234,10 @@ public class AshFrameHandler {
                             logger.error("AshFrameHandler exception count exceeded");
                             // if (!close) {
                             // frameHandler.error(e);
-                            close = true;
+                            closeHandler = true;
                         }
+                    } catch (final Exception e) {
+                        logger.error("AshFrameHandler Exception: ", e);
                     }
                 }
                 logger.debug("AshFrameHandler exited.");
@@ -258,7 +253,7 @@ public class AshFrameHandler {
         int inputCount = 0;
         boolean inputError = false;
 
-        while (!close) {
+        while (!closeHandler) {
             int val = port.read();
             logger.trace("ASH RX: " + String.format("%02X", val));
             switch (val) {
@@ -335,19 +330,20 @@ public class AshFrameHandler {
      * Set the close flag to true.
      */
     public void setClosing() {
-        this.close = true;
+        this.closeHandler = true;
     }
 
     /**
      * Requests parser thread to shutdown.
      */
     public void close() {
-        this.close = true;
+        setClosing();
         stopRetryTimer();
 
         try {
             parserThread.interrupt();
             parserThread.join();
+            logger.debug("AshFrameHandler close complete.");
         } catch (InterruptedException e) {
             logger.warn("Interrupted in packet parser thread shutdown join.");
         }
@@ -368,7 +364,7 @@ public class AshFrameHandler {
     private synchronized void sendNextFrame() {
         // We're not allowed to send if we're not connected
         if (!stateConnected) {
-            logger.warn("Trying to send when not connected.");
+            logger.debug("Trying to send when not connected.");
             return;
         }
 
@@ -425,11 +421,11 @@ public class AshFrameHandler {
         logger.debug("--> TX ASH frame: {}", ashFrame);
 
         // Send the data
-        for (int b : ashFrame.getOutputBuffer()) {
+        for (int outByte : ashFrame.getOutputBuffer()) {
             // result.append(" ");
             // result.append(String.format("%02X", b));
             // logger.debug("ASH TX: " + String.format("%02X", b));
-            port.write(b);
+            port.write(outByte);
         }
 
         // logger.debug(result.toString());
@@ -446,8 +442,7 @@ public class AshFrameHandler {
      * This method queues a {@link EzspFrameRequest} frame without waiting for a response and
      * no transaction management is performed.
      *
-     * @param request
-     *            {@link EzspFrameRequest}
+     * @param request {@link EzspFrameRequest}
      */
     public void queueFrame(EzspFrameRequest request) {
         sendQueue.add(request);
@@ -484,8 +479,7 @@ public class AshFrameHandler {
      * Acknowledge frames we've sent and removes the from the sent queue.
      * This method is called for each DATA or ACK frame where we have the 'ack' property.
      *
-     * @param ackNum
-     *            the last ack from the NCP
+     * @param ackNum the last ack from the NCP
      */
     private void ackSentQueue(int ackNum) {
         // Handle the timer if it's running
@@ -529,9 +523,6 @@ public class AshFrameHandler {
     }
 
     private class AshRetryTimer extends TimerTask {
-        // private final Logger logger =
-        // LoggerFactory.getLogger(ZWaveTransactionTimer.class);
-
         @Override
         public void run() {
             // Resend the first message in the sentQueue
@@ -561,15 +552,12 @@ public class AshFrameHandler {
     /**
      * Notify any transaction listeners when we receive a response.
      *
-     * @param response
-     *            the response data received
+     * @param response the response data received
      * @return true if the response was processed
      */
     private boolean notifyTransactionComplete(final EzspFrameResponse response) {
         boolean processed = false;
 
-        // logger.debug("NODE {}: notifyTransactionResponse {}",
-        // transaction.getNodeId(), transaction.getTransactionId());
         synchronized (transactionListeners) {
             for (AshListener listener : transactionListeners) {
                 if (listener.transactionEvent(response)) {
@@ -600,8 +588,7 @@ public class AshFrameHandler {
     /**
      * Sends an EZSP request to the NCP without waiting for the response.
      *
-     * @param ezspTransaction
-     *            Request {@link EzspTransaction}
+     * @param ezspTransaction Request {@link EzspTransaction}
      * @return response {@link Future} {@link EzspFrame}
      */
     public Future<EzspFrame> sendEzspRequestAsync(final EzspTransaction ezspTransaction) {
@@ -623,7 +610,7 @@ public class AshFrameHandler {
                         try {
                             wait();
                         } catch (InterruptedException e) {
-                            logger.debug(e.getMessage());
+                            complete = true;
                         }
                     }
                 }
@@ -674,7 +661,8 @@ public class AshFrameHandler {
             futureResponse.get();
             return ezspTransaction;
         } catch (InterruptedException | ExecutionException e) {
-            logger.debug("Error sending EZSP transaction to listeners: ", e);
+            futureResponse.cancel(true);
+            logger.debug("EZSP interrupted in sendRequest: ", e);
         }
 
         return null;

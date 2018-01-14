@@ -26,7 +26,6 @@ import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisRout
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisRouterAnnounceEvent;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisSleepyDeviceAnnounceEvent;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -90,9 +89,8 @@ public class TelegesisEventFactory {
             TelegesisEvent telegesisEvent = (TelegesisEvent) ctor.newInstance();
             telegesisEvent.deserialize(data);
             return telegesisEvent;
-        } catch (SecurityException | NoSuchMethodException | InstantiationException | InvocationTargetException
-               | IllegalAccessException | IllegalArgumentException e) {
-            logger.debug("Error creating instance of EzspFrame", e);
+        } catch (Exception e) {
+            logger.debug("Error creating instance of Telegesis event", e);
         }
 
         return null;
