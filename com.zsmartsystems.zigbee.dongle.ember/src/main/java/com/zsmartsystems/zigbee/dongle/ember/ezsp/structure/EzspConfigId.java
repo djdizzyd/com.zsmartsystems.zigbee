@@ -75,6 +75,12 @@ public enum EzspConfigId {
     EZSP_CONFIG_INDIRECT_TRANSMISSION_TIMEOUT(0x0012),
 
     /**
+     * The maximum amount of time that an end device child can wait between polls. If no poll is heard
+     * within this timeout, then the parent removes the end device from its tables.
+     */
+    EZSP_CONFIG_END_DEVICE_POLL_TIMEOUT(0x0013),
+
+    /**
      * Enables boost power mode and/or the alternate transmitter output.
      */
     EZSP_CONFIG_TX_POWER_MODE(0x0017),
