@@ -53,6 +53,15 @@ public class EzspSerializer {
     }
 
     /**
+     * Adds an int8s_t into the output stream
+     *
+     * @param val
+     */
+    public void serializeInt8S(int val) {
+        buffer[length++] = val & 0xFF;
+    }
+
+    /**
      * Adds a uint16_t into the output stream
      *
      * @param val
