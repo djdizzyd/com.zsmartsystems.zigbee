@@ -82,7 +82,7 @@ public class EzspSetRadioPowerRequest extends EzspFrameRequest {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder(54);
-        builder.append("EzspSetRadioChannelRequest [power=");
+        builder.append("EzspSetRadioPowerRequest [power=");
         builder.append(power);
         builder.append(']');
         return builder.toString();
