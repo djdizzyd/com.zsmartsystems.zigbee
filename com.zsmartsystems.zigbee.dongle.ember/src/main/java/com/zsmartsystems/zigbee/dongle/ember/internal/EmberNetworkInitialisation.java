@@ -130,26 +130,9 @@ public class EmberNetworkInitialisation {
 
         // And now form the network
         doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
-                networkParameters.getRadioChannel());
+                networkParameters.getRadioChannel(), networkParameters.getRadioTxPower());
     }
 
-
-    public void reformNetworkWithNetworkKey(EmberNetworkParameters networkParameters, EmberKeyData networkKey) {
-        // Leave the current network so we can initialise a new network
-        if (checkNetworkJoined()) {
-            doLeaveNetwork();
-        }
-
-        // Read the current network parameters
-        getNetworkParameters();
-
-        // Initialise security
-        setSecurityState(networkKey);
-
-        // And now form the network
-        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
-                networkParameters.getRadioChannel());
-    }
 
     public void reformNetworkWithoutLeave(EmberNetworkParameters networkParameters, EmberKeyData networkKey) {
         // Read the current network parameters
@@ -160,21 +143,7 @@ public class EmberNetworkInitialisation {
 
         // And now form the network
         doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
-                networkParameters.getRadioChannel());
-    }
-
-    public void reformNetwork(EmberNetworkParameters networkParameters) {
-        // Leave the current network so we can initialise a new network
-        if (checkNetworkJoined()) {
-            doLeaveNetwork();
-        }
-
-        // Read the current network parameters
-        //getNetworkParameters();
-
-        // And now form the network
-        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
-                networkParameters.getRadioChannel());
+                networkParameters.getRadioChannel(), networkParameters.getRadioTxPower());
     }
 
     private boolean checkNetworkJoined() {
@@ -351,6 +320,36 @@ public class EmberNetworkInitialisation {
         networkParameters.setExtendedPanId(extendedPanId.getValue());
         networkParameters.setPanId(panId);
         networkParameters.setRadioChannel(channel);
+        EzspFormNetworkRequest formNetwork = new EzspFormNetworkRequest();
+        formNetwork.setParameters(networkParameters);
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(formNetwork,
+                EzspFormNetworkResponse.class);
+        ashHandler.sendEzspTransaction(transaction);
+        EzspFormNetworkResponse formNetworkResponse = (EzspFormNetworkResponse) transaction.getResponse();
+        logger.debug(formNetworkResponse.toString());
+        if (formNetworkResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
+            logger.debug("Error during retrieval of network parameters: {}", formNetworkResponse);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Forms the ZigBee network
+     *
+     * @param panId the panId as int
+     * @param extendedPanId the extended pan ID as {@link ExtendedPanId}
+     * @param channel the radio channel to use
+     * @return true if the network was formed successfully
+     */
+    private boolean doFormNetwork(int panId, ExtendedPanId extendedPanId, int channel, int radioTxPower) {
+        EmberNetworkParameters networkParameters = new EmberNetworkParameters();
+        networkParameters.setJoinMethod(EmberJoinMethod.EMBER_USE_MAC_ASSOCIATION);
+        networkParameters.setExtendedPanId(extendedPanId.getValue());
+        networkParameters.setPanId(panId);
+        networkParameters.setRadioChannel(channel);
+        networkParameters.setRadioTxPower(radioTxPower);
         EzspFormNetworkRequest formNetwork = new EzspFormNetworkRequest();
         formNetwork.setParameters(networkParameters);
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(formNetwork,
