@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,14 +20,14 @@ public abstract class ZigBeeAddress implements Comparable<ZigBeeAddress> {
     /**
      * Gets the network address for this address.
      *
-     * @return network address as {@link int}
+     * @return network address as int
      */
     public abstract int getAddress();
 
     /**
      * Sets the network address for this address
      *
-     * @param address the network address as {@link int}
+     * @param address the network address as int
      */
     public abstract void setAddress(final int address);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,7 +25,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspIdConflictHandler extends EzspFrameResponse {
-    public static int FRAME_ID = 0x7C;
+    public static final int FRAME_ID = 0x7C;
 
     /**
      * The short id for which a conflict was detected.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -64,6 +64,7 @@ import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_RPC_ERRO
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_TEST_LOOPBACK_SRSP;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_VERSION_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_GET_DEVICE_INFO_RESPONSE;
+import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_LED_CONTROL_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_SET_CHANNELS_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_SET_PANID_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_MSG_CB_REGISTER_SRSP;
@@ -299,6 +300,8 @@ public class ZToolPacketStream implements IIntArrayInputStream {
                 return new UTIL_SET_CHANNELS_RESPONSE(payload);
             case ZToolCMD.UTIL_GET_DEVICE_INFO_RESPONSE:
                 return new UTIL_GET_DEVICE_INFO_RESPONSE(payload);
+            case ZToolCMD.UTIL_LED_CONTROL_RESPONSE:
+                return new UTIL_LED_CONTROL_RESPONSE(payload);
             default:
                 // logger.warn("Unknown command ID: 0x" + Integer.toHexString(cmdId.get16BitValue()));
                 return new ZToolPacket(cmdId, payload);

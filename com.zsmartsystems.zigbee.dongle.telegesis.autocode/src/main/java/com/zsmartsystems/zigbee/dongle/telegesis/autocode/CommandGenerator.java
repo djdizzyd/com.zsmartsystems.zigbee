@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2019 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.dongle.telegesis.autocode;
 
 import java.io.File;
@@ -1085,12 +1092,14 @@ public class CommandGenerator extends ClassGenerator {
             case "Int16":
             case "Integer":
                 return "Integer";
+            case "Int32":
+                return "Long";
             case "Boolean":
                 return "Boolean";
             case "String":
                 return "String";
             case "ZigBeeKey":
-                addImport(zigbeePackage + ".ZigBeeKey");
+                addImport(zigbeePackage + ".security.ZigBeeKey");
                 return "ZigBeeKey";
             case "IeeeAddress":
                 addImport(zigbeePackage + ".IeeeAddress");

@@ -1,4 +1,4 @@
-# Home Automation [0x0104]
+# ZigBee Home Automation [0x0104]
 
 Home Automation ZigBee cluster library protocol description is used to code generate cluster specific command serialization classes.
 
@@ -343,6 +343,7 @@ Extended command.
 |0x0012 |DeviceEnabled        |Boolean                    |Read/Write |Mandatory |          |
 |0x0013 |AlarmMask            |8-bit bitmap               |Read/Write |Mandatory |          |
 |0x0014 |DisableLocalConfig   |8-bit bitmap               |Read/Write |Mandatory |          |
+|0x4000 |SWBuildID            |Character string           |Read Only  |Optional  |          |
 
 #### ZCLVersion Attribute
 The ZCLVersion attribute is 8 bits in length and specifies the version number of
@@ -381,6 +382,18 @@ available to the device. Bits b0–b6 of this attribute represent the primary po
 source of the device and bit b7 indicates whether the device has a secondary power
 source in the form of a battery backup. 
 
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Unknown                   |
+|0x0001 |Mains Single Phase        |
+|0x0002 |Mains Three Phase         |
+|0x0003 |Battery                   |
+|0x0004 |DC Source                 |
+|0x0005 |Emergency Mains Constant  |
+|0x0006 |Emergency Mains Changeover|
+
+
+
 #### LocationDescription Attribute
 The LocationDescription attribute is a maximum of 16 bytes in length and describes
 the physical location of the device as a ZigBee character string. 
@@ -388,6 +401,15 @@ the physical location of the device as a ZigBee character string.
 #### PhysicalEnvironment Attribute
 The PhysicalEnvironment attribute is 8 bits in length and specifies the type of
 physical environment in which the device will operate. 
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Unknown                   |
+|0x0001 |Atrium                    |
+|0x0002 |Bar                       |
+|0x0003 |Courtyard                 |
+|0x0004 |Bathroom                  |
+|0x0005 |edroom                    |
 
 #### DeviceEnabled Attribute
 The DeviceEnabled attribute is a boolean and specifies whether the device is enabled
@@ -405,10 +427,17 @@ The intention of this attribute is to allow disabling of any local configuration
 user interface, for example to prevent reset or binding buttons being activated by
 unauthorised persons in a public building.
 
+#### SWBuildID Attribute
+The SWBuildIDattribute represents a detailed, manufacturer-specific reference to the version of the software.
+
 
 ### Received
 
 #### Reset to Factory Defaults Command [0x00]
+On receipt of this command, the device resets all the attributes of all its clusters
+to their factory defaults. Note that ZigBee networking functionality,bindings, groups
+or other persistent data are not affected by this command
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 
@@ -893,9 +922,28 @@ Attributes and commands for switching devices between ‘On’ and ‘Off’ sta
 |Id     |Name                 |Type                       |Access     |Implement |Reporting |
 |-------|---------------------|---------------------------|-----------|----------|----------|
 |0x0000 |OnOff                |Boolean                    |Read Only  |Mandatory |Mandatory |
+|0x4000 |GlobalSceneControl   |Boolean                    |Read       |          |          |
+|0x4001 |OffTime              |Unsigned 16-bit integer    |Read/Write |          |          |
+|0x4002 |OffWaitTime          |Unsigned 16-bit integer    |Read/Write |          |          |
+
 
 #### OnOff Attribute
 The OnOff attribute has the following values: 0 = Off, 1 = On
+
+#### GlobalSceneControl Attribute
+In order to support the use case where the user gets back the last setting of the devices (e.g. level settings for lamps), a global scene is introduced which is stored when the devices are turned off and recalled when the devices are turned on. The global scene is defined as the scene that is stored with group identifier 0 and scene identifier 0.
+
+The GlobalSceneControl attribute is defined in order to prevent a second off command storing the all-devices-off situation as a global scene, and to prevent a second on command destroying the current settings by going back to the global scene.
+
+The GlobalSceneControl attribute SHALL be set to TRUE after the reception of a command which causes the OnOff attribute to be set to TRUE, such as a standard On command, a Move to level (with on/off) command, a Recall scene command or a On with recall global scene command.
+
+The GlobalSceneControl attribute is set to FALSE after reception of a Off with effect command.
+
+#### OnTime Attribute
+The OnTime attribute specifies the length of time (in 1/10ths second) that the “on” state SHALL be maintained before automatically transitioning to the “off” state when using the On with timed off command. If this attribute is set to 0x0000 or 0xffff, the device SHALL remain in its current state.
+
+#### OffWaitTime Attribute
+The OffWaitTime attribute specifies the length of time (in 1/10ths second) that the “off” state SHALL be guarded to prevent an on command turning the device back to its “on” state (e.g., when leaving a room, the lights are turned off but an occupancy sensor detects the leaving person and attempts to turn the lights back on). If this attribute is set to 0x0000, the device SHALL remain in its current state.
 
 ### Received
 
@@ -911,12 +959,98 @@ The OnOff attribute has the following values: 0 = Off, 1 = On
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 
+#### Off With Effect Command [0x40]
+The Off With Effect command allows devices to be turned off using enhanced ways of fading.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Effect Identifier          |Unsigned 8-bit integer     |
+|Effect Variant             |Unsigned 8-bit integer     |
+
+##### Effect Identifier Field
+The Effect Identifier field is 8-bits in length and specifies the fading effect to use when
+switching the device off.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Delayed All Off           |
+|0x0001 |Dying Light               |
+
+##### Effect Variant Field
+The Effect Variant field is 8-bits in length and is used to indicate which variant of the
+effect, indicated in the Effect Identifier field, SHOULD be triggered. If a device does not
+support the given variant, it SHALL use the default variant. This field is dependent on the
+value of the Effect Identifier field.
+
+
+#### On With Recall Global Scene Command [0x41]
+
+The On With Recall Global Scene command allows the recall of the settings when the device was turned off.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+
+#### On With Timed Off Command [0x42]
+
+The On With Timed Off command allows devices to be turned on for a specific duration
+with a guarded off duration so that SHOULD the device be subsequently switched off,
+further On With Timed Off commands, received during this time, are prevented from
+turning the devices back on. Note that the device can be periodically re-kicked by
+subsequent On With Timed Off commands, e.g., from an on/off sensor.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|On Off Control             |Unsigned 8-bit integer     |
+|On Time                    |Unsigned 16-bit integer    |
+|Off Wait Time              |Unsigned 16-bit integer    |
+
+##### On Off Control Field
+The On/Off Control field is 8-bits in length and contains information on how the device is to be operated.
+
+##### On Time Field
+The On Time field is 16 bits in length and specifies the length of time (in 1/10ths second)
+that the device is to remain  “on”,  i.e., with its OnOffattribute equal to 0x01,
+before automatically turning “off”. This field SHALL be specified in the range 0x0000–0xfffe.
+
+##### Off Time Wait Field
+The Off Wait Time field is 16 bits in length and specifies the length of time (in 1/10ths second)
+that the device SHALL remain “off”, i.e., with its OnOffattribute equal to 0x00, and guarded to
+prevent an on command turning the device back “on”. This field SHALL be specified in the range 0x0000–0xfffe.
+
 ### Generated
 
 No cluster specific commands.
 
 ## On/off Switch Configuration [0x0007]
 Attributes and commands for configuring On/Off switching devices
+
+### Attributes
+
+|Id     |Name                 |Type                       |Access     |Implement |Reporting |
+|-------|---------------------|---------------------------|-----------|----------|----------|
+|0x0000 |SwitchType           |8-bit enumeration          |Read Only  |Mandatory |          |
+|0x0010 |SwitchActions        |8-bit enumeration          |Read Write |Mandatory |          |
+
+#### SwitchType Attribute
+The SwitchTypeattribute  specifies  the  basic  functionality  of  the  On/Off  switching  device.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Toggle                    |
+|0x0001 |Momentary                 |
+|0x0002 |Multifunction             |
+
+#### SwitchActions Attribute
+
+The SwitchActions attribute is 8 bits in length and specifies the commands of the On/Off cluster
+to be generated when the switch moves between its two states
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |On                        |
+|0x0001 |Off                       |
+|0x0002 |Toggle                    |
+
 
 ### Received
 
@@ -1095,12 +1229,24 @@ If alarm logging is not implemented this attribute shall always take the value
 ### Generated
 
 #### Alarm Command [0x00]
+The alarm command signals an alarm situation on the sending device.
+
+An alarm command is generated when a  cluster  which has alarm functionality detects an alarm
+condition, e.g., an attribute has taken on a value that is outside a ‘safe’ range. The details
+are given by individual cluster specifications.
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Alarm code                 |8-bit enumeration          |
 |Cluster identifier         |Unsigned 16-bit integer    |
 
 #### Get Alarm Response Command [0x01]
+If there is at least one alarm record in the alarm table then the status field is set to SUCCESS.
+The alarm code, cluster identifier and time stamp fields SHALL all be present and SHALL take their
+values from the item in the alarm table that they are reporting.If there  are  no more  alarms logged
+in the  alarm table  then the  status field is set  to NOT_FOUND  and the alarm code, cluster
+identifier and time stamp fields SHALL be omitted.
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Status                     |8-bit enumeration          |
@@ -1450,6 +1596,137 @@ No cluster specific commands.
 
 ## Binary Input (Basic) [0x000f]
 
+The Binary Input (Basic) cluster provides an interface for reading the value of a binary measurement and accessing various characteristics of that measurement. The cluster is typically used to implement a sensor that measures a two-state physical quantity.
+
+### Attributes
+|Id     |Name                  |Type                       |Access     |Implement |Reporting |
+|-------|----------------------|---------------------------|-----------|----------|----------|
+|0x0004 |ActiveText            |Character String           |Read/Write |Optional  |          |
+|0x001C |Description           |Character string           |Read/Write |Optional  |          |
+|0x002E |InactiveText          |Character string           |Read/Write |Optional  |          |
+|0x0051 |OutOfService          |Boolean                    |Read/Write |Mandatory |          |
+|0x0054 |Polarity              |8-bit Enumeration          |Read only  |Optional  |          |
+|0x0055 |PresentValue          |Boolean                    |Read/Write |Mandatory |Mandatory |
+|0x0067 |Reliability           |8-bit enumeration          |Read/Write |Optional  |          |
+|0x006F |StatusFlags           |8-bit bitmap               |Read only  |Mandatory |Mandatory |
+|0x0100 |ApplicationType       |Signed 32-bit integer      |Read only  |Optional  |          |
+
+#### ActiveText Attribute
+This attribute, of type Character string, MAY be used to hold a human readable description of the ACTIVE state of a binary PresentValue. For example, for a Binary Input cluster, if the physical input is a switch contact, then the ActiveText attribute might be assigned a value such as “Fan 1 On”. If either the ActiveText attribute or the InactiveText attribute are present, then both of them SHALL be present.
+
+The character set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters, which SHALL be printable but are otherwise unrestricted.
+
+
+#### Description Attribute
+The Description attribute, of type Character string, MAY be used to hold a description
+of the usage of the input, output or value, as appropriate to the cluster. The character
+set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters,
+which SHALL be printable but are otherwise unrestricted.
+
+#### InactiveText Attribute
+This attribute, of type Character string, MAY be used to hold a human readable description of the INACTIVE state of a binary PresentValue. For example, for a Binary Input cluster, if the physical input is a switch contact, then the InactiveText attribute might be assigned a value such as “Fan 1 Off”. If either the InactiveText attribute or the ActiveText attribute are present, then both of them SHALL be present.
+
+The character set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters, which SHALL be printable but are otherwise unrestricted.
+
+#### OutOfService Attribute
+The OutOfService attribute, of type Boolean, indicates whether (TRUE) or not (FALSE) the physical
+input, output or value that the cluster represents is not in service. For an Input cluster, when
+OutOfService is TRUE the PresentValue attribute is decoupled from the physical input and will
+not track changes to the  physical input. For an Output cluster, when OutOfService is TRUE the
+PresentValue attribute is decoupled from the physical output, so changes to PresentValue will not
+affect the physical output. For a Value cluster, when OutOfService is TRUE the PresentValue attribute
+MAY be written to freely by software local to the device that the cluster resides on.
+
+#### Polarity Attribute
+This attribute, of type enumeration, indicates the relationship between the physical state of the input (or output as appropriate for the cluster) and the logical state represented by a binary PresentValue attribute, when OutOfService is FALSE. If the Polarity attribute is NORMAL (0), then the ACTIVE (1) state of the PresentValue attribute is also the ACTIVE or ON state of the physical input (or output). If the Polarity attribute is REVERSE (1), then the ACTIVE (1) state of the PresentValue attribute is the INACTIVE or OFF state of the physical input (or output).
+
+Thus, when OutOfService is FALSE, for a constant physical input state a change in the Polarity attribute SHALL produce a change in the PresentValue attribute. If OutOfService is TRUE, then the Polarity attribute SHALL have no effect on the PresentValue attribute.
+
+#### PresentValue Attribute
+The PresentValue attribute indicates the current value of the input, output or
+value, as appropriate  for the cluster. For Analog clusters it is of type single precision, for Binary
+clusters it is of type  Boolean, and for multistate clusters it is of type Unsigned 16-bit integer. The
+PresentValue attribute of an input cluster SHALL be writable when OutOfService is TRUE. When the PriorityArray
+attribute is implemented, writing to PresentValue SHALL be equivalent to writing to element 16 of PriorityArray,
+i.e., with a priority of 16.
+
+#### Reliability Attribute
+The Reliability attribute, of type 8-bit enumeration, provides an indication of whether
+the PresentValueor the operation of the physical input, output or value in question (as
+appropriate for the cluster) is “reliable” as far as can be determined and, if not, why
+not. The Reliability attribute MAY have any of the following values:
+
+NO-FAULT-DETECTED (0)
+OVER-RANGE (2)
+UNDER-RANGE (3)
+OPEN-LOOP (4)
+SHORTED-LOOP (5)
+UNRELIABLE-OTHER (7)
+PROCESS-ERROR (8)
+MULTI-STATE-FAULT (9)
+CONFIGURATION-ERROR (10)
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |NO-FAULT-DETECTED         |
+|0x0002 |OVER-RANGE                |
+|0x0003 |UNDER-RANGE               |
+|0x0004 |OPEN-LOOP                 |
+|0x0005 |SHORTED-LOOP              |
+|0x0007 |UNRELIABLE-OTHER          |
+|0x0008 |PROCESS-ERROR             |
+|0x0009 |MULTI-STATE-FAULT         |
+|0x000A |CONFIGURATION-ERROR       |
+
+#### StatusFlags Attribute
+This attribute, of type bitmap, represents four Boolean flags that indicate the general “health”
+of the analog sensor. Three of the flags are associated with the values of other optional attributes
+of this cluster. A more detailed status could be determined by reading the optional attributes (if
+supported) that are linked to these flags. The relationship between individual flags is not defined. 
+
+The four flags are Bit 0 = IN_ALARM, Bit 1 = FAULT, Bit 2 = OVERRIDDEN, Bit 3 = OUT OF SERVICE
+
+where:
+
+IN_ALARM -Logical FALSE (0) if the EventStateattribute has a value of NORMAL, otherwise logical TRUE (1).
+This bit is always 0 unless the cluster implementing the EventState attribute is implemented on the same
+endpoint.
+
+FAULT -Logical TRUE (1) if the Reliability attribute is present and does not have a value of NO FAULT DETECTED,
+otherwise logical FALSE (0).
+
+OVERRIDDEN -Logical TRUE (1) if the cluster has been overridden by some  mechanism local to the device. 
+Otherwise, the value is logical FALSE (0). In this context, for an input cluster, “overridden” is taken
+to mean that the PresentValue and Reliability(optional) attributes are no longer tracking changes to the
+physical input. For an Output cluster, “overridden” is taken to mean that the physical output is no longer
+tracking changes to the PresentValue attribute and the Reliability attribute is no longer a reflection of
+the physical output. For a Value cluster, “overridden” is taken to mean that the PresentValue attribute is
+not writeable.
+
+OUT OF SERVICE -Logical TRUE (1) if the OutOfService attribute has a value of TRUE, otherwise
+logical FALSE (0).
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0001 |IN_ALARM                  |
+|0x0002 |FAULT                     |
+|0x0004 |OVERRIDDEN                |
+|0x0008 |OUT OF SERVICE            |
+
+
+#### ApplicationType Attribute
+The ApplicationType attribute is an unsigned 32 bit integer that indicates the specific
+application usage for this cluster. (Note: This attribute has no BACnet equivalent).
+ApplicationType is subdivided into Group, Type and an Index number, as follows.
+
+Group = Bits 24-31 An indication of the cluster this attribute is part of.
+
+Type = Bits 16-23 For Analog clusters, the physical quantity that the Present Value attribute
+of the cluster represents. For Binary and Multistate clusters, the application usage domain.
+
+Index = Bits 0-15The specific application usage of the cluster. 
+
+
 ### Received
 
 No cluster specific commands.
@@ -1478,6 +1755,136 @@ No cluster specific commands.
 
 ## Multistate Input (Basic) [0x0012]
 
+The Multistate Input (Basic) cluster provides an interface for reading the value of a
+multistate measurement and accessing various characteristics of that measurement. The
+cluster is typically used to implement a sensor that measures a physical quantity that
+can take on one of a number of discrete states.
+
+### Attributes
+|Id     |Name                  |Type                       |Access     |Implement |Reporting |
+|-------|----------------------|---------------------------|-----------|----------|----------|
+|0x000E |StateText             |Character string           |Read/Write |Optional  |          |
+|0x001C |Description           |Character string           |Read/Write |Optional  |          |
+|0x004A |NumberOfStates        |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0051 |OutOfService          |Boolean                    |Read/Write |Mandatory |          |
+|0x0055 |PresentValue          |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0067 |Reliability           |8-bit enumeration          |Read/Write |Optional  |          |
+|0x006F |StatusFlags           |8-bit bitmap               |Read only  |Mandatory |          |
+|0x0100 |ApplicationType       |Signed 32-bit integer      |Read only  |Optional  |          |
+
+#### StateText Attribute
+This  attribute, of type Array of Character strings, holds descriptions of all possible
+states of a multistate PresentValue.  The number of descriptions matches the number of states
+defined in the NumberOfStates property. The PresentValue, interpreted as an integer, serves as
+an index into the array. If the size of this array is changed, the NumberOfStates property SHALL
+also be changed to the same value. The character set used SHALL be ASCII, and the attribute
+SHALL contain a maximum of 16 characters, which SHALL be printable but are otherwise unrestricted.
+
+#### Description Attribute
+The Description attribute, of type Character string, MAY be used to hold a description
+of the usage of the input, output or value, as appropriate to the cluster. The character
+set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters,
+which SHALL be printable but are otherwise unrestricted.
+
+#### NumberOfStates Attribute
+This attribute, of type Unsigned 16-bit integer, defines the number of states that a multistate
+PresentValue MAY have. The NumberOfStates property SHALL always have a value greater than zero. 
+If the value of this property is changed, the size of the StateText array, if present, SHALL also
+be changed to the same value. The states are numbered consecutively, starting with 1.
+
+#### OutOfService Attribute
+The OutOfService attribute, of type Boolean, indicates whether (TRUE) or not (FALSE) the physical
+input, output or value that the cluster represents is not in service. For an Input cluster, when
+OutOfService is TRUE the PresentValue attribute is decoupled from the physical input and  will
+not track changes to the  physical input. For an Output cluster, when OutOfService is TRUE the
+PresentValue attribute is decoupled from the physical output, so changes to PresentValue will not
+affect the physical output. For a Value cluster, when OutOfService is TRUE the PresentValue attribute
+MAY be written to freely by software local to the device that the cluster resides on.
+
+#### PresentValue Attribute
+The PresentValue attribute indicates the current value of the input, output or
+value, as appropriate  for the cluster. For Analog clusters it is of type single precision, for Binary
+clusters it is of type  Boolean, and for multistate clusters it is of type Unsigned 16-bit integer. The
+PresentValue attribute of an input cluster SHALL be writable when OutOfService is TRUE. When the PriorityArray
+attribute is implemented, writing to PresentValue SHALL be equivalent to writing to element 16 of PriorityArray,
+i.e., with a priority of 16.
+
+#### Reliability Attribute
+The Reliability attribute, of type 8-bit enumeration, provides an indication of whether
+the PresentValueor the operation of the physical input, output or value in question (as
+appropriate for the cluster) is “reliable” as far as can be determined and, if not, why
+not. The Reliability attribute MAY have any of the following values:
+
+NO-FAULT-DETECTED (0)
+OVER-RANGE (2)
+UNDER-RANGE (3)
+OPEN-LOOP (4)
+SHORTED-LOOP (5)
+UNRELIABLE-OTHER (7)
+PROCESS-ERROR (8)
+MULTI-STATE-FAULT (9)
+CONFIGURATION-ERROR (10)
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |NO-FAULT-DETECTED         |
+|0x0002 |OVER-RANGE                |
+|0x0003 |UNDER-RANGE               |
+|0x0004 |OPEN-LOOP                 |
+|0x0005 |SHORTED-LOOP              |
+|0x0007 |UNRELIABLE-OTHER          |
+|0x0008 |PROCESS-ERROR             |
+|0x0009 |MULTI-STATE-FAULT         |
+|0x000A |CONFIGURATION-ERROR       |
+
+#### StatusFlags Attribute
+This attribute, of type bitmap, represents four Boolean flags that indicate the general “health”
+of the analog sensor. Three of the flags are associated with the values of other optional attributes
+of this cluster. A more detailed status could be determined by reading the optional attributes (if
+supported) that are linked to these flags. The relationship between individual flags is not defined. 
+
+The four flags are Bit 0 = IN_ALARM, Bit 1 = FAULT, Bit 2 = OVERRIDDEN, Bit 3 = OUT OF SERVICE
+
+where:
+
+IN_ALARM -Logical FALSE (0) if the EventStateattribute has a value of NORMAL, otherwise logical TRUE (1).
+This bit is always 0 unless the cluster implementing the EventState attribute is implemented on the same
+endpoint.
+
+FAULT -Logical TRUE (1) if the Reliability attribute is present and does not have a value of NO FAULT DETECTED,
+otherwise logical FALSE (0).
+
+OVERRIDDEN -Logical TRUE (1) if the cluster has been overridden by some  mechanism local to the device. 
+Otherwise, the value is logical FALSE (0). In this context, for an input cluster, “overridden” is taken
+to mean that the PresentValue and Reliability(optional) attributes are no longer tracking changes to the
+physical input. For an Output cluster, “overridden” is taken to mean that the physical output is no longer
+tracking changes to the PresentValue attribute and the Reliability attribute is no longer a reflection of
+the physical output. For a Value cluster, “overridden” is taken to mean that the PresentValue attribute is
+not writeable.
+
+OUT OF SERVICE -Logical TRUE (1) if the OutOfService attribute has a value of TRUE, otherwise
+logical FALSE (0).
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0001 |IN_ALARM                  |
+|0x0002 |FAULT                     |
+|0x0004 |OVERRIDDEN                |
+|0x0008 |OUT OF SERVICE            |
+
+
+#### ApplicationType Attribute
+The ApplicationType attribute is an unsigned 32 bit integer that indicates the specific
+application usage for this cluster. (Note: This attribute has no BACnet equivalent).
+ApplicationType is subdivided into Group, Type and an Index number, as follows.
+
+Group = Bits 24-31 An indication of the cluster this attribute is part of.
+
+Type = Bits 16-23 For Analog clusters, the physical quantity that the Present Value attribute
+of the cluster represents. For Binary and Multistate clusters, the application usage domain.
+
+Index = Bits 0-15The specific application usage of the cluster. 
+
 ### Received
 
 No cluster specific commands.
@@ -1487,6 +1894,139 @@ No cluster specific commands.
 No cluster specific commands.
 
 ## Multistate Output (Basic) [0x0013]
+The Multistate Output (Basic) cluster provides an interface for setting the value of an output
+that can take one of a number of discrete values, and accessing characteristics of that value. 
+
+### Attributes
+|Id     |Name                  |Type                       |Access     |Implement |Reporting |
+|-------|----------------------|---------------------------|-----------|----------|----------|
+|0x000E |StateText             |Character string           |Read/Write |Optional  |          |
+|0x001C |Description           |Character string           |Read/Write |Optional  |          |
+|0x004A |NumberOfStates        |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0051 |OutOfService          |Boolean                    |Read/Write |Mandatory |          |
+|0x0055 |PresentValue          |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0067 |Reliability           |8-bit enumeration          |Read/Write |Optional  |          |
+|0x0068 |RelinquishDefault     |Unsigned 16-bit Integer    |Read/Write |Optional  |          |
+|0x006F |StatusFlags           |8-bit bitmap               |Read only  |Mandatory |          |
+|0x0100 |ApplicationType       |Signed 32-bit integer      |Read only  |Optional  |          |
+
+#### StateText Attribute
+This  attribute, of type Array of Character strings, holds descriptions of all possible
+states of a multistate PresentValue.  The number of descriptions matches the number of states
+defined in the NumberOfStates property. The PresentValue, interpreted as an integer, serves as
+an index into the array. If the size of this array is changed, the NumberOfStates property SHALL
+also be changed to the same value. The character set used SHALL be ASCII, and the attribute
+SHALL contain a maximum of 16 characters, which SHALL be printable but are otherwise unrestricted.
+
+#### Description Attribute
+The Description attribute, of type Character string, MAY be used to hold a description
+of the usage of the input, output or value, as appropriate to the cluster. The character
+set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters,
+which SHALL be printable but are otherwise unrestricted.
+
+#### NumberOfStates Attribute
+This attribute, of type Unsigned 16-bit integer, defines the number of states that a multistate
+PresentValue MAY have. The NumberOfStates property SHALL always have a value greater than zero. 
+If the value of this property is changed, the size of the StateText array, if present, SHALL also
+be changed to the same value. The states are numbered consecutively, starting with 1.
+
+#### OutOfService Attribute
+The OutOfService attribute, of type Boolean, indicates whether (TRUE) or not (FALSE) the physical
+input, output or value that the cluster represents is not in service. For an Input cluster, when
+OutOfService is TRUE the PresentValue attribute is decoupled from the physical input and  will
+not track changes to the  physical input. For an Output cluster, when OutOfService is TRUE the
+PresentValue attribute is decoupled from the physical output, so changes to PresentValue will not
+affect the physical output. For a Value cluster, when OutOfService is TRUE the PresentValue attribute
+MAY be written to freely by software local to the device that the cluster resides on.
+
+#### PresentValue Attribute
+The PresentValue attribute indicates the current value of the input, output or
+value, as appropriate  for the cluster. For Analog clusters it is of type single precision, for Binary
+clusters it is of type  Boolean, and for multistate clusters it is of type Unsigned 16-bit integer. The
+PresentValue attribute of an input cluster SHALL be writable when OutOfService is TRUE. When the PriorityArray
+attribute is implemented, writing to PresentValue SHALL be equivalent to writing to element 16 of PriorityArray,
+i.e., with a priority of 16.
+
+#### Reliability Attribute
+The Reliability attribute, of type 8-bit enumeration, provides an indication of whether
+the PresentValueor the operation of the physical input, output or value in question (as
+appropriate for the cluster) is “reliable” as far as can be determined and, if not, why
+not. The Reliability attribute MAY have any of the following values:
+
+NO-FAULT-DETECTED (0)
+OVER-RANGE (2)
+UNDER-RANGE (3)
+OPEN-LOOP (4)
+SHORTED-LOOP (5)
+UNRELIABLE-OTHER (7)
+PROCESS-ERROR (8)
+MULTI-STATE-FAULT (9)
+CONFIGURATION-ERROR (10)
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |NO-FAULT-DETECTED         |
+|0x0002 |OVER-RANGE                |
+|0x0003 |UNDER-RANGE               |
+|0x0004 |OPEN-LOOP                 |
+|0x0005 |SHORTED-LOOP              |
+|0x0007 |UNRELIABLE-OTHER          |
+|0x0008 |PROCESS-ERROR             |
+|0x0009 |MULTI-STATE-FAULT         |
+|0x000A |CONFIGURATION-ERROR       |
+
+#### RelinquishDefault Attribute
+The RelinquishDefault attribute is the default value to be used for the PresentValue
+attribute when all elements of the PriorityArray attribute are marked as invalid.
+
+#### StatusFlags Attribute
+This attribute, of type bitmap, represents four Boolean flags that indicate the general “health”
+of the analog sensor. Three of the flags are associated with the values of other optional attributes
+of this cluster. A more detailed status could be determined by reading the optional attributes (if
+supported) that are linked to these flags. The relationship between individual flags is not defined. 
+
+The four flags are Bit 0 = IN_ALARM, Bit 1 = FAULT, Bit 2 = OVERRIDDEN, Bit 3 = OUT OF SERVICE
+
+where:
+
+IN_ALARM -Logical FALSE (0) if the EventStateattribute has a value of NORMAL, otherwise logical TRUE (1).
+This bit is always 0 unless the cluster implementing the EventState attribute is implemented on the same
+endpoint.
+
+FAULT -Logical TRUE (1) if the Reliability attribute is present and does not have a value of NO FAULT DETECTED,
+otherwise logical FALSE (0).
+
+OVERRIDDEN -Logical TRUE (1) if the cluster has been overridden by some  mechanism local to the device. 
+Otherwise, the value is logical FALSE (0). In this context, for an input cluster, “overridden” is taken
+to mean that the PresentValue and Reliability(optional) attributes are no longer tracking changes to the
+physical input. For an Output cluster, “overridden” is taken to mean that the physical output is no longer
+tracking changes to the PresentValue attribute and the Reliability attribute is no longer a reflection of
+the physical output. For a Value cluster, “overridden” is taken to mean that the PresentValue attribute is
+not writeable.
+
+OUT OF SERVICE -Logical TRUE (1) if the OutOfService attribute has a value of TRUE, otherwise
+logical FALSE (0).
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0001 |IN_ALARM                  |
+|0x0002 |FAULT                     |
+|0x0004 |OVERRIDDEN                |
+|0x0008 |OUT OF SERVICE            |
+
+
+#### ApplicationType Attribute
+The ApplicationType attribute is an unsigned 32 bit integer that indicates the specific
+application usage for this cluster. (Note: This attribute has no BACnet equivalent).
+ApplicationType is subdivided into Group, Type and an Index number, as follows.
+
+Group = Bits 24 -31 An indication of the cluster this attribute is part of.
+
+Type = Bits 16 -23 For Analog clusters, the physical quantity that the Present Value attribute
+of the cluster represents. For Binary and Multistate clusters, the application usage domain.
+
+Index = Bits 0 -15 The specific application usage of the cluster. 
+
 
 ### Received
 
@@ -1497,6 +2037,139 @@ No cluster specific commands.
 No cluster specific commands.
 
 ## Multistate Value (Basic) [0x0014]
+The Multistate Value (Basic) cluster provides an interface for setting a multistate
+value, typically used as a control system parameter, and accessing characteristics of that value.
+
+### Attributes
+|Id     |Name                  |Type                       |Access     |Implement |Reporting |
+|-------|----------------------|---------------------------|-----------|----------|----------|
+|0x000E |StateText             |Character string           |Read/Write |Optional  |          |
+|0x001C |Description           |Character string           |Read/Write |Optional  |          |
+|0x004A |NumberOfStates        |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0051 |OutOfService          |Boolean                    |Read/Write |Mandatory |          |
+|0x0055 |PresentValue          |Unsigned 16-bit Integer    |Read/Write |Mandatory |          |
+|0x0067 |Reliability           |8-bit enumeration          |Read/Write |Optional  |          |
+|0x0068 |RelinquishDefault     |Unsigned 16-bit Integer    |Read/Write |Optional  |          |
+|0x006F |StatusFlags           |8-bit bitmap               |Read only  |Mandatory |          |
+|0x0100 |ApplicationType       |Signed 32-bit integer      |Read only  |Optional  |          |
+
+#### StateText Attribute
+This  attribute, of type Array of Character strings, holds descriptions of all possible
+states of a multistate PresentValue.  The number of descriptions matches the number of states
+defined in the NumberOfStates property. The PresentValue, interpreted as an integer, serves as
+an index into the array. If the size of this array is changed, the NumberOfStates property SHALL
+also be changed to the same value. The character set used SHALL be ASCII, and the attribute
+SHALL contain a maximum of 16 characters, which SHALL be printable but are otherwise unrestricted.
+
+#### Description Attribute
+The Description attribute, of type Character string, MAY be used to hold a description
+of the usage of the input, output or value, as appropriate to the cluster. The character
+set used SHALL be ASCII, and the attribute SHALL contain a maximum of 16 characters,
+which SHALL be printable but are otherwise unrestricted.
+
+#### NumberOfStates Attribute
+This attribute, of type Unsigned 16-bit integer, defines the number of states that a multistate
+PresentValue MAY have. The NumberOfStates property SHALL always have a value greater than zero. 
+If the value of this property is changed, the size of the StateText array, if present, SHALL also
+be changed to the same value. The states are numbered consecutively, starting with 1.
+
+#### OutOfService Attribute
+The OutOfService attribute, of type Boolean, indicates whether (TRUE) or not (FALSE) the physical
+input, output or value that the cluster represents is not in service. For an Input cluster, when
+OutOfService is TRUE the PresentValue attribute is decoupled from the physical input and  will
+not track changes to the  physical input. For an Output cluster, when OutOfService is TRUE the
+PresentValue attribute is decoupled from the physical output, so changes to PresentValue will not
+affect the physical output. For a Value cluster, when OutOfService is TRUE the PresentValue attribute
+MAY be written to freely by software local to the device that the cluster resides on.
+
+#### PresentValue Attribute
+The PresentValue attribute indicates the current value of the input, output or
+value, as appropriate for the cluster. For Analog clusters it is of type single precision, for Binary
+clusters it is of type  Boolean, and for multistate clusters it is of type Unsigned 16-bit integer. The
+PresentValue attribute of an input cluster SHALL be writable when OutOfService is TRUE. When the PriorityArray
+attribute is implemented, writing to PresentValue SHALL be equivalent to writing to element 16 of PriorityArray,
+i.e., with a priority of 16.
+
+#### Reliability Attribute
+The Reliability attribute, of type 8-bit enumeration, provides an indication of whether
+the PresentValueor the operation of the physical input, output or value in question (as
+appropriate for the cluster) is “reliable” as far as can be determined and, if not, why
+not. The Reliability attribute MAY have any of the following values:
+
+NO-FAULT-DETECTED (0)
+OVER-RANGE (2)
+UNDER-RANGE (3)
+OPEN-LOOP (4)
+SHORTED-LOOP (5)
+UNRELIABLE-OTHER (7)
+PROCESS-ERROR (8)
+MULTI-STATE-FAULT (9)
+CONFIGURATION-ERROR (10)
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |NO-FAULT-DETECTED         |
+|0x0002 |OVER-RANGE                |
+|0x0003 |UNDER-RANGE               |
+|0x0004 |OPEN-LOOP                 |
+|0x0005 |SHORTED-LOOP              |
+|0x0007 |UNRELIABLE-OTHER          |
+|0x0008 |PROCESS-ERROR             |
+|0x0009 |MULTI-STATE-FAULT         |
+|0x000A |CONFIGURATION-ERROR       |
+
+#### RelinquishDefault Attribute
+The RelinquishDefault attribute is the default value to be used for the PresentValue
+attribute when all elements of the PriorityArray attribute are marked as invalid.
+
+#### StatusFlags Attribute
+This attribute, of type bitmap, represents four Boolean flags that indicate the general “health”
+of the analog sensor. Three of the flags are associated with the values of other optional attributes
+of this cluster. A more detailed status could be determined by reading the optional attributes (if
+supported) that are linked to these flags. The relationship between individual flags is not defined. 
+
+The four flags are Bit 0 = IN_ALARM, Bit 1 = FAULT, Bit 2 = OVERRIDDEN, Bit 3 = OUT OF SERVICE
+
+where:
+
+IN_ALARM -Logical FALSE (0) if the EventStateattribute has a value of NORMAL, otherwise logical TRUE (1).
+This bit is always 0 unless the cluster implementing the EventState attribute is implemented on the same
+endpoint.
+
+FAULT -Logical TRUE (1) if the Reliability attribute is present and does not have a value of NO FAULT DETECTED,
+otherwise logical FALSE (0).
+
+OVERRIDDEN -Logical TRUE (1) if the cluster has been overridden by some  mechanism local to the device. 
+Otherwise, the value is logical FALSE (0). In this context, for an input cluster, “overridden” is taken
+to mean that the PresentValue and Reliability(optional) attributes are no longer tracking changes to the
+physical input. For an Output cluster, “overridden” is taken to mean that the physical output is no longer
+tracking changes to the PresentValue attribute and the Reliability attribute is no longer a reflection of
+the physical output. For a Value cluster, “overridden” is taken to mean that the PresentValue attribute is
+not writeable.
+
+OUT OF SERVICE -Logical TRUE (1) if the OutOfService attribute has a value of TRUE, otherwise
+logical FALSE (0).
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0001 |IN_ALARM                  |
+|0x0002 |FAULT                     |
+|0x0004 |OVERRIDDEN                |
+|0x0008 |OUT OF SERVICE            |
+
+
+#### ApplicationType Attribute
+The ApplicationType attribute is an unsigned 32 bit integer that indicates the specific
+application usage for this cluster. (Note: This attribute has no BACnet equivalent).
+ApplicationType is subdivided into Group, Type and an Index number, as follows.
+
+Group = Bits 24 -31 An indication of the cluster this attribute is part of.
+
+Type = Bits 16 -23 For Analog clusters, the physical quantity that the Present Value attribute
+of the cluster represents. For Binary and Multistate clusters, the application usage domain.
+
+Index = Bits 0 -15The specific application usage of the cluster. 
+
 
 ### Received
 
@@ -1557,12 +2230,129 @@ No cluster specific commands.
 |---------------------------|---------------------------|
 |Status                     |8-bit enumeration          |
 
+## Poll Control [0x0020]
+
+This cluster provides a mechanism for the management of an end device’s MAC Data Request rate.
+For the purposes of this cluster, the term “poll” always refers to the sending of a MAC Data
+Request from the end device to the end device’s parent. This cluster can be used for instance
+by a configuration device to make an end device responsive for a certain period of time so that
+the device can be managed by the controller. This cluster is composed of a client and server. The end device implements the server side of this cluster. The server side contains several attributes related to the MAC Data Request rate for the device. The client side implements commands used to manage the poll rate for the device. The end device which implements the server side of this cluster sends a query to the client on a predetermined interval to see if the client would like to manage the poll period of the end device in question. When the client side of the cluster hears from the server it has the opportunity to respond with configuration data to either put the end device in a short poll mode or let the end device continue to function normally.
+
+### Attributes
+
+|Id     |Name                       |Type                       |Access     |Implement |Reporting |
+|-------|---------------------------|---------------------------|-----------|----------|----------|
+|0x0000 |CheckinInterval            |Unsigned 32-bit integer    |Read Write |Mandatory |Mandatory |
+|0x0001 |LongPollInterval           |Unsigned 32-bit integer    |Read       |Mandatory |Mandatory |
+|0x0002 |ShortPollInterval          |Unsigned 16-bit integer    |Read       |Mandatory |Mandatory |
+|0x0003 |FastPollTimeout            |Unsigned 16-bit integer    |Read       |Mandatory |Mandatory |
+|0x0004 |CheckinIntervalMin         |Unsigned 32-bit integer    |Read       |          |          |
+|0x0005 |LongPollIntervalMin        |Unsigned 32-bit integer    |Read       |          |          |
+|0x0006 |FastPollTimeoutMin         |Unsigned 32-bit integer    |Read       |          |          |
+
+#### CheckinInterval Attribute
+
+The Poll Control server is responsible for checking in with the poll control client periodically to see if the poll control  client wants to modify the poll rate of the poll control server.  This is due to the fact that  the  PollControl server is implemented on an end device that MAY have an unpredictable sleep-wake cycle. The CheckinInterval represents the default amount of time between check-ins by the poll control server with the poll control client. The CheckinInterval is measured in quarter-seconds. A value of 0 indicates that the Poll Control Server is turned off and the poll control server will not check-in with the poll control client. The Poll Control Server checks in with the Poll Control Client by sending a Checkin command to the Client. This value SHOULDbe longer than the LongPoll Interval attribute. If the Client writes an invalid attribute value (Example: Out of Range or a value smaller than the optional Check-inIntervalMinattribute value or a value smaller than the LongPollInterval attribute value), the Server SHOULD return Write Attributes Response with an error status not equal to ZCL_SUCCESS. The Poll Control Client will hold onto the actions or messages for the Poll Control Server at the application level until the Poll Control Server checks in with the Poll Control Client.
+
+#### LongPollInterval Attribute
+
+An end device that implements the Poll Control server MAY optionally expose a LongPollInterval attribute. 
+The Long Poll Interval represents the maximum amount of time in quarter-seconds between MAC Data Requests
+from the end device to its parent. 
+
+The LongPollInterval defines the frequency of polling that an end device does when it is NOT in fast poll mode.  The LongPollInterval SHOULD be longer than the ShortPollInterval attribute but shorter than the CheckinInterval attribute.A  value of 0xffffffff is reserved to indicate that the device does not have or does not know its long poll interval
+
+#### ShortPollInterval Attribute
+
+An  end  device  that  implements  the  Poll  Control  server MAY optionally  expose the ShortPollInterval attribute.  The ShortPollIntervalrepresents  the  number  of  quarterseconds  that  an  end  device  waits  between MAC Data Requests to its parent when it is expecting data (i.e.,in fast poll mode).
+
+#### FastPollTimeout Attribute
+
+The FastPollTimeout attribute represents the number of quarterseconds that an end device will stay in fast poll mode by default. It is suggested that the FastPollTimeoutattribute value be greater than 7.68 seconds.The Poll Control Cluster  Client MAYoverride  this  value  by  indicating  a  different  value  in  the  Fast  Poll Duration argument in the Check-in Response command. If the Client writes a value out of range or greater  than  the  optional FastPollTimeoutMax attribute  value  if  supported, the Server SHOULD return a  Write  Attributes  Response with a status of  INVALID_VALUE30.  An  end  device  that implements the  Poll Control server can be  put into a  fast poll  mode during  which it will send MAC Data Requests  to  its  parent  at  the  frequency  of  its  configured ShortPollInterval attribute.  During this  period  of time, fast polling is considered active. When the device goes into fast poll mode, it is required to send MAC DataRequests to its parent at an accelerated rate and is thus more responsive on the network and can receive data asynchronously from the device implementing the Poll Control Cluster Client.
+
+#### CheckinIntervalMin Attribute
+
+The Poll Control Server MAY optionally provide its own minimum value for the Check-inInterval to protect against the Check-inInterval being set too low and draining the battery on the end device implementing the Poll Control Server.
+
+#### LongPollIntervalMin Attribute
+
+The Poll Control Server MAYoptionally provide its own minimum value for the LongPollIntervalto protect against  another  device  setting  the  value  to  too  short  a  time  resulting  in  an  inadvertent  power  drain  on  the device.
+
+#### FastPollTimeoutMin Attribute
+
+The Poll Control Server MAY optionally provide its own maximum value for the FastPollTimeout to avoid it being set to too high a value resulting in an inadvertent power drain on the device.
+
+### Received
+
+#### Check In Response [0x00]
+The Check-in Response is sent in response to the receipt of a Check-in command. The Check-in Response is used by the Poll Control Client to indicate whether it would like the device implementing the Poll Control Cluster Server to go into a fast poll mode and for how long. If the Poll Control Cluster Client indicates that it would like the device to go into a fast poll mode, it is responsible for telling the device to stop fast polling when it is done sending messages to the fast polling device.
+
+If the Poll Control Server receives a Check-In Response from a client for which there is no binding (unbound), it SHOULD respond with a Default Response with a status value indicating ACTION_DENIED.
+
+If the Poll Control Server receives a Check-In Response from a client for which there is a binding (bound) with an invalid fast poll interval it SHOULD respond with a Default Response with status INVALID_VALUE.
+
+If the Poll Control Server receives a Check-In Response from a bound client after temporary fast poll mode is completed it SHOULD respond with a Default Response with a status value indicating TIMEOUT.
+
+In all of the above cases, the Server SHALL respond with a Default Response not equal to ZCL_SUCCESS.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+| Start Fast Polling        |Boolean                    |
+| Fast Poll Timeout         |Unsigned 16-bit integer    |
+
+##### Start Fast Polling Field
+This Boolean value indicates whether or not the Poll Control Server device SHOULD begin fast polling or not. If the Start Fast Polling value is true, the server device is EXPECTED to begin fast polling until the Fast Poll Timeout has expired. If the Start Fast Polling argument is false, the Poll Control Server MAY continue in normal operation and is not required to go into fast poll mode.
+
+##### Fast Poll Timeout Field
+The Fast Poll Timeout value indicates the number of quarterseconds during which the device SHOULD continue fast polling. If the Fast Poll Timeout value is 0, the device is EXPECTED to continue fast polling until the amount of time indicated it the FastPollTimeout attribute has elapsed or it receives a Fast Poll Stop command. If the Start Fast Polling argument is false, the Poll Control Server MAY ignore the Fast Poll Timeout argument.
+
+The Fast Poll Timeout argument temporarily overrides the FastPollTimeout attribute on the Poll Control Cluster Server for the fast poll mode induced by the Check-in Response command. This value is not EXPECTED to overwrite the stored value in the FastPollTimeout attribute.
+
+If the FastPollTimeout parameter in the CheckInResponse command is greater than the FastPollTimeoutMax attribute value, the Server Device SHALL respond with a default response of error status not equal to ZCL_SUCCESS. It is suggested to use the Error Status of ZCL_INVALID_FIELD.
+
+#### Fast Poll Stop Command [0x01]
+
+The Fast Poll Stop command is used to stop the fast poll mode initiated by the Check-in response. The Fast Poll Stop command has no payload.
+
+If the Poll Control Server receives a Fast Poll Stop from an unbound client it SHOULD send back a DefaultResponse with a value field indicating “ACTION_DENIED” . The Server SHALL respond with a DefaultResponse not equal to ZCL_SUCCESS.
+
+If the Poll Control Server receives a Fast Poll Stop command from a bound client but it is unable to stop fast polling due to the fact that there is another bound client which has requested that polling continue it SHOULD respond with a Default Response with a status of “ACTION_DENIED”
+
+If a Poll Control Server receives a Fast Poll Stop command from a bound client but it is not FastPolling it SHOULD respond with a Default Response with a status of ACTION_DENIED.
+
+#### Set Long Poll Interval Command [0x02]
+The Set Long Poll Interval command is used to set the Read Only LongPollInterval attribute.
+
+When the Poll Control Server receives the Set Long Poll Interval Command, it SHOULD check its internal minimal limit and the attributes relationship if the new Long Poll Interval is acceptable. If the new value is acceptable, the new value SHALL be saved to the LongPollInterval attribute. If the new value is not acceptable, the Poll Control Server SHALL send a default response of INVALID_VALUE and the LongPollInterval attribute value is not updated.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+| New Long Poll Interval    |Unsigned 16-bit integer    |
+
+#### Set Short Poll Interval Command [0x03]
+The Set Short Poll Interval command is used to set the Read Only ShortPollInterval attribute.
+
+When the Poll Control Server receives the Set Short Poll Interval Command, it SHOULD check its internal minimal limit and the attributes relationship if the new Short Poll Interval is acceptable. If the new value is acceptable, the new value SHALL be saved to the ShortPollInterval attribute. If the new value is not acceptable, the Poll Control Server SHALL send a default response of INVALID_VALUE and the ShortPollInterval attribute value is not updated.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+| New Short Poll Interval   |Unsigned 16-bit integer    |
+
+### Generated
+
+#### Check In Command [0x00]
+The Poll Control Cluster server sends out a Check-in command to the devices to which it is paired based on the server’s Check-inInterval attribute. It does this to find out if any of the Poll Control Cluster Clients with which it is paired are interested in having it enter fast poll mode so that it can be managed. This request is sent out based on either the Check-inInterval, or the next Check-in value in the Fast Poll Stop Request generated by the Poll Control Cluster Client.
+
+The Check-in command expects a Check-in Response command to be sent back from the Poll Control Client. If the Poll Control Server does not receive a Check-in response back from the Poll Control Client up to 7.68 seconds it is free to return to polling according to the LongPollInterval.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+
+
 # Closures
 ## Shade Configuration [0x0100]
 
 ### Received
-
-No cluster specific commands.
 
 ### Generated
 
@@ -1637,6 +2427,7 @@ No cluster specific commands.
 |0x001C |SystemMode                 |Enumeration 8-bit          |Read       |Mandatory |          |
 |0x001D |AlarmMask                  |Enumeration 8-bit          |Read       |Optional  |          |
 |0x001E |ThermostatRunningMode      |Enumeration 8-bit          |Read       |Optional  |          |
+|0x0044 |ACErrorCode                |Bitmap 32-bit              |Read       |Optional  |          |
 
 #### LocalTemperature Attribute
 LocalTemperature represents the temperature in degrees Celsius, as measured locally.
@@ -1741,14 +2532,13 @@ ii) generate new log record at the time of request and send Get Relay Status Log
 
 #### Get Weekly Schedule Response [0x00]
 
-|Field Name                 |Data Type                  |
-|---------------------------|---------------------------|
-|Number of Transitions      |8-bit Enumeration          |
+|Number of Transitions      |Enumeration 8-bit          |
 |Day of Week                |Enumeration 8-bit          |
 |Mode                       |Enumeration 8-bit          |
 |Transition                 |Unsigned 16-bit integer    |
 |Heat Set                   |Unsigned 16-bit integer    |
 |Cool Set                   |Unsigned 16-bit integer    |
+
 
 #### Get Relay Status Log Response [0x01]
 
@@ -1794,24 +2584,34 @@ No cluster specific commands.
 
 # Lighting
 
-## Color control [0x0300]
+## Color Control [0x0300]
 This cluster provides an interface for changing the color of a light. Color is
 specified according to the Commission Internationale de l'Éclairage (CIE)
 specification CIE 1931 Color Space, [B4]. Color control is carried out in terms of
 x,y values, as defined by this specification. 
 
 ### Attributes
-|Id     |Name                  |Type                       |Access     |Implement |Reporting |
-|-------|----------------------|---------------------------|-----------|----------|----------|
-|0x0000 |CurrentHue            |Unsigned 8-bit Integer     |Read only  |Optional  |Mandatory |
-|0x0001 |CurrentSaturation     |Unsigned 8-bit Integer     |Read only  |Optional  |Mandatory |
-|0x0002 |RemainingTime         |Unsigned 16-bit Integer    |Read only  |Optional  |          |
-|0x0003 |CurrentX              |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
-|0x0004 |CurrentY              |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
-|0x0005 |DriftCompensation     |8-bit Enumeration          |Read only  |Optional  |          |
-|0x0006 |CompensationText      |Character string           |Read only  |Optional  |          |
-|0x0007 |ColorTemperature      |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
-|0x0008 |ColorMode             |8-bit Enumeration          |Read only  |Optional  |          |
+|Id     |Name                       |Type                       |Access     |Implement |Reporting |
+|-------|---------------------------|---------------------------|-----------|----------|----------|
+|0x0000 |CurrentHue                 |Unsigned 8-bit Integer     |Read only  |Optional  |Mandatory |
+|0x0001 |CurrentSaturation          |Unsigned 8-bit Integer     |Read only  |Optional  |Mandatory |
+|0x0002 |RemainingTime              |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0003 |CurrentX                   |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
+|0x0004 |CurrentY                   |Unsigned 16-bit Integer    |Read only  |Mandatory |Mandatory |
+|0x0005 |DriftCompensation          |8-bit Enumeration          |Read only  |Optional  |          |
+|0x0006 |CompensationText           |Character string           |Read only  |Optional  |          |
+|0x0007 |ColorTemperature           |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
+|0x0008 |ColorMode                  |8-bit Enumeration          |Read only  |Optional  |          |
+|0x4000 |EnhancedCurrentHue         |Unsigned 16-bit Integer    |Read only  |Optional  |Mandatory |
+|0x4001 |EnhancedColorMode          |8-bit Enumeration          |Read only  |Optional  |          |
+|0x4002 |ColorLoopActive            |Unsigned 8-bit Integer     |Read only  |Optional  |          |
+|0x4003 |ColorLoopDirection         |Unsigned 8-bit Integer     |Read only  |Optional  |          |
+|0x4004 |ColorLoopTime              |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x4005 |ColorLoopStartHue          |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x4006 |ColorLoopStoredHue         |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x400A |ColorCapabilities          |16-bit Bitmap              |Read only  |Optional  |          |
+|0x400B |ColorTemperatureMin        |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x400C |ColorTemperatureMax        |Unsigned 16-bit Integer    |Read only  |Optional  |          |
 
 
 #### CurrentHue Attribute
@@ -1884,9 +2684,81 @@ If either the CurrentHue or CurrentSaturation attribute is implemented, this att
 implemented, otherwise it is optional. The value of the ColorMode attribute cannot be written directly
 - it is set upon reception of another command in to the appropriate mode for that command.
 
-0x00 CurrentHue and CurrentSaturation
-0x01 CurrentX and CurrentY
-0x02 ColorTemperatureMireds
+|Id     |Name                              |
+|-------|----------------------------------|
+|0x0000 |CurrentHue and CurrentSaturation  |
+|0x0001 |CurrentX and CurrentY             |
+|0x0002 |ColorTemperature                  |
+
+
+#### EnhancedCurrentHue Attribute
+The EnhancedCurrentHueattribute represents non-equidistant steps along the CIE 1931 color
+triangle, and it provides 16-bits precision. The upper 8 bits of this attribute SHALL be
+used as an index in the implementation specific XY lookup table to provide the non-equidistance
+steps (see the ZLL test specification for an example).  The lower 8 bits SHALL be used to
+interpolate between these steps in a linear way in order to provide color zoom for the user.
+
+#### EnhancedColorMode Attribute
+The EnhancedColorModeattribute specifies which attributes are currently determining the color of the device.
+To provide compatibility with standard ZCL, the original ColorModeattribute SHALLindicate ‘CurrentHueand CurrentSaturation’
+when the light uses the EnhancedCurrentHueattribute.
+ 
+|Id     |Name                                     |
+|-------|-----------------------------------------|
+|0x0000 |CurrentHue and CurrentSaturation         |
+|0x0001 |CurrentX and CurrentY                    |
+|0x0002 |ColorTemperature                         |
+|0x0002 |EnhancedCurrentHue and CurrentSaturation |
+
+#### ColorCapabilities Attribute
+The ColorCapabilitiesattribute specifies the color capabilities of the device supporting the
+color control cluster.
+
+Note:The support of the CurrentXand CurrentYattributes is mandatory regardless of color capabilities.
+
+|Id     |Name                |
+|-------|--------------------|
+|0x0001 |Hue and Saturation  |
+|0x0002 |Enhanced Hue        |
+|0x0004 |Color Loop          |
+|0x0008 |XY Attribute        |
+|0x0010 |Color Temperature   |
+
+#### ColorLoopActive Attribute
+The ColorLoopActive attribute specifies the current active status of the color loop.
+If this attribute has the value 0x00, the color loop SHALLnot be active. If this attribute
+has the value 0x01, the color loop SHALL be active. All other values (0x02 – 0xff) are reserved.
+
+#### ColorLoopDirection Attribute
+The ColorLoopDirection attribute specifies the current direction of the color loop.
+If this attribute has the value 0x00, the EnhancedCurrentHue attribute SHALL be decremented.
+If this attribute has the value 0x01, the EnhancedCurrentHue attribute SHALL be incremented.
+All other values (0x02 – 0xff) are reserved.
+
+#### ColorLoopTime Attribute
+The ColorLoopTime attribute specifies the number of seconds it SHALL take to perform a full
+color loop, i.e.,to cycle all values of the EnhancedCurrentHue attribute (between 0x0000 and 0xffff).
+
+#### ColorLoopStartHue Attribute
+The ColorLoopStartEnhancedHueattribute specifies the value of the EnhancedCurrentHue attribute
+from which the color loop SHALL be started.
+
+#### ColorLoopStoredHue Attribute
+The ColorLoopStoredEnhancedHue attribute specifies the value of the EnhancedCurrentHue attribute
+before the color loop was started. Once the color loop is complete, the EnhancedCurrentHue
+attribute SHALL be restored to this value.
+
+#### ColorTemperatureMin Attribute
+The ColorTempPhysicalMinMiredsattribute indicates the minimum mired value
+supported by the hardware. ColorTempPhysicalMinMiredscorresponds to the maximum
+color temperature in kelvins supported by the hardware.
+ColorTempPhysicalMinMireds ≤ ColorTemperatureMireds
+
+#### ColorTemperatureMax Attribute
+The ColorTempPhysicalMaxMiredsattribute indicates the maximum mired value
+supported by the hard-ware. ColorTempPhysicalMaxMiredscorresponds to the minimum
+color temperature in kelvins supported by the hardware.
+ColorTemperatureMireds ≤ ColorTempPhysicalMaxMireds.
 
 ### Received
 
@@ -1961,6 +2833,37 @@ implemented, otherwise it is optional. The value of the ColorMode attribute cann
 |---------------------------|---------------------------|
 |Color Temperature          |Unsigned 16-bit integer    |
 |Transition time            |Unsigned 16-bit integer    |
+
+#### Enhanced Move To Hue Command [0x40]
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Hue                        |Unsigned 16-bit integer    |
+|Direction                  |8-bit enumeration          |
+|Transition time            |Unsigned 16-bit integer    |
+
+#### Enhanced Step Hue Command [0x41]
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Step Mode                  |8-bit enumeration          |
+|Step Size                  |Unsigned 16-bit integer    |
+|Transition time            |Unsigned 16-bit integer    |
+
+#### Enhanced Move To Hue and Saturation Command [0x42]
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Hue                        |Unsigned 16-bit integer    |
+|Saturation                 |8-bit enumeration          |
+|Transition time            |Unsigned 16-bit integer    |
+
+#### Color Loop Set Command [0x43]
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Update Flags               |8-bit bitmap               |
+|Action                     |8-bit enumeration          |
+|Direction                  |8-bit enumeration          |
+|Transition time            |Unsigned 16-bit integer    |
+|Start Hue                  |Unsigned 16-bit integer    |
+
 
 ### Generated
 
@@ -2042,6 +2945,7 @@ is within, above or below a target band.
 |-------|----------------------|---------------------------|-----------|----------|----------|
 |0x0000 |LevelStatus           |8-bit Enumeration          |Read only  |Mandatory |Mandatory |
 |0x0001 |LightSensorType       |8-bit Enumeration          |Read only  |Optional  |          |
+|0x0010 |IlluminanceTargetLevel|Unsigned 16-bit Integer    |Read only  |Optional  |          |
 
 #### LevelStatus Attribute
 The LevelStatus attribute indicates whether the measured illuminance is above,
@@ -2313,14 +3217,14 @@ All other bits are reserved.
 #### OccupancySensorType Attribute
 The OccupancySensorType attribute specifies the type of the occupancy sensor.
 
-#### PIROccupiedToUnoccupiedTime Attribute
+#### PIROccupiedToUnoccupiedDelay Attribute
 The PIROccupiedToUnoccupiedDelay attribute is 8-bits in length and specifies
 the time delay, in seconds, before the PIR sensor changes to its occupied state
 when the sensed area becomes unoccupied. This attribute, along with
 PIRUnoccupiedToOccupiedTime, may be used to reduce sensor 'chatter' when
 used in an area where occupation changes frequently.
 
-#### PIRUnoccupiedToOccupiedTime Attribute
+#### PIRUnoccupiedToOccupiedDelay Attribute
 The PIRUnoccupiedToOccupiedDelay attribute is 8-bits in length and specifies
 the time delay, in seconds, before the PIR sensor changes to its unoccupied state
 when the sensed area becomes occupied.
@@ -2361,7 +3265,7 @@ reports and supervision of the IAS network.
 |0x0001 |ZoneType                                    |16-bit Enumeration         |Read only  |Mandatory |          |
 |0x0002 |ZoneStatus                                  |16-bit Bitmap              |Read only  |Mandatory |          |
 |0x0010 |IASCIEAddress                               |IEEE Address               |Read/Write |Mandatory |          |
-|0x0011 |ZoneID                                      |Unsigned 8-bit Integer     |Read only  |Mandatory |          |
+|0x0011 |ZoneID                                      |Unsigned 8-bit Integer     |Read/Write |Mandatory |          |
 |0x0012 |NumberOfZoneSensitivityLevelsSupported      |Unsigned 8-bit Integer     |Read only  |Optional  |          |
 |0x0013 |CurrentZoneSensitivityLevel                 |Unsigned 8-bit Integer     |Read/Write |Optional  |          |
 
@@ -2382,7 +3286,7 @@ The Zone Type dictates the meaning of Alarm1 and Alarm2 bits of the ZoneStatus a
 |0x000D |Motion Sensor             |
 |0x0015 |Contact Switch            |
 |0x0028 |Fire Sensor               |
-|0x0028 |Water Sensor              |
+|0x002A |Water Sensor              |
 |0x002B |CO Sensor                 |
 |0x002C |Personal Emergency Device |
 |0x002D |Vibration Movement Sensor |
@@ -2407,6 +3311,24 @@ to implement some auto-detect for the CIE (example: by requesting the ZigBee
 cluster discovery service to locate a Zone Server cluster.) or require the
 intervention of a CT in order to configure this attribute during installation.
 
+#### ZoneID Attribute
+A unique reference number allocated by the CIE at zone enrollment time.
+
+Used by IAS devices to reference specific zones when communicating with the CIE. The ZoneID of each zone stays fixed until that zone is unenrolled.
+
+#### NumberOfZoneSensitivityLevelsSupported Attribute
+Provides the total number of sensitivity levels supported by the IAS Zone server. The purpose of this attribute is to support devices that can be configured to be more or less sensitive (e.g., motion sensor). It provides IAS Zone clients with the range of sensitivity levels that are supported so they MAY be presented to the user for configuration.
+
+The values 0x00 and 0x01 are reserved because a device that has zero or one sensitivity level SHOULD NOT support this attribute because no configuration of the IAS Zone server’s sensitivity level is possible.
+
+The meaning of each sensitivity level is manufacturer-specific. However, the sensitivity level of the IAS Zone server SHALL become more sensitive as they ascend. For example, if the server supports three sen- sitivity levels, then the value of this attribute would be 0x03 where 0x03 is more sensitive than 0x02, which is more sensitive than 0x01.
+
+#### CurrentZoneSensitivityLevel Attribute
+Allows an IAS Zone client to query and configure the IAS Zone server’s sensitivity level. Please see NumberOfZoneSensitivityLevelsSupported Attribute for more detail on how to interpret this attribute.
+
+The default value 0x00 is the device’s default sensitivity level as configured by the manufacturer. It MAY correspond to the same sensitivity as another value in the NumberOfZoneSensitivityLevelsSupported, but this is the default sensitivity to be used if the CurrentZoneSensitivityLevel attribute is not otherwise configured by an IAS Zone client.
+
+
 ### Received
 
 #### Zone Enroll Response Command [0x00]
@@ -2424,6 +3346,35 @@ intervention of a CT in order to configure this attribute during installation.
 |0x0002 |No Enroll Permit          |
 |0x0003 |Too Many Zones            |
 
+#### Initiate Normal Operation Mode Command [0x01]
+Used to tell the IAS Zone server to commence normal operation mode.
+
+Upon receipt, the IAS Zone server SHALL commence normal operational mode.
+
+Any configurations and changes made (e.g., CurrentZoneSensitivityLevel attribute) to the IAS Zone server SHALL be retained.
+
+Upon commencing normal operation mode, the IAS Zone server SHALL send a Zone Status Change Notification command updating the ZoneStatus attribute Test bit to zero (i.e., “operation mode”).
+
+
+#### Initiate Test Mode Command [0x02]
+Certain IAS Zone servers MAY have operational configurations that could be configured OTA or locally on the device. This command enables them to be remotely placed into a test mode so that the user or installer MAY configure their field of view, sensitivity, and other operational parameters. They MAY also verify the placement and proper operation of the IAS Zone server, which MAY have been placed in a difficult to reach location (i.e., making a physical input on the device impractical to trigger).
+
+Another use case for this command is large deployments, especially commercial and industrial, where placing the entire IAS system into test mode instead of a single IAS Zone server is infeasible due to the vulnerabilities that might arise. This command enables only a single IAS Zone server to be placed into test mode.
+
+The biggest limitation of this command is that most IAS Zone servers today are battery-powered sleepy nodes that cannot reliably receive commands. However, implementers MAY decide to program an IAS Zone server by factory default to maintain a limited duration of normal polling upon initialization/joining to a new network. Some IAS Zone servers MAY also have AC mains power and are able to receive commands. Some types of IAS Zone servers that MAY benefit from this command are: motion sensors and fire sensor/smoke alarm listeners (i.e., a device that listens for a non-communicating fire sensor to alarm and communicates this to the IAS CIE).
+
+|Field Name                     |Data Type                  |
+|-------------------------------|---------------------------|
+|Test Mode Duration             |Unsigned 8-bit Integer     |
+|Current Zone Sensitivity Level |Unsigned 8-bit Integer     |
+
+##### Test Mode Duration Field
+Specifies the duration, in seconds, for which the IAS Zone server SHALL operate in its test mode.
+
+##### Current Zone Sensitivity Level Field
+Specifies the sensitivity level the IAS Zone server SHALL use for the duration of the Test Mode and with which it must update its CurrentZoneSensitivityLevel attribute.
+
+The permitted values of Current Zone Sensitivity Level are shown defined for the CurrentZoneSensitivityLevel Attribute.
 
 ### Generated
 
@@ -2454,15 +3405,65 @@ level-2 user.
 ### Received
 
 #### Arm Command [0x00]
+On receipt of this command, the receiving device sets its arm mode according to the value of the Arm Mode field. It
+is not guaranteed that an Arm command will succeed. Based on the current state of
+the IAS CIE, and its related devices, the command can be rejected. The device SHALL generate an Arm Response command
+to indicate the resulting armed state
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Arm Mode                   |8-bit Enumeration          |
+|Arm/Disarm Code            |Character String           |
+|Zone ID                    |Unsigned 8-bit Integer     |
+
+##### Arm Mode
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Disarm                    |
+|0x0001 |Arm Day                   |
+|0x0002 |Arm Night                 |
+|0x0003 |Arm All Zones             |
+
+
+##### Arm/Disarm Code
+The Arm/DisarmCode SHALL be a code entered into the ACE client (e.g., security keypad) or system by the
+user upon arming/disarming. The server MAY validate the Arm/Disarm Code received from the IAS ACE client
+in Arm command payload before arming or disarming the system. If the client does not have the capability
+to input an Arm/Disarm Code (e.g., keyfob),or the system does not require one, the client SHALL a transmit
+a string with a length of zero.
+
+There is no minimum or maximum length to the Arm/Disarm Code; however, the
+Arm/Disarm Code SHOULD be between four and eight alphanumeric characters in length.
+
+The string encoding SHALL be UTF-8.
+
+##### Zone ID
+Zone ID is the index of the Zone in the CIE's zone table. If none is programmed, the Zone
+ID default value SHALL be indicated in this field.
 
 #### Bypass Command [0x01]
+
+Provides IAS ACE clients with a method to send zone bypass requests to the IAS ACE server.
+Bypassed zones MAYbe faulted or in alarm but will not trigger the security system to go into alarm.
+For example, a user MAYwish to allow certain windows in his premises protected by an IAS Zone server to
+be left open while the user leaves the premises. The user could bypass the IAS Zone server protecting
+the window on his IAS ACE client (e.g., security keypad), and if the IAS ACE server indicates that zone is
+successfully by-passed, arm his security system while he is away.
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Number of Zones            |Unsigned 8-bit integer     |
-|Zone IDs                   |N X Unsigned 8-bit integer |
+|Zone IDs                   |N x Unsigned 8-bit integer |
+|Arm/Disarm Code            |Character String           |
+
+
+##### Arm/Disarm Code 
+The Arm/DisarmCode SHALL be a code entered into the ACE client (e.g., security keypad) or system by the
+user upon arming/disarming. The server MAY validate the Arm/Disarm Code received from the IAS ACE client
+in Arm command payload before arming or disarming the system. If the client does not have the capability
+to input an Arm/Disarm Code (e.g., keyfob),or the system does not require one, the client SHALL a transmit
+a string with a length of zero.
 
 #### Emergency Command [0x02]
 |Field Name                 |Data Type                  |
@@ -2481,9 +3482,69 @@ level-2 user.
 |---------------------------|---------------------------|
 
 #### Get Zone Information Command [0x06]
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Zone ID                    |Unsigned 8-bit Integer     |
+
+#### Get Panel Status Command [0x07]
+This command is used by ACE clients to request an update to the status (e.g., security
+system arm state) of the ACE server (i.e., the IAS CIE). In particular, this command is
+useful for battery-powered ACE clients with polling rates longer than the ZigBee standard
+check-in rate.
+
+On receipt of this command, the ACE server responds with the status of the security system.
+The IAS ACE server SHALL generate a Get Panel Status Response command.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+
+#### Get Bypassed Zone List Command [0x08]
+Provides IAS ACE clients with a way to retrieve the list of zones to be bypassed. This provides them with the ability
+to provide greater local functionality (i.e., at the IAS ACE client) for users to modify the Bypassed Zone List and reduce
+communications to the IAS ACE server when trying to arm the CIE security system.
+
+#### Get Zone Status Command [0x09]
+This command is used by ACE clients to request an update of the status of the IAS Zone devices managed by the ACE server
+(i.e., the IAS CIE). In particular, this command is useful for battery-powered ACE clients with polling rates longer than
+the ZigBee standard check-in rate. The command is similar to the Get Attributes Supported command in that it specifies a
+starting Zone ID and a number of Zone IDs for which information is requested. Depending on the number of IAS Zone devices
+managed by the IAS ACE server, sending the Zone Status of all zones MAY not fit into a single Get ZoneStatus Response command.
+IAS ACE clients MAY need to send multiple Get Zone Status commands in order to get the information they seek.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Starting Zone ID           |Unsigned 8-bit Integer     |
+|Max Zone IDs               |Unsigned 8-bit Integer     |
+|Zone Status Mask Flag      |Boolean                    |
+|Zone Status Mask           |16-bit bitmap              |
+
+##### Starting Zone ID
+Specifies the starting Zone ID at which the IAS Client would like to obtain zone status information.
+
+##### Max Zone IDs
+Specifies the maximum number of Zone IDs and corresponding Zone Statuses that are to be returned by the IAS ACE server
+when it responds with a Get Zone Status Response command
+
+##### Zone Status Mask Flag
+Functions as a query operand with the Zone Status Mask field. If set to zero (i.e., FALSE), the IAS ACE server SHALL include all Zone
+IDs and their status, regardless of their Zone Status when it responds with a Get Zone Status Response command. If set to one (i.e., TRUE),
+the IAS ACE server SHALL include only those Zone IDs whose Zone Status attribute is equal to one or more of the Zone Statuses requested
+in the Zone Status Mask field of the Get Zone Status command.
+
+Use of Zone Status Mask Flag and Zone Status Mask fields allow a client to obtain updated information for the subset of Zone IDs
+they’re interested in, which is beneficial when the number of IAS Zone devices in a system is large.
+
+##### Zone Status Mask
+Coupled with the Zone Status Mask Flag field, functions as a mask to enable IAS ACE clients to get information about the Zone IDs whose
+ZoneStatus attribute is equal to any of the bits indicated by the IAS ACE client in the Zone Status Mask field. The format of this field
+is the same as the ZoneStatus attribute in the IAS Zone cluster. Per the Zone Status Mask Flag field, IAS ACE servers SHALL respond with
+only the Zone IDs whose ZoneStatus attributes are equal to at least one of the Zone Status bits set in the Zone Status Mask field requested
+by the IAS ACE client.For example, if the Zone Status Mask field set to “0x0003” would match IAS Zones whose ZoneStatus attributes are
+0x0001, 0x0002, and 0x0003.
+
+In other words, if a logical 'AND' between the Zone Status Mask field and the IAS Zone’s ZoneStatus attribute yields a non-zero result, 
+the IAS ACE server SHALL include that IAS Zone in the Get Zone Status Response command
 
 ### Generated
 
@@ -2492,7 +3553,22 @@ level-2 user.
 |---------------------------|---------------------------|
 |Arm Notification           |8-bit enumeration          |
 
+##### Arm Notification
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |All Zones Disarmed        |
+|0x0001 |Day Zones Armed           |
+|0x0002 |Night Zones Armed         |
+|0x0003 |All Zones Armed           |
+|0x0004 |Invalid Arm Code          |
+|0x0005 |Not Ready To Arm          |
+|0x0006 |Already Disarmed          |
+
 #### Get Zone ID Map Response Command [0x01]
+The 16 fields of the payload indicate whether each of the Zone IDs from 0 to 0xff is allocated or not. If bit n
+of Zone ID Map section N is set to 1, then Zone ID (16 x N + n ) is allocated, else it is not allocated
+
 |Field Name                 |Data Type                  |
 |---------------------------|---------------------------|
 |Zone ID Map section 0      |16-bit bitmap              |
@@ -2518,6 +3594,195 @@ level-2 user.
 |Zone ID                    |Unsigned 8-bit integer     |
 |Zone Type                  |16-bit Enumeration         |
 |IEEE address               |IEEE address               |
+|Zone Label                 |Character String           |
+
+##### Zone Label
+Provides the ZoneLabel stored in the IAS CIE. If none is programmed, the IAS ACE server SHALL transmit a string with a length
+of zero.There is no minimum or maximum length to the Zone Label field; however, the Zone Label SHOULD be between 16 to 24
+alphanumeric characters in length.
+
+The string encoding SHALL be UTF-8.
+
+#### Zone Status Changed Command [0x03]
+This command updates ACE clients in the system of changes to zone status recorded by the ACE server (e.g., IAS CIE device).
+An IAS ACE server SHOULD send a Zone Status Changed command upon a change to an IAS Zone device’s ZoneStatus that it manages (i.e.,
+IAS ACE server SHOULD send a Zone Status Changed command upon receipt of a Zone Status Change Notification command).
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Zone ID                    |Unsigned 8-bit Integer     |
+|Zone Status                |16-bit enumeration         |
+|Audible Notification       |8-bit enumeration          |
+|Zone Label                 |Character String           |
+
+##### Zone ID
+The index of the Zone in the CIE’s zone table (Table 8-11). If none  is programmed, the  ZoneID  attribute default
+value SHALL be indicated in this field.
+
+##### Zone Label
+Provides the ZoneLabel stored in the IAS CIE. If none is programmed, the IAS ACE server SHALL transmit a string with a length
+of zero. There is no minimum or maximum length to the Zone Label field; however, the Zone Label SHOULD be between 16 to 24
+alphanumeric characters in length.
+
+#### Panel Status Changed Command [0x04]
+This command updates ACE clients in the system of changes to panel status recorded by the ACE server (e.g., IAS CIE
+device).Sending the Panel Status Changed command (vs.the Get Panel Status and Get Panel Status Response method) is
+generally useful only when there are IAS ACE clients that data poll within the retry timeout of the network (e.g., less than
+7.68 seconds).
+
+An IAS ACE server SHALL send a Panel Status Changed command upon a change to the IAS CIE’s panel status (e.g.,
+Disarmed to Arming Away/Stay/Night, Arming Away/Stay/Night to Armed, Armed to Disarmed) as defined in the Panel Status field.
+
+When Panel Status is Arming Away/Stay/Night, an IAS ACE server SHOULD send Panel Status Changed commands every second in order to
+update the Seconds Remaining. In some markets (e.g., North America), the final 10 seconds of the Arming Away/Stay/Night sequence
+requires a separate audible notification (e.g., a double tone).
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Panel Status               |8-bit enumeration          |
+|Seconds Remaining          |Unsigned 8-bit Integer     |
+|Audible Notification       |8-bit enumeration          |
+|Alarm Status               |8-bit enumeration          |
+
+##### Panel Status
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Panel Disarmed            |
+|0x0001 |Armed Stay                |
+|0x0002 |Armed Night               |
+|0x0003 |Armed Away                |
+|0x0004 |Exit Delay                |
+|0x0005 |Entry Delay               |
+|0x0006 |Not Ready to Arm          |
+|0x0007 |In Alarm                  |
+|0x0008 |Arming Stay               |
+|0x0009 |Arming Night              |
+|0x000A |Arming Away               |
+
+##### Seconds Remaining Parameter
+Indicates the number of seconds remaining for  the server to be in the state indicated in the PanelStatus parameter.
+The SecondsRemaining parameter SHALL be provided if the PanelStatus parameter has a value of 0x04 (Exit delay) or 0x05 (Entry delay).
+
+The default value SHALL be 0x00.
+
+##### Alarm Status
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |No Alarm                  |
+|0x0001 |Burglar                   |
+|0x0002 |Fire                      |
+|0x0003 |Emergency                 |
+|0x0004 |Police Panic              |
+|0x0005 |Fire Panic                |
+|0x0006 |Emergency Panic           |
+
+#### Get Panel Status Response Command [0x05]
+This command updates requesting IAS ACE clients in the system of changes to the security panel status recorded by
+the ACE server (e.g., IAS CIE device).
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Panel Status               |8-bit enumeration          |
+|Seconds Remaining          |Unsigned 8-bit Integer     |
+|Audible Notification       |8-bit enumeration          |
+|Alarm Status               |8-bit enumeration          |
+
+
+##### Panel Status
+Defines the current status of the alarm panel.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Panel Disarmed            |
+|0x0001 |Armed Stay                |
+|0x0002 |Armed Night               |
+|0x0003 |Armed Away                |
+|0x0004 |Exit Delay                |
+|0x0005 |Entry Delay               |
+|0x0006 |Not Ready to Arm          |
+|0x0007 |In Alarm                  |
+|0x0008 |Arming Stay               |
+|0x0009 |Arming Night              |
+|0x000A |Arming Away               |
+
+##### Seconds Remaining
+Indicates the number of seconds remaining for  the server to be in the state indicated in the PanelStatus parameter.
+The SecondsRemaining parameter SHALL be provided if the PanelStatus parameter has a value of 0x04 (Exit delay) or 0x05 (Entry delay).
+
+The default value SHALL be 0x00.
+
+##### Audible Notification
+Provide the ACE client with information on which type of audible notification it SHOULD make for the zone status change. This field is useful for telling the ACE client to play a standard chime or other audio indication or to mute and not sound an audible notification at all. This field also allows manufacturers to create additional audible alert types (e.g., dog barking, windchimes, conga drums) to enable users to customise their system.
+
+##### Alarm Status
+Provides the ACE client with information on the type of alarm the panel is in if its Panel Status field indicates it is “in alarm.” This field MAY be useful for ACE clients to display or otherwise initiate notification for users.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |No Alarm                  |
+|0x0001 |Burglar                   |
+|0x0002 |Fire                      |
+|0x0003 |Emergency                 |
+|0x0004 |Police Panic              |
+|0x0005 |Fire Panic                |
+|0x0006 |Emergency Panic           |
+
+#### Set Bypassed Zone List Command [0x06]
+Sets the list of bypassed zones on the IAS ACE client. This command can be sent either as a response to the
+GetBypassedZoneList command or unsolicited when the list of bypassed zones changes on the ACE server.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Zone ID                    |N x Unsigned 8-bit Integer |
+
+##### Zone ID
+Zone ID is the index of the Zone in the CIE's zone table and is an array of Zone IDs for each zone that is bypassed
+where X is equal to the value of the Number of Zones field. There is no order imposed by the numbering of the Zone ID
+field in this command payload. IAS ACE servers SHOULD provide the array of Zone IDs in ascending order.
+
+#### Bypass Response Command [0x07]
+Provides the response of the security panel to the request from the IAS ACE client to bypass zones via a Bypass command.
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Bypass Result              |N x Unsigned 8-bit Integer |
+
+##### Bypass Result
+An array of Zone IDs for each zone requested to be bypassed via the Bypass command where X is equal to the value of
+the Number of Zones field. The order of results for Zone IDs SHALL be the same as the order of Zone IDs sent in
+the Bypass command by the IAS ACE client.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |Zone Bypassed             |
+|0x0001 |Zone Not Bypassed         |
+|0x0002 |Not Allowed               |
+|0x0003 |Invalid Zone Id           |
+|0x0004 |Unknown Zone Id           |
+|0x0005 |Invalid Arm Code          |
+
+
+#### Get Zone Status Response [0x08]
+
+This command updates requesting IAS ACE clients in the system of changes to the IAS Zone server statuses recorded
+by the ACE server (e.g., IAS CIE device).
+
+|Field Name                 |Data Type                  |
+|---------------------------|---------------------------|
+|Zone Status Complete       |Boolean                    |
+|Number of zones            |Unsigned 8-bit Integer     |
+|Ias Ace Zone Status        |Unsigned 8-bit Integer     |Structure[Number Of Zones] |
+|Zone Id                    |Unsigned 8-bit Integer     |TODO
+|Zone Status                |16-bit bitmap              |TODO
+
+##### Zone Status Complete 
+Indicates whether there are additional Zone IDs managed by the IAS ACE Server with Zone Status information to be obtained.
+A value of zero (i.e. FALSE) indicates there are additional Zone IDs for which Zone Status information is available and
+that the IAS ACE client SHOULD send another Get Zone Status command.A value of one (i.e. TRUE) indicates there are no
+more Zone IDs for the IAS ACE client to query and the IAS ACE client has received all the Zone Status information for all
+IAS Zones managed by the IAS ACE server.
+
+The IAS ACE client SHOULD NOT typically send another Get Zone Status command.
 
 ## IAS WD [0x0502]
 The IAS WD cluster provides an interface to the functionality of any Warning
@@ -2666,6 +3931,107 @@ command that is still current.
 ### Generated
 
 ## Electrical Measurement [0x0B04]
+This cluster provides a mechanism for querying data about the electrical properties as measured
+by the device. This cluster may be implemented on any device type and be implemented on a per-endpoint
+basis. For example, a power  strip device could represent each outlet on a  different endpoint and
+report electrical  information for each individual outlet. The only caveat is that if you implement
+an attribute that has an associated multiplier and divisor, then you must implement the associated
+multiplier and divisor attributes. For example if you implement DCVoltage, you must also implement
+DCVoltageMultiplier and DCVoltageDivisor.
+
+If you are interested in reading information about the power supply or battery level on the device,
+please see the Power Configuration cluster.
+
+### Attributes
+
+|Id     |Name                             |Type                       |Access     |Implement |Reporting |
+|-------|---------------------------------|---------------------------|-----------|----------|----------|
+|0x0000 |MeasurementType                  |32-bit Bitmap              |Read only  |Mandatory |          |
+|0x0300 |ACFrequency                      |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0304 |TotalActivePower                 |Signed 32-bit Integer      |Read only  |Optional  |          |
+|0x0305 |TotalReactivePower               |Signed 32-bit Integer      |Read only  |Optional  |          |
+|0x0306 |TotalApparentPower               |Unsigned 32-bit Integer    |Read only  |Optional  |          |
+|0x0505 |RMSVoltage                       |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0508 |RMSCurrent                       |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x050B |ActivePower                      |Signed 16-bit Integer      |Read only  |Optional  |          |
+|0x0600 |ACVoltageMultiplier              |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0601 |ACVoltageDivisor                 |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0602 |ACCurrentMultiplier              |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0603 |ACCurrentDivisor                 |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0604 |ACPowerMultiplier                |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+|0x0605 |ACPowerDivisor                   |Unsigned 16-bit Integer    |Read only  |Optional  |          |
+
+
+
+#### MeasurementType Attribute
+This attribute indicates a device’s measurement capabilities. This will be indicated by setting
+the desire measurement bits to 1.
+
+|Id     |Name                      |
+|-------|--------------------------|
+|0x0000 |AC Active Measurement     |
+|0x0001 |AC Reactive Measurement   |
+|0x0002 |AC Apparent Measurement   |
+|0x0004 |Phase A Measurement       |
+|0x0008 |Phase B Measurement       |
+|0x0010 |Phase C Measurement       |
+|0x0020 |DC Measurement            |
+|0x0040 |Harmonics Measurement     |
+|0x0080 |Power Quality Measurement |
+
+####  ACFrequency Attribute
+The ACFrequency attribute represents the most recent AC Frequency reading in Hertz (Hz).
+If the frequency cannot be measured, a value of 0xFFFF is returned. 
+
+#### TotalActivePower Attribute
+Active power represents the current demand of active power delivered or received at the
+premises, in kW. Positive values indicate power delivered to the premises where negative
+values indicate power received from the premises. In case if device is capable of measuring
+multi elements or phases then this will be net active power value.
+
+#### TotalReactivePower Attribute
+Reactive power represents the  current demand of reactive power delivered or 
+received at the premises, in kVAr. Positive values indicate power delivered to
+the premises where negative values indicate power received from the premises. In
+case if device is capable of measuring multi elements or phases then this will be net reactive
+power value.
+
+#### TotalApparentPower Attribute
+Represents the current demand of apparent power, in kVA. In case if device is capable of
+measuring multi elements or phases then this will be net apparent power value.
+
+#### RMSVoltage Attribute
+Represents the  most recent RMS voltage reading in Volts (V). If the RMS voltage cannot be
+measured, a value of 0xFFFF is returned.
+
+#### RMSCurrent Attribute
+Represents the most recent RMS current reading in Amps (A). If the power cannot be measured,
+a value of 0xFFFF is returned. 
+
+#### ActivePower Attribute
+Represents the single phase or Phase A, current demand of active power delivered or received at
+the premises, in Watts (W). Positive values indicate power delivered to the premises where negative
+values indicate power received from the premises.
+
+#### ACCurrentMultiplier Attribute
+Provides a value to be multiplied against the InstantaneousCurrent and RMSCurrentattributes. 
+his attribute must be used in conjunction with the ACCurrentDivisorattribute. 0x0000 is an invalid value for this attribute.
+
+#### ACCurrentDivisor Attribute
+Provides  a  value  to  be  divided  against the ACCurrent, InstantaneousCurrent and
+RMSCurrentattributes. This attribute must be used in conjunction with the ACCurrentMultiplierattribute
+0x0000 is an invalid value for this attribute.
+ 
+#### ACPowerMultiplier Attribute
+Provides a value to be multiplied against the InstantaneousPower and ActivePowerattributes.
+This attribute must be used in conjunction with the ACPowerDivisorattribute. 0x0000 is an invalid
+value for this attribute
+
+#### ACPowerDivisor Attribute
+Provides a value to be divided against the InstantaneousPower and ActivePowerattributes.
+This  attribute must be used in conjunction with the ACPowerMultiplierattribute. 0x0000 is an
+invalid value for this attribute.
+ 
 ### Received
 ### Generated
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,15 +9,14 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Pressure measurement</b> cluster implementation (<i>Cluster ID 0x0403</i>).
@@ -27,6 +26,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclPressureMeasurementCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -109,13 +109,11 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     /**
      * Default constructor to create a Pressure measurement cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclPressureMeasurementCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclPressureMeasurementCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>MeasuredValue</i> attribute [attribute ID <b>0</b>].
@@ -141,7 +139,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     public Future<CommandResult> getMeasuredValueAsync() {
         return read(attributes.get(ATTR_MEASUREDVALUE));
     }
-
 
     /**
      * Synchronously get the <i>MeasuredValue</i> attribute [attribute ID <b>0</b>].
@@ -173,16 +170,12 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMeasuredValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MEASUREDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MEASUREDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MEASUREDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_MEASUREDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MEASUREDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MEASUREDVALUE));
     }
-
 
     /**
      * Set reporting for the <i>MeasuredValue</i> attribute [attribute ID <b>0</b>].
@@ -228,7 +221,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
         return read(attributes.get(ATTR_MINMEASUREDVALUE));
     }
 
-
     /**
      * Synchronously get the <i>MinMeasuredValue</i> attribute [attribute ID <b>1</b>].
      * <p>
@@ -250,11 +242,8 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinMeasuredValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINMEASUREDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINMEASUREDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINMEASUREDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_MINMEASUREDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINMEASUREDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINMEASUREDVALUE));
@@ -279,7 +268,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     public Future<CommandResult> getMaxMeasuredValueAsync() {
         return read(attributes.get(ATTR_MAXMEASUREDVALUE));
     }
-
 
     /**
      * Synchronously get the <i>MaxMeasuredValue</i> attribute [attribute ID <b>2</b>].
@@ -306,16 +294,12 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMaxMeasuredValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAXMEASUREDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAXMEASUREDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAXMEASUREDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_MAXMEASUREDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAXMEASUREDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAXMEASUREDVALUE));
     }
-
 
     /**
      * Set reporting for the <i>MaxMeasuredValue</i> attribute [attribute ID <b>2</b>].
@@ -357,7 +341,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
         return read(attributes.get(ATTR_TOLERANCE));
     }
 
-
     /**
      * Synchronously get the <i>Tolerance</i> attribute [attribute ID <b>3</b>].
      * <p>
@@ -380,11 +363,8 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getTolerance(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_TOLERANCE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_TOLERANCE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_TOLERANCE).getLastValue();
-            }
+        if (attributes.get(ATTR_TOLERANCE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_TOLERANCE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_TOLERANCE));
@@ -402,7 +382,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     public Future<CommandResult> getScaledValueAsync() {
         return read(attributes.get(ATTR_SCALEDVALUE));
     }
-
 
     /**
      * Synchronously get the <i>ScaledValue</i> attribute [attribute ID <b>16</b>].
@@ -422,16 +401,12 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getScaledValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SCALEDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SCALEDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_SCALEDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_SCALEDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_SCALEDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_SCALEDVALUE));
     }
-
 
     /**
      * Set reporting for the <i>ScaledValue</i> attribute [attribute ID <b>16</b>].
@@ -462,7 +437,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
         return read(attributes.get(ATTR_MINSCALEDVALUE));
     }
 
-
     /**
      * Synchronously get the <i>MinScaledValue</i> attribute [attribute ID <b>17</b>].
      * <p>
@@ -481,11 +455,8 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinScaledValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINSCALEDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINSCALEDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINSCALEDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_MINSCALEDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINSCALEDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINSCALEDVALUE));
@@ -503,7 +474,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     public Future<CommandResult> getMaxScaledValueAsync() {
         return read(attributes.get(ATTR_MAXSCALEDVALUE));
     }
-
 
     /**
      * Synchronously get the <i>MaxScaledValue</i> attribute [attribute ID <b>18</b>].
@@ -523,11 +493,8 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMaxScaledValue(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAXSCALEDVALUE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAXSCALEDVALUE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAXSCALEDVALUE).getLastValue();
-            }
+        if (attributes.get(ATTR_MAXSCALEDVALUE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAXSCALEDVALUE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAXSCALEDVALUE));
@@ -545,7 +512,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
     public Future<CommandResult> getScaledToleranceAsync() {
         return read(attributes.get(ATTR_SCALEDTOLERANCE));
     }
-
 
     /**
      * Synchronously get the <i>ScaledTolerance</i> attribute [attribute ID <b>19</b>].
@@ -565,16 +531,12 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getScaledTolerance(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SCALEDTOLERANCE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SCALEDTOLERANCE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_SCALEDTOLERANCE).getLastValue();
-            }
+        if (attributes.get(ATTR_SCALEDTOLERANCE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_SCALEDTOLERANCE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_SCALEDTOLERANCE));
     }
-
 
     /**
      * Set reporting for the <i>ScaledTolerance</i> attribute [attribute ID <b>19</b>].
@@ -605,7 +567,6 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
         return read(attributes.get(ATTR_SCALE));
     }
 
-
     /**
      * Synchronously get the <i>Scale</i> attribute [attribute ID <b>20</b>].
      * <p>
@@ -624,11 +585,8 @@ public class ZclPressureMeasurementCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getScale(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SCALE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SCALE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_SCALE).getLastValue();
-            }
+        if (attributes.get(ATTR_SCALE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_SCALE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_SCALE));

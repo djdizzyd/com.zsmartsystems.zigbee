@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -30,11 +29,11 @@ import com.zsmartsystems.zigbee.zcl.clusters.scenes.ViewSceneResponse;
 import com.zsmartsystems.zigbee.zcl.field.ExtensionFieldSet;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Scenes</b> cluster implementation (<i>Cluster ID 0x0005</i>).
@@ -51,6 +50,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclScenesCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -120,13 +120,11 @@ public class ZclScenesCluster extends ZclCluster {
     /**
      * Default constructor to create a Scenes cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclScenesCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclScenesCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>SceneCount</i> attribute [attribute ID <b>0</b>].
@@ -143,7 +141,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getSceneCountAsync() {
         return read(attributes.get(ATTR_SCENECOUNT));
     }
-
 
     /**
      * Synchronously get the <i>SceneCount</i> attribute [attribute ID <b>0</b>].
@@ -166,11 +163,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getSceneCount(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SCENECOUNT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SCENECOUNT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_SCENECOUNT).getLastValue();
-            }
+        if (attributes.get(ATTR_SCENECOUNT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_SCENECOUNT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_SCENECOUNT));
@@ -190,7 +184,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getCurrentSceneAsync() {
         return read(attributes.get(ATTR_CURRENTSCENE));
     }
-
 
     /**
      * Synchronously get the <i>CurrentScene</i> attribute [attribute ID <b>1</b>].
@@ -212,11 +205,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentScene(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTSCENE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTSCENE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTSCENE).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTSCENE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTSCENE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTSCENE));
@@ -237,7 +227,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getCurrentGroupAsync() {
         return read(attributes.get(ATTR_CURRENTGROUP));
     }
-
 
     /**
      * Synchronously get the <i>CurrentGroup</i> attribute [attribute ID <b>2</b>].
@@ -260,11 +249,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentGroup(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTGROUP).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTGROUP).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTGROUP).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTGROUP).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTGROUP).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTGROUP));
@@ -291,7 +277,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getSceneValidAsync() {
         return read(attributes.get(ATTR_SCENEVALID));
     }
-
 
     /**
      * Synchronously get the <i>SceneValid</i> attribute [attribute ID <b>3</b>].
@@ -320,11 +305,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link Boolean} attribute value, or null on error
      */
     public Boolean getSceneValid(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SCENEVALID).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SCENEVALID).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Boolean) attributes.get(ATTR_SCENEVALID).getLastValue();
-            }
+        if (attributes.get(ATTR_SCENEVALID).isLastValueCurrent(refreshPeriod)) {
+            return (Boolean) attributes.get(ATTR_SCENEVALID).getLastValue();
         }
 
         return (Boolean) readSync(attributes.get(ATTR_SCENEVALID));
@@ -346,7 +328,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getNameSupportAsync() {
         return read(attributes.get(ATTR_NAMESUPPORT));
     }
-
 
     /**
      * Synchronously get the <i>NameSupport</i> attribute [attribute ID <b>4</b>].
@@ -370,11 +351,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNameSupport(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NAMESUPPORT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NAMESUPPORT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NAMESUPPORT).getLastValue();
-            }
+        if (attributes.get(ATTR_NAMESUPPORT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NAMESUPPORT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NAMESUPPORT));
@@ -398,7 +376,6 @@ public class ZclScenesCluster extends ZclCluster {
     public Future<CommandResult> getLastConfiguredByAsync() {
         return read(attributes.get(ATTR_LASTCONFIGUREDBY));
     }
-
 
     /**
      * Synchronously get the <i>LastConfiguredBy</i> attribute [attribute ID <b>5</b>].
@@ -424,11 +401,8 @@ public class ZclScenesCluster extends ZclCluster {
      * @return the {@link IeeeAddress} attribute value, or null on error
      */
     public IeeeAddress getLastConfiguredBy(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LASTCONFIGUREDBY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LASTCONFIGUREDBY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (IeeeAddress) attributes.get(ATTR_LASTCONFIGUREDBY).getLastValue();
-            }
+        if (attributes.get(ATTR_LASTCONFIGUREDBY).isLastValueCurrent(refreshPeriod)) {
+            return (IeeeAddress) attributes.get(ATTR_LASTCONFIGUREDBY).getLastValue();
         }
 
         return (IeeeAddress) readSync(attributes.get(ATTR_LASTCONFIGUREDBY));

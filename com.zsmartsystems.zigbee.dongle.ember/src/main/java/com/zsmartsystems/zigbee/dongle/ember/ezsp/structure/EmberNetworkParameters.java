@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,8 +8,8 @@
 package com.zsmartsystems.zigbee.dongle.ember.ezsp.structure;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspDeserializer;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspDeserializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
 
 /**
  * Class to implement the Ember Structure <b>EmberNetworkParameters</b>.
@@ -25,9 +25,9 @@ public class EmberNetworkParameters {
     /**
      * The network's extended PAN identifier.
      * <p>
-     * EZSP type is <i>uint8_t[8]</i> - Java type is {@link int[]}
+     * EZSP type is <i>ExtendedPanId</i> - Java type is {@link ExtendedPanId}
      */
-    private int[] extendedPanId;
+    private ExtendedPanId extendedPanId;
 
     /**
      * The network's PAN identifier.
@@ -96,20 +96,20 @@ public class EmberNetworkParameters {
     /**
      * The network's extended PAN identifier.
      * <p>
-     * EZSP type is <i>uint8_t[8]</i> - Java type is {@link int[]}
+     * EZSP type is <i>ExtendedPanId</i> - Java type is {@link ExtendedPanId}
      *
-     * @return the current extendedPanId as {@link extendedPanId}
+     * @return the current extendedPanId as {@link ExtendedPanId}
      */
     public ExtendedPanId getExtendedPanId() {
-        return new ExtendedPanId(extendedPanId);
+        return extendedPanId;
     }
 
     /**
      * The network's extended PAN identifier.
      *
-     * @param extendedPanId the extendedPanId to set as {@link int[]}
+     * @param extendedPanId the extendedPanId to set as {@link ExtendedPanId}
      */
-    public void setExtendedPanId(int[] extendedPanId) {
+    public void setExtendedPanId(ExtendedPanId extendedPanId) {
         this.extendedPanId = extendedPanId;
     }
 
@@ -270,7 +270,7 @@ public class EmberNetworkParameters {
      */
     public int[] serialize(EzspSerializer serializer) {
         // Serialize the fields
-        serializer.serializeUInt8Array(extendedPanId);
+        serializer.serializeExtendedPanId(extendedPanId);
         serializer.serializeUInt16(panId);
         serializer.serializeUInt8(radioTxPower);
         serializer.serializeUInt8(radioChannel);
@@ -288,7 +288,7 @@ public class EmberNetworkParameters {
      */
     public void deserialize(EzspDeserializer deserializer) {
         // Deserialize the fields
-        extendedPanId = deserializer.deserializeUInt8Array(8);
+        extendedPanId = deserializer.deserializeExtendedPanId();
         panId = deserializer.deserializeUInt16();
         radioTxPower = deserializer.deserializeUInt8();
         radioChannel = deserializer.deserializeUInt8();
@@ -302,18 +302,7 @@ public class EmberNetworkParameters {
     public String toString() {
         final StringBuilder builder = new StringBuilder(225);
         builder.append("EmberNetworkParameters [extendedPanId=");
-        builder.append("{");
-        if (extendedPanId == null) {
-            builder.append("null");
-        } else {
-            for (int cnt = 0; cnt < extendedPanId.length; cnt++) {
-                if (cnt != 0) {
-                    builder.append(" ");
-                }
-                builder.append(String.format("%02X", extendedPanId[cnt]));
-            }
-        }
-        builder.append("}");
+        builder.append(extendedPanId);
         builder.append(", panId=");
         builder.append(panId);
         builder.append(", radioTxPower=");

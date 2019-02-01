@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -16,6 +18,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
 
 /**
  * Query Next Image Response value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * The upgrade server sends a Query Next Image Response with one of the following status: SUCCESS,
  * NO_IMAGE_AVAILABLE or NOT_AUTHORIZED. When a SUCCESS status is sent, it is
@@ -31,11 +36,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
  * case, the client may perform discovery again to find another upgrade server. The client may implement
  * an intelligence to avoid querying the same unauthorized server.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class QueryNextImageResponse extends ZclCommand {
     /**
      * Status command message field.

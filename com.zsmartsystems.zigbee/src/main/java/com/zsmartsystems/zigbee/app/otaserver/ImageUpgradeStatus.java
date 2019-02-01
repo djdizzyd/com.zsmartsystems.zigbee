@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -79,6 +79,13 @@ public enum ImageUpgradeStatus {
      */
     private static Map<Integer, ImageUpgradeStatus> map = null;
 
+    static {
+        map = new HashMap<Integer, ImageUpgradeStatus>();
+        for (ImageUpgradeStatus stackType : values()) {
+            map.put(stackType.statusId, stackType);
+        }
+    }
+
     private ImageUpgradeStatus(int stackId) {
         this.statusId = stackId;
     }
@@ -90,13 +97,6 @@ public enum ImageUpgradeStatus {
      * @return {@link ImageUpgradeStatus} or {@link #UNKNOWN} if the value could not be converted
      */
     public static ImageUpgradeStatus getStatus(int statusValue) {
-        if (map == null) {
-            map = new HashMap<Integer, ImageUpgradeStatus>();
-            for (ImageUpgradeStatus stackType : values()) {
-                map.put(stackType.statusId, stackType);
-            }
-
-        }
         if (map.get(statusValue) == null) {
             return UNKNOWN;
         }

@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.iaszone;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -19,12 +21,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * Cluster: <b>IAS Zone</b>. Command is sent <b>FROM</b> the server.
  * This command is a <b>specific</b> command used for the IAS Zone cluster.
  * <p>
- * The IAS Zone cluster defines an interface to the functionality of an IAS security
- * zone device. IAS Zone supports up to two alarm types per zone, low battery
- * reports and supervision of the IAS network.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-13T17:16:42Z")
 public class ZoneStatusChangeNotificationCommand extends ZclCommand {
     /**
      * Zone Status command message field.

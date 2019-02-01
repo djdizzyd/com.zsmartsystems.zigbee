@@ -1,17 +1,31 @@
+/**
+ * Copyright (c) 2016-2019 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.autocode;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,12 +55,102 @@ public class ZclProtocolCodeGenerator {
     static String packageZclCluster = packageZcl + ".clusters";
     static String packageZclProtocol = packageZcl + ".protocol";
     static String packageZclProtocolCommand = packageZclCluster;
+    static String packageTransactionPrefix = ".transaction";
 
     static String packageZdp = ".zdo";
     static String packageZdpField = packageZdp + ".field";
     static String packageZdpCommand = packageZdp + ".command";
     static String packageZdpTransaction = packageZdp + ".transaction";
     static String packageZdpDescriptors = packageZdpField;
+
+    private static int lineLen = 120;
+
+    private static String generatedDate;
+
+    private static boolean fileCompare(String file1, String file2) throws IOException {
+        File f = new File(file1);
+        if (!f.exists()) {
+            return false;
+        }
+        f = new File(file2);
+        if (!f.exists()) {
+            return false;
+        }
+
+        BufferedReader reader1 = new BufferedReader(new FileReader(file1));
+        BufferedReader reader2 = new BufferedReader(new FileReader(file2));
+
+        String line1 = reader1.readLine();
+        String line2 = reader2.readLine();
+
+        boolean areEqual = true;
+
+        int lineNum = 1;
+
+        while (line1 != null || line2 != null) {
+            if (line1 == null || line2 == null) {
+                areEqual = false;
+
+                break;
+            } else if (!line1.startsWith("@Generated") && !line1.equalsIgnoreCase(line2)) {
+                areEqual = false;
+
+                break;
+            }
+
+            line1 = reader1.readLine();
+            line2 = reader2.readLine();
+
+            lineNum++;
+        }
+
+        if (areEqual) {
+            System.out.println("Two files have same content.");
+        } else {
+            System.out.println("Two files have different content. They differ at line " + lineNum);
+            System.out.println("File1 has " + line1 + " and File2 has " + line2 + " at line " + lineNum);
+        }
+
+        reader1.close();
+        reader2.close();
+
+        return areEqual;
+    }
+
+    private static void copyFile(String source, String dest) throws IOException {
+        File target = new File(dest);
+
+        File parent = target.getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) {
+            throw new IllegalStateException("Couldn't create dir: " + parent);
+        }
+
+        if (target.exists()) {
+            Files.delete(new File(dest).toPath());
+        }
+
+        Files.copy(new File(source).toPath(), new File(dest).toPath());
+    }
+
+    private static void compareFiles(String inFolder, String outFolder, String folder) {
+        File[] files = new File(inFolder + folder).listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                compareFiles(inFolder, outFolder, folder + "/" + file.getName());
+            } else {
+                System.out.println("File: " + folder + "/" + file.getName());
+                try {
+                    if (!fileCompare(inFolder + folder + "/" + file.getName(),
+                            outFolder + folder + "/" + file.getName())) {
+                        copyFile(inFolder + folder + "/" + file.getName(), outFolder + folder + "/" + file.getName());
+                        System.out.println("File: " + folder + "/" + file.getName() + " updated");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     /**
      * The main method for running the code generator.
@@ -55,16 +159,29 @@ public class ZclProtocolCodeGenerator {
      *            the command line arguments
      */
     public static void main(final String[] args) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        generatedDate = dateFormat.format(new Date());
+
         final String definitionFilePathZcl = "./src/main/resources/zcl_definition.md";
         final String definitionFilePathZll = "./src/main/resources/zll_definition.md";
         final String definitionFilePathZdp = "./src/main/resources/zdp_definition.md";
         final String definitionFilePathOta = "./src/main/resources/ota_definition.md";
+        final String definitionFilePathZse = "./src/main/resources/zse_definition.md";
+        final String definitionFilePathMan = "./src/main/resources/manufacturer_definition.md";
 
         final String sourceRootPath;
-        if (args.length != 0) {
-            sourceRootPath = args[0];
-        } else {
-            sourceRootPath = "../com.zsmartsystems.zigbee/src/main/java/";
+        // if (args.length != 0) {
+        // sourceRootPath = args[0];
+        // } else {
+        // sourceRootPath = "../com.zsmartsystems.zigbee/src/main/java/";
+        // }
+        String outRootPath = "../com.zsmartsystems.zigbee/src/main/java/";
+
+        sourceRootPath = "target/src/main/java/";
+        final File packageFolder = new File(sourceRootPath);
+        if (!packageFolder.exists()) {
+            packageFolder.mkdirs();
         }
 
         final File sourceRootFile = new File(sourceRootPath);
@@ -86,8 +203,10 @@ public class ZclProtocolCodeGenerator {
 
         final Context contextZcl = new Context();
         final File definitionFileZcl = new File(definitionFilePathZcl);
+        final File definitionFileZse = new File(definitionFilePathZse);
         final File definitionFileOta = new File(definitionFilePathOta);
         final File definitionFileZll = new File(definitionFilePathZll);
+        final File definitionFileMan = new File(definitionFilePathMan);
         if (!(definitionFileZcl.exists() && definitionFileOta.exists() && definitionFileZll.exists())) {
             System.out.println("Definition file does not exist: " + definitionFilePathZcl);
         } else {
@@ -95,6 +214,8 @@ public class ZclProtocolCodeGenerator {
                 contextZcl.lines = new ArrayList<String>(FileUtils.readLines(definitionFileZcl, "UTF-8"));
                 contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileOta, "UTF-8")));
                 contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileZll, "UTF-8")));
+                contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileZse, "UTF-8")));
+                contextZcl.lines.addAll(new ArrayList<String>(FileUtils.readLines(definitionFileMan, "UTF-8")));
                 generateZclCode(contextZcl, sourceRootFile, packageRoot);
             } catch (final IOException e) {
                 System.out.println(
@@ -147,6 +268,9 @@ public class ZclProtocolCodeGenerator {
             }
 
             generateZclDataTypeEnumeration(dataTypes, packageRoot, packageFile);
+
+            String inRootPath = sourceRootPath.substring(0, sourceRootPath.length() - 1);
+            compareFiles(inRootPath, outRootPath, "");
         } catch (final IOException e) {
             System.out.println("Failed to generate data types enumeration.");
             e.printStackTrace();
@@ -196,22 +320,6 @@ public class ZclProtocolCodeGenerator {
             return;
         }
 
-        // try {
-        // generateZclAttributeTypeEnumeration(context, packageRoot, packageFile);
-        // } catch (final IOException e) {
-        // System.out.println("Failed to generate attribute enumeration.");
-        // e.printStackTrace();
-        // return;
-        // }
-
-        // try {
-        // generateZclFieldTypeEnumeration(context, packageRoot, packageFile);
-        // } catch (final IOException e) {
-        // System.out.println("Failed to generate field enumeration.");
-        // e.printStackTrace();
-        // return;
-        // }
-
         try {
             generateAttributeEnumeration(context, packageRoot, sourceRootPath);
         } catch (final IOException e) {
@@ -248,8 +356,6 @@ public class ZclProtocolCodeGenerator {
     public static void generateZdpCode(final Context context, final File sourceRootPath, final String packageRoot) {
         ZclProtocolDefinitionParser.parseProfiles(context);
 
-        final File packageFile = getPackageFile(packageRoot);
-
         try {
             generateZdpCommandClasses(context, packageRoot, sourceRootPath);
         } catch (final IOException e) {
@@ -266,13 +372,6 @@ public class ZclProtocolCodeGenerator {
             return;
         }
 
-        // try {
-        // generateZdpCommandTransactions(context, packageRoot, sourceRootPath);
-        // } catch (final IOException e) {
-        // System.out.println("Failed to generate profile message classes.");
-        // e.printStackTrace();
-        // return;
-        // }
     }
 
     private static void outputClassJavaDoc(final PrintWriter out, String description) {
@@ -306,14 +405,7 @@ public class ZclProtocolCodeGenerator {
         final File packageFile = getPackageFile(packagePath);
 
         final PrintWriter out = getClassOut(packageFile, className);
-
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
 
@@ -321,6 +413,8 @@ public class ZclProtocolCodeGenerator {
         out.println("import java.util.Calendar;");
         out.println("import java.util.HashMap;");
         out.println("import java.util.Map;");
+        out.println();
+        out.println("import javax.annotation.Generated;");
         out.println("import " + packageRootPrefix + packageZclField + ".*;");
         out.println("import " + packageRootPrefix + packageZcl + ".ZclStatus;");
         out.println("import " + packageRootPrefix + packageZdp + ".ZdoStatus;");
@@ -329,6 +423,7 @@ public class ZclProtocolCodeGenerator {
         out.println("import " + packageRootPrefix + "." + "ExtendedPanId" + ";");
         out.println();
         outputClassJavaDoc(out, "Enumeration of the ZCL data types");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         DataType newDataType = new DataType();
@@ -367,6 +462,14 @@ public class ZclProtocolCodeGenerator {
         out.println("    private final boolean analogue;");
         out.println("    private static Map<Integer, " + className + "> codeTypeMapping;");
         out.println();
+
+        out.println("    static {");
+        out.println("        codeTypeMapping = new HashMap<Integer, " + className + ">();");
+        out.println("        for (" + className + " s : values()) {");
+        out.println("            codeTypeMapping.put(s.id, s);");
+        out.println("        }");
+        out.println("    }");
+        out.println();
         out.println("    " + className
                 + "(final String label, final Class<?> dataClass, final int id, final boolean analogue) {");
         out.println("        this.label = label;");
@@ -376,18 +479,7 @@ public class ZclProtocolCodeGenerator {
         out.println("    }");
         out.println();
 
-        out.println("    private static void initMapping() {");
-        out.println("        codeTypeMapping = new HashMap<Integer, " + className + ">();");
-        out.println("        for (" + className + " s : values()) {");
-        out.println("            codeTypeMapping.put(s.id, s);");
-        out.println("        }");
-        out.println("    }");
-
         out.println("    public static " + className + " getType(int id) {");
-        out.println("        if (codeTypeMapping == null) {");
-        out.println("            initMapping();");
-        out.println("        }");
-
         out.println("        return codeTypeMapping.get(id);");
         out.println("    }");
 
@@ -413,6 +505,11 @@ public class ZclProtocolCodeGenerator {
         out.close();
     }
 
+    private static void outputClassGenerated(PrintWriter out) {
+        out.println("@Generated(value = \"" + ZclProtocolCodeGenerator.class.getName() + "\", date = \"" + generatedDate
+                + "\")");
+    }
+
     private static void generateZclProfileTypeEnumeration(Context context, String packageRootPrefix,
             File sourceRootPath) throws IOException {
         final String className = "ZigBeeProfileType";
@@ -423,27 +520,24 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
         out.println("import java.util.Map;");
         out.println("import java.util.HashMap;");
+        out.println();
+        out.println("import javax.annotation.Generated;");
 
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZigBee profile types");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         out.println("    UNKNOWN(-1, \"Unknown Profile\"),");
         final LinkedList<Profile> profiles = new LinkedList<Profile>(context.profiles.values());
         for (final Profile profile : profiles) {
-            out.print("    " + profile.profileType + "(" + String.format("0x%04x", profile.profileId) + ", \""
+            out.print("    " + profile.profileType + "(" + String.format("0x%04X", profile.profileId) + ", \""
                     + profile.profileName + "\")");
             out.println(profiles.getLast().equals(profile) ? ';' : ',');
         }
@@ -464,6 +558,15 @@ public class ZclProtocolCodeGenerator {
         out.println("     */");
         out.println("    private static Map<Integer, ZigBeeProfileType> map = null;");
         out.println();
+
+        out.println("    static {");
+        out.println("        map = new HashMap<Integer, ZigBeeProfileType>();");
+        out.println("        for (" + className + " profileType : values()) {");
+        out.println("            map.put(profileType.profileId, profileType);");
+        out.println("        }");
+        out.println("    }");
+        out.println();
+
         out.println("    " + className + "(final int profileId, final String label) {");
         out.println("        this.profileId = profileId;");
         out.println("        this.label = label;");
@@ -495,13 +598,6 @@ public class ZclProtocolCodeGenerator {
         out.println("     * @return {@link " + className + "} or {@link #UNKNOWN} if the value could not be converted");
         out.println("     */");
         out.println("    public static " + className + " getProfileType(int profileTypeValue) {");
-        out.println("        if (map == null) {");
-        out.println("            map = new HashMap<Integer, ZigBeeProfileType>();");
-        out.println("            for (" + className + " profileType : values()) {");
-        out.println("                map.put(profileType.profileId, profileType);");
-        out.println("            }");
-        out.println("        }");
-        out.println();
         out.println("        if (map.get(profileTypeValue) == null) {");
         out.println("            return UNKNOWN;");
         out.println("        }");
@@ -524,13 +620,7 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
@@ -540,9 +630,12 @@ public class ZclProtocolCodeGenerator {
         out.println();
         out.println("import java.util.HashMap;");
         out.println("import java.util.Map;");
+        out.println();
+        out.println("import javax.annotation.Generated;");
 
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZigBee Clusters");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         boolean first = true;
@@ -628,6 +721,7 @@ public class ZclProtocolCodeGenerator {
         out.println("package " + packageRoot + ";");
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZCL commands");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         final LinkedList<String> valueRows = new LinkedList<String>();
@@ -698,17 +792,12 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZigBee attributes");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         boolean first = true;
@@ -768,17 +857,12 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZCL fields");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
 
         final LinkedList<String> valueRows = new LinkedList<String>();
@@ -857,17 +941,13 @@ public class ZclProtocolCodeGenerator {
                             break;
                         }
                     }
-
-                    out.println("/**");
-                    out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-                    out.println(" * All rights reserved. This program and the accompanying materials");
-                    out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-                    out.println(" * which accompanies this distribution, and is available at");
-                    out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-                    out.println(" */");
+                    CodeGeneratorUtil.outputLicense(out);
 
                     out.println("package " + packageRoot + ";");
                     out.println();
+                    out.println("import javax.annotation.Generated;");
+                    out.println();
+
                     // out.println("import " + packageRootPrefix + packageZcl + ".ZclCommandMessage;");
                     out.println("import " + packageRootPrefix + packageZcl + ".ZclCommand;");
                     // out.println("import " + packageRootPrefix + packageZcl + ".ZclField;");
@@ -937,13 +1017,6 @@ public class ZclProtocolCodeGenerator {
                     out.println("/**");
                     out.println(" * " + command.commandLabel + " value object class.");
 
-                    if (command.commandDescription != null && command.commandDescription.size() != 0) {
-                        out.println(" * <p>");
-                        for (String line : command.commandDescription) {
-                            out.println(" * " + line);
-                        }
-                    }
-
                     out.println(" * <p>");
                     out.println(" * Cluster: <b>" + cluster.clusterName + "</b>. Command is sent <b>"
                             + (cluster.received.containsValue(command) ? "TO" : "FROM") + "</b> the server.");
@@ -951,27 +1024,24 @@ public class ZclProtocolCodeGenerator {
                             ? "a <b>generic</b> command used across the profile."
                             : "a <b>specific</b> command used for the " + cluster.clusterName + " cluster."));
 
-                    if (cluster.clusterDescription.size() > 0) {
+                    if (command.commandDescription.size() > 0) {
                         out.println(" * <p>");
-                        for (String line : cluster.clusterDescription) {
-                            out.println(" * " + line);
-                        }
+                        outputWithLinebreak(out, "", command.commandDescription);
                     }
 
                     out.println(" * <p>");
                     out.println(" * Code is auto-generated. Modifications may be overwritten!");
 
                     out.println(" */");
+                    outputClassGenerated(out);
                     out.println("public class " + className + " extends ZclCommand {");
 
                     for (final Field field : fields) {
                         out.println("    /**");
                         out.println("     * " + field.fieldLabel + " command message field.");
                         if (field.description.size() != 0) {
-                            out.println("     *");
-                            for (String line : field.description) {
-                                out.println("     * " + line);
-                            }
+                            out.println("     * <p>");
+                            outputWithLinebreak(out, "    ", field.description);
                         }
                         out.println("     */");
                         out.println("    private " + field.dataTypeClass + " " + field.nameLowerCamelCase + ";");
@@ -1071,9 +1141,7 @@ public class ZclProtocolCodeGenerator {
                         out.println("     * Sets " + field.fieldLabel + ".");
                         if (field.description.size() != 0) {
                             out.println("     *");
-                            for (String line : field.description) {
-                                out.println("     * " + line);
-                            }
+                            outputWithLinebreak(out, "    ", field.description);
                         }
                         out.println("     *");
                         out.println("     * @param " + field.nameLowerCamelCase + " the " + field.fieldLabel);
@@ -1224,18 +1292,14 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
 
         out.println("import java.lang.reflect.Constructor;");
+        out.println();
+        out.println("import javax.annotation.Generated;");
         out.println();
         out.println("import " + packageRootPrefix + packageZcl + ".ZclCommand;");
         out.println("import " + packageRootPrefix + packageZclProtocol + ".ZclCommandDirection;");
@@ -1270,6 +1334,7 @@ public class ZclProtocolCodeGenerator {
 
         out.println();
         outputClassJavaDoc(out, "Enumeration of ZigBee Cluster Library commands");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
         boolean first = true;
         for (String command : commandEnum.keySet()) {
@@ -1370,6 +1435,41 @@ public class ZclProtocolCodeGenerator {
         out.close();
     }
 
+    protected static void outputWithLinebreak(PrintWriter out, String indent, List<String> lines) {
+        for (String line : lines) {
+            String[] words = line.split(" ");
+            if (words.length == 0) {
+                return;
+            }
+
+            out.print(indent + " *");
+
+            int len = 2;
+            for (String word : words) {
+                // if (word.toLowerCase().equals("note:")) {
+                // if (len > 2) {
+                // out.println();
+                // }
+                // out.println(indent + " * <p>");
+                // out.print(indent + " * <b>Note:</b>");
+                // continue;
+                // }
+                if (len + word.length() > lineLen) {
+                    out.println();
+                    out.print(indent + " *");
+                    len = 2;
+                }
+                out.print(" ");
+                out.print(word);
+                len += word.length();
+            }
+
+            if (len != 0) {
+                out.println();
+            }
+        }
+    }
+
     private static void generateZclClusterClasses(Context context, String packageRootPrefix, File sourceRootPath)
             throws IOException {
 
@@ -1388,13 +1488,7 @@ public class ZclProtocolCodeGenerator {
                 commands.addAll(cluster.received.values());
                 commands.addAll(cluster.generated.values());
 
-                out.println("/**");
-                out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-                out.println(" * All rights reserved. This program and the accompanying materials");
-                out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-                out.println(" * which accompanies this distribution, and is available at");
-                out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-                out.println(" */");
+                CodeGeneratorUtil.outputLicense(out);
 
                 out.println("package " + packageRoot + packageZclCluster + ";");
                 out.println();
@@ -1490,10 +1584,10 @@ public class ZclProtocolCodeGenerator {
                     imports.add(packageRoot + packageZcl + ".ZclCommand");
                 }
                 // imports.add(packageRoot + packageZcl + ".ZclCommandMessage");
+                imports.add("javax.annotation.Generated");
 
                 // imports.add(packageRoot + ".ZigBeeDestination");
                 imports.add(packageRoot + ".ZigBeeEndpoint");
-                imports.add(packageRoot + ".ZigBeeNetworkManager");
                 if (!cluster.attributes.isEmpty() | !commands.isEmpty()) {
                     imports.add(packageRoot + ".CommandResult");
                 }
@@ -1509,7 +1603,7 @@ public class ZclProtocolCodeGenerator {
 
                 for (final Attribute attribute : cluster.attributes.values()) {
                     if (attribute.attributeAccess.toLowerCase().contains("read")) {
-                        imports.add("java.util.Calendar");
+                        // imports.add("java.util.Calendar");
                     }
                 }
 
@@ -1532,17 +1626,17 @@ public class ZclProtocolCodeGenerator {
                 out.println("/**");
                 out.println(" * <b>" + cluster.clusterName + "</b> cluster implementation (<i>Cluster ID "
                         + String.format("0x%04X", cluster.clusterId) + "</i>).");
-                if (cluster.clusterDescription.size() != 0) {
+                if (cluster.clusterDescription.size() > 0) {
                     out.println(" * <p>");
-                    for (String line : cluster.clusterDescription) {
-                        out.println(" * " + line);
-                    }
                 }
+                outputWithLinebreak(out, "", cluster.clusterDescription);
+
                 out.println(" * <p>");
                 out.println(" * Code is auto-generated. Modifications may be overwritten!");
 
                 out.println(" */");
                 // outputClassJavaDoc(out);
+                outputClassGenerated(out);
                 out.println("public class " + className + " extends ZclCluster {");
 
                 out.println("    /**");
@@ -1560,11 +1654,8 @@ public class ZclProtocolCodeGenerator {
                     out.println("    // Attribute constants");
                     for (final Attribute attribute : cluster.attributes.values()) {
                         out.println("    /**");
-                        if (attribute.attributeDescription.size() != 0) {
-                            for (String line : attribute.attributeDescription) {
-                                out.println("     * " + line);
-                            }
-                        }
+                        outputWithLinebreak(out, "    ", attribute.attributeDescription);
+
                         out.println("     */");
                         out.println("    public static final int " + attribute.enumName + " = "
                                 + String.format("0x%04X", attribute.attributeId) + ";");
@@ -1598,20 +1689,16 @@ public class ZclProtocolCodeGenerator {
                 out.println("    /**");
                 out.println("     * Default constructor to create a " + cluster.clusterName + " cluster.");
                 out.println("     *");
-                out.println("     * @param zigbeeManager {@link ZigBeeNetworkManager}");
                 out.println("     * @param zigbeeEndpoint the {@link ZigBeeEndpoint}");
                 out.println("     */");
-                out.println("    public " + className
-                        + "(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {");
-                out.println("        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);");
+                out.println("    public " + className + "(final ZigBeeEndpoint zigbeeEndpoint) {");
+                out.println("        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);");
                 out.println("    }");
-                out.println();
 
                 for (final Attribute attribute : cluster.attributes.values()) {
                     DataTypeMap zclDataType = ZclDataType.getDataTypeMapping().get(attribute.dataType);
 
                     if (attribute.attributeAccess.toLowerCase().contains("write")) {
-                        out.println();
                         outputAttributeJavaDoc(out, "Set", attribute, zclDataType);
                         out.println("    public Future<CommandResult> set"
                                 + attribute.nameUpperCamelCase.replace("_", "") + "(final Object value) {");
@@ -1625,19 +1712,13 @@ public class ZclProtocolCodeGenerator {
                                 + attribute.nameUpperCamelCase.replace("_", "") + "Async() {");
                         out.println("        return read(attributes.get(" + attribute.enumName + "));");
                         out.println("    }");
-                        out.println();
                         outputAttributeJavaDoc(out, "Synchronously get", attribute, zclDataType);
                         out.println("    public " + attribute.dataTypeClass + " get"
                                 + attribute.nameUpperCamelCase.replace("_", "") + "(final long refreshPeriod) {");
-                        out.println("        if(refreshPeriod > 0 && attributes.get(" + attribute.enumName
-                                + ").getLastReportTime() != null) {");
-                        out.println(
-                                "            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;");
-                        out.println("            if(attributes.get(" + attribute.enumName
-                                + ").getLastReportTime().getTimeInMillis() < refreshTime) {");
-                        out.println("                return (" + attribute.dataTypeClass + ") attributes.get("
+                        out.println("        if (attributes.get(" + attribute.enumName
+                                + ").isLastValueCurrent(refreshPeriod)) {");
+                        out.println("            return (" + attribute.dataTypeClass + ") attributes.get("
                                 + attribute.enumName + ").getLastValue();");
-                        out.println("            }");
                         out.println("        }");
                         out.println();
                         out.println("        return (" + attribute.dataTypeClass + ") readSync(attributes.get("
@@ -1647,7 +1728,6 @@ public class ZclProtocolCodeGenerator {
 
                     if (attribute.attributeAccess.toLowerCase().contains("read")
                             && attribute.attributeReporting.toLowerCase().equals("mandatory")) {
-                        out.println();
                         outputAttributeJavaDoc(out, "Set reporting for", attribute, zclDataType);
                         if (zclDataType.analogue) {
                             out.println("    public Future<CommandResult> set" + attribute.nameUpperCamelCase
@@ -1670,9 +1750,7 @@ public class ZclProtocolCodeGenerator {
                     out.println("     * The " + command.commandLabel);
                     if (command.commandDescription.size() != 0) {
                         out.println("     * <p>");
-                        for (String line : command.commandDescription) {
-                            out.println("     * " + line);
-                        }
+                        outputWithLinebreak(out, "    ", command.commandDescription);
                     }
                     out.println("     *");
 
@@ -1827,22 +1905,19 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
 
         out.println();
         out.println("import java.util.HashMap;");
         out.println("import java.util.Map;");
+        out.println();
+        out.println("import javax.annotation.Generated;");
 
         out.println();
         outputClassJavaDoc(out, "Enumeration of " + parentName + " attribute " + label + " options.");
+        outputClassGenerated(out);
         out.println("public enum " + className + " {");
         boolean first = true;
         for (final Integer key : valueMap.keySet()) {
@@ -1867,13 +1942,18 @@ public class ZclProtocolCodeGenerator {
                 + " type to facilitate lookup by value.");
         out.println("     */");
         out.println("    private static Map<Integer, " + className + "> idMap;");
-
+        out.println();
+        out.println("    static {");
+        out.println("        idMap = new HashMap<Integer, " + className + ">();");
+        out.println("        for (" + className + " enumValue : values()) {");
+        out.println("            idMap.put(enumValue.key, enumValue);");
+        out.println("        }");
+        out.println("    }");
         out.println();
         out.println("    private final int key;");
         out.println();
         out.println("    " + className + "(final int key) {");
         out.println("        this.key = key;");
-        // out.println(" this.label = label;");
         out.println("    }");
         out.println();
 
@@ -1882,12 +1962,6 @@ public class ZclProtocolCodeGenerator {
         out.println("    }");
         out.println();
         out.println("    public static " + className + " getByValue(final int value) {");
-        out.println("        if (idMap == null) {");
-        out.println("            idMap = new HashMap<Integer, " + className + ">();");
-        out.println("            for (" + className + " enumValue : values()) {");
-        out.println("                idMap.put(enumValue.key, enumValue);");
-        out.println("            }");
-        out.println("        }");
         out.println("        return idMap.get(value);");
         out.println("    }");
         out.println("}");
@@ -1904,9 +1978,7 @@ public class ZclProtocolCodeGenerator {
                 + attribute.attributeId + "</b>].");
         if (attribute.attributeDescription.size() != 0) {
             out.println("     * <p>");
-            for (String line : attribute.attributeDescription) {
-                out.println("     * " + line);
-            }
+            outputWithLinebreak(out, "    ", attribute.attributeDescription);
         }
         if ("Synchronously get".equals(type)) {
             out.println("     * <p>");
@@ -2016,13 +2088,7 @@ public class ZclProtocolCodeGenerator {
                         }
                     }
 
-                    out.println("/**");
-                    out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-                    out.println(" * All rights reserved. This program and the accompanying materials");
-                    out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-                    out.println(" * which accompanies this distribution, and is available at");
-                    out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-                    out.println(" */");
+                    CodeGeneratorUtil.outputLicense(out);
 
                     out.println("package " + packageRoot + ";");
                     out.println();
@@ -2043,7 +2109,8 @@ public class ZclProtocolCodeGenerator {
 
                     if (command.responseCommand != null && command.responseCommand.length() != 0) {
                         out.println("import " + packageRootPrefix + ".ZigBeeCommand;");
-                        out.println("import " + packageRootPrefix + ".ZigBeeTransactionMatcher;");
+                        out.println("import " + packageRootPrefix + packageTransactionPrefix
+                                + ".ZigBeeTransactionMatcher;");
                         out.println("import " + packageRootPrefix + packageZdpCommand + "." + command.responseCommand
                                 + ";");
                     }
@@ -2053,6 +2120,8 @@ public class ZclProtocolCodeGenerator {
                         out.println("import java.util.List;");
                         out.println("import java.util.ArrayList;");
                     }
+
+                    out.println("import javax.annotation.Generated;");
 
                     // out.println("import java.util.Map;");
                     // out.println("import java.util.HashMap;");
@@ -2110,22 +2179,22 @@ public class ZclProtocolCodeGenerator {
 
                     if (command.commandDescription != null && command.commandDescription.size() != 0) {
                         out.println(" * <p>");
-                        for (String line : command.commandDescription) {
-                            out.println(" * " + line);
-                        }
+                        outputWithLinebreak(out, "", command.commandDescription);
                     }
 
                     if (cluster.clusterDescription.size() > 0) {
                         out.println(" * <p>");
-                        for (String line : cluster.clusterDescription) {
-                            out.println(" * " + line);
-                        }
+                        outputWithLinebreak(out, "", cluster.clusterDescription);
                     }
 
                     out.println(" * <p>");
                     out.println(" * Code is auto-generated. Modifications may be overwritten!");
 
                     out.println(" */");
+                    out.println();
+
+                    outputClassGenerated(out);
+
                     if (className.endsWith("Request")) {
                         out.print("public class " + className + " extends ZdoRequest");
                     } else {
@@ -2148,11 +2217,9 @@ public class ZclProtocolCodeGenerator {
 
                         out.println("    /**");
                         out.println("     * " + field.fieldLabel + " command message field.");
-                        if (field.description.size() != 0) {
-                            out.println("     *");
-                            for (String line : field.description) {
-                                out.println("     * " + line);
-                            }
+                        if (field.description.size() > 0) {
+                            out.println("     * <p>");
+                            outputWithLinebreak(out, "    ", field.description);
                         }
                         out.println("     */");
                         out.println("    private " + getFieldType(field) + " " + field.nameLowerCamelCase + ";");
@@ -2195,9 +2262,7 @@ public class ZclProtocolCodeGenerator {
                         out.println("     * Gets " + field.fieldLabel + ".");
                         if (field.description.size() != 0) {
                             out.println("     * <p>");
-                            for (String line : field.description) {
-                                out.println("     * " + line);
-                            }
+                            outputWithLinebreak(out, "    ", field.description);
                         }
                         out.println("     *");
                         out.println("     * @return the " + field.fieldLabel);
@@ -2210,9 +2275,7 @@ public class ZclProtocolCodeGenerator {
                         out.println("     * Sets " + field.fieldLabel + ".");
                         if (field.description.size() != 0) {
                             out.println("     * <p>");
-                            for (String line : field.description) {
-                                out.println("     * " + line);
-                            }
+                            outputWithLinebreak(out, "    ", field.description);
                         }
                         out.println("     *");
                         out.println("     * @param " + field.nameLowerCamelCase + " the " + field.fieldLabel);
@@ -2420,13 +2483,7 @@ public class ZclProtocolCodeGenerator {
 
         final PrintWriter out = getClassOut(packageFile, className);
 
-        out.println("/**");
-        out.println(" * Copyright (c) 2016-2017 by the respective copyright holders.");
-        out.println(" * All rights reserved. This program and the accompanying materials");
-        out.println(" * are made available under the terms of the Eclipse Public License v1.0");
-        out.println(" * which accompanies this distribution, and is available at");
-        out.println(" * http://www.eclipse.org/legal/epl-v10.html");
-        out.println(" */");
+        CodeGeneratorUtil.outputLicense(out);
 
         out.println("package " + packageRoot + ";");
         out.println();
@@ -2543,7 +2600,8 @@ public class ZclProtocolCodeGenerator {
                             "import " + packageRootPrefix + packageZdpCommand + "." + command.responseCommand + ";");
 
                     out.println("import " + packageRootPrefix + ".Command;");
-                    out.println("import " + packageRootPrefix + ".ZigBeeTransactionMatcher;");
+                    out.println(
+                            "import " + packageRootPrefix + packageTransactionPrefix + ".ZigBeeTransactionMatcher;");
                     // out.println("import " + packageRootPrefix + packageZdp + ".ZdoRequest;");
                     // out.println("import " + packageRootPrefix + packageZdp + ".ZdoResponse;");
 
@@ -2556,16 +2614,12 @@ public class ZclProtocolCodeGenerator {
 
                     if (command.commandDescription != null && command.commandDescription.size() != 0) {
                         out.println(" * <p>");
-                        for (String line : command.commandDescription) {
-                            out.println(" * " + line);
-                        }
+                        outputWithLinebreak(out, "", command.commandDescription);
                     }
 
                     if (cluster.clusterDescription.size() > 0) {
                         out.println(" * <p>");
-                        for (String line : cluster.clusterDescription) {
-                            out.println(" * " + line);
-                        }
+                        outputWithLinebreak(out, "", cluster.clusterDescription);
                     }
 
                     out.println(" * <p>");

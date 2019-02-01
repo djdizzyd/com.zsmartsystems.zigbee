@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.general;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -17,20 +19,21 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
 /**
  * Write Attributes Structured Command value object class.
  * <p>
+ * Cluster: <b>General</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>generic</b> command used across the profile.
+ * <p>
  * The write attributes structured command is generated when a device wishes to
  * change the values of one or more attributes located on another device. Each write
  * attribute record shall contain the identifier and the actual value of the attribute, or
  * element thereof, to be written.
  * <p>
- * Cluster: <b>General</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>generic</b> command used across the profile.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class WriteAttributesStructuredCommand extends ZclCommand {
     /**
      * Status command message field.
-     *
+     * <p>
      * Status is only provided if the command was successful, and the
      * attribute selector records are not included for successfully
      * written attributes, in order to save bandwidth.
@@ -39,7 +42,7 @@ public class WriteAttributesStructuredCommand extends ZclCommand {
 
     /**
      * Attribute selectors command message field.
-     *
+     * <p>
      * Note that write attribute status records are not included for successfully
      * written attributes, in order to save bandwidth. In the case of successful
      * writing of all attributes, only a single  write attribute status record

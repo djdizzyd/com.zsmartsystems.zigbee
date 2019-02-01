@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import com.zsmartsystems.zigbee.ZigBeeCommand;
 import com.zsmartsystems.zigbee.ZigBeeCommandListener;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNode;
+import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
 import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorRequest;
 import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorResponse;
@@ -51,7 +52,7 @@ public class ClusterMatcher implements ZigBeeCommandListener {
      * @param networkManager the {@link ZigBeeNetworkManager} to which this matcher is linked
      */
     public ClusterMatcher(ZigBeeNetworkManager networkManager) {
-        logger.debug("{}: ClusterMatcher starting", networkManager.getZigBeeExtendedPanId());
+        logger.debug("ClusterMatcher starting");
         this.networkManager = networkManager;
 
         networkManager.addCommandListener(this);
@@ -63,7 +64,7 @@ public class ClusterMatcher implements ZigBeeCommandListener {
      * @param cluster the cluster to match
      */
     public void addCluster(int cluster) {
-        logger.debug("{}: ClusterMatcher adding cluster {}", networkManager.getZigBeeExtendedPanId(), cluster);
+        logger.debug("ClusterMatcher adding cluster {}", ZclClusterType.getValueById(cluster));
         clusters.add(cluster);
     }
 
@@ -94,7 +95,7 @@ public class ClusterMatcher implements ZigBeeCommandListener {
             matchResponse.setMatchList(matchList);
 
             matchResponse.setDestinationAddress(command.getSourceAddress());
-            matchResponse.setNwkAddrOfInterest(command.getSourceAddress().getAddress());
+            matchResponse.setNwkAddrOfInterest(matchRequest.getNwkAddrOfInterest());
             logger.debug("{}: ClusterMatcher sending match {}", networkManager.getZigBeeExtendedPanId(), matchResponse);
             networkManager.sendCommand(matchResponse);
         }

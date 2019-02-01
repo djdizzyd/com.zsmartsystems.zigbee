@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -15,6 +17,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
 
 /**
  * Image Notify Command value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * The purpose of sending Image Notify command is so the server has a way to notify client devices of
  * when the OTA upgrade images are available for them. It eliminates the need for ZR client devices
@@ -31,11 +36,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * notify all clients disregard of their manufacturers, image types or file versions. Query jitter is needed
  * to protect the server from being flooded with clients’ queries for next image.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class ImageNotifyCommand extends ZclCommand {
     /**
      * Payload type command message field.

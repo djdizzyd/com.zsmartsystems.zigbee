@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,9 +18,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import com.zsmartsystems.zigbee.ZigBeeNode.ZigBeeNodeState;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
+import com.zsmartsystems.zigbee.zcl.ZclCommand;
+import com.zsmartsystems.zigbee.zdo.ZdoCommand;
 import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.LogicalType;
@@ -32,6 +36,8 @@ import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
 import com.zsmartsystems.zigbee.zdo.field.RoutingTable.DiscoveryState;
 
 public class ZigBeeNodeTest {
+    static final int TIMEOUT = 5000;
+
     @Test
     public void testAddDescriptors() {
         ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress());
@@ -83,14 +89,10 @@ public class ZigBeeNodeTest {
             fieldLqi.setAccessible(true);
             fieldLqi.set(neighbor, lqi);
         } catch (IllegalAccessException | IllegalArgumentException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
-
         } catch (SecurityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (NoSuchFieldException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -224,14 +226,6 @@ public class ZigBeeNodeTest {
     }
 
     @Test
-    public void testJoiningEnabled() {
-        ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress());
-
-        node.setJoining(true);
-        assertTrue(node.isJoiningEnabled());
-    }
-
-    @Test
     public void testAssociatedDevices() {
         ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress());
 
@@ -309,8 +303,12 @@ public class ZigBeeNodeTest {
     public void testUpdated() {
         ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress("1234567890"));
         ZigBeeNode newNode = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress("1234567890"));
+        ZigBeeNode invalidNode = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class),
+                new IeeeAddress("ABCDEF1234567890"));
         node.setNetworkAddress(1234);
         newNode.setNetworkAddress(1234);
+
+        assertFalse(node.updateNode(invalidNode));
 
         assertFalse(node.updateNode(newNode));
 
@@ -375,5 +373,97 @@ public class ZigBeeNodeTest {
         assertEquals(2, node.getNeighbors().size());
         assertTrue(node.setNeighbors(null));
         assertEquals(0, node.getNeighbors().size());
+    }
+
+    @Test
+    public void isDiscovered() {
+        ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress("1234567890"));
+        ZigBeeNetworkEndpointListener listener = Mockito.mock(ZigBeeNetworkEndpointListener.class);
+        node.addNetworkEndpointListener(listener);
+
+        assertFalse(node.isDiscovered());
+        assertNotNull(node.getEndpoints());
+
+        NodeDescriptor descriptor = new NodeDescriptor(0, 3333, 74, true, 6666, 0, 6, 4444, true, 8);
+        node.setNodeDescriptor(descriptor);
+        assertFalse(node.isDiscovered());
+
+        ZigBeeEndpoint endpoint = new ZigBeeEndpoint(node, 1);
+        node.addEndpoint(endpoint);
+        assertTrue(node.isDiscovered());
+        Mockito.verify(listener, Mockito.timeout(TIMEOUT)).deviceAdded(endpoint);
+
+        assertEquals(endpoint, node.getEndpoint(1));
+        assertEquals(1, node.getEndpoints().size());
+
+        node.removeEndpoint(1);
+        assertEquals(0, node.getEndpoints().size());
+        Mockito.verify(listener, Mockito.timeout(TIMEOUT)).deviceRemoved(endpoint);
+
+        node.removeNetworkEndpointListener(listener);
+    }
+
+    @Test
+    public void commandReceived() {
+        ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress("1234567890"));
+        node.setNetworkAddress(12345);
+
+        ZigBeeEndpoint endpoint1 = Mockito.mock(ZigBeeEndpoint.class);
+        Mockito.when(endpoint1.getEndpointId()).thenReturn(1);
+        ZigBeeEndpoint endpoint2 = Mockito.mock(ZigBeeEndpoint.class);
+        Mockito.when(endpoint2.getEndpointId()).thenReturn(2);
+
+        node.addEndpoint(endpoint1);
+        node.addEndpoint(endpoint2);
+
+        ZigBeeEndpointAddress sourceAddress = Mockito.mock(ZigBeeEndpointAddress.class);
+        Mockito.when(sourceAddress.getAddress()).thenReturn(12345);
+        Mockito.when(sourceAddress.getEndpoint()).thenReturn(1);
+
+        ZigBeeEndpointAddress invalidSourceAddress = Mockito.mock(ZigBeeEndpointAddress.class);
+        Mockito.when(invalidSourceAddress.getAddress()).thenReturn(1234);
+        Mockito.when(invalidSourceAddress.getEndpoint()).thenReturn(1);
+        ZclCommand zigbeeCommand = Mockito.mock(ZclCommand.class);
+        Mockito.when(zigbeeCommand.getSourceAddress()).thenReturn(invalidSourceAddress);
+        node.commandReceived(zigbeeCommand);
+        Mockito.verify(endpoint1, Mockito.times(0)).commandReceived(ArgumentMatchers.any(ZclCommand.class));
+        Mockito.verify(endpoint2, Mockito.times(0)).commandReceived(ArgumentMatchers.any(ZclCommand.class));
+
+        ZigBeeAddress zigbeeAddress = Mockito.mock(ZigBeeAddress.class);
+        Mockito.when(zigbeeAddress.getAddress()).thenReturn(124);
+        ZigBeeCommand zigbeeCommandInvalidAddressCmd = Mockito.mock(ZigBeeCommand.class);
+        Mockito.when(zigbeeCommandInvalidAddressCmd.getSourceAddress()).thenReturn(zigbeeAddress);
+        node.commandReceived(zigbeeCommandInvalidAddressCmd);
+        Mockito.verify(endpoint1, Mockito.times(0)).commandReceived(ArgumentMatchers.any(ZclCommand.class));
+        Mockito.verify(endpoint2, Mockito.times(0)).commandReceived(ArgumentMatchers.any(ZclCommand.class));
+
+        ZclCommand unicast = Mockito.mock(ZclCommand.class);
+        ZigBeeEndpointAddress unicastDestination = Mockito.mock(ZigBeeEndpointAddress.class);
+        Mockito.when(unicastDestination.getAddress()).thenReturn(123);
+        Mockito.when(unicastDestination.getEndpoint()).thenReturn(1);
+        Mockito.when(unicast.getSourceAddress()).thenReturn(sourceAddress);
+        Mockito.when(unicast.getDestinationAddress()).thenReturn(unicastDestination);
+
+        node.commandReceived(unicast);
+        Mockito.verify(endpoint1, Mockito.times(1)).commandReceived(unicast);
+        Mockito.verify(endpoint2, Mockito.times(0)).commandReceived(unicast);
+
+        ZdoCommand zdoCommand = Mockito.mock(ZdoCommand.class);
+        ZigBeeAddress zdoSource = Mockito.mock(ZigBeeAddress.class);
+        Mockito.when(zdoSource.getAddress()).thenReturn(12345);
+        Mockito.when(zdoCommand.getSourceAddress()).thenReturn(zdoSource);
+        node.commandReceived(zdoCommand);
+    }
+
+    @Test
+    public void setNodeState() {
+        ZigBeeNode node = new ZigBeeNode(Mockito.mock(ZigBeeNetworkManager.class), new IeeeAddress("1234567890"));
+
+        assertFalse(node.setNodeState(ZigBeeNodeState.UNKNOWN));
+        assertTrue(node.setNodeState(ZigBeeNodeState.ONLINE));
+        assertEquals(ZigBeeNodeState.ONLINE, node.getNodeState());
+        assertTrue(node.setNodeState(ZigBeeNodeState.OFFLINE));
+        assertFalse(node.setNodeState(ZigBeeNodeState.OFFLINE));
+        assertEquals(ZigBeeNodeState.OFFLINE, node.getNodeState());
     }
 }

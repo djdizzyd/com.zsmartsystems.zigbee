@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,6 +32,16 @@ public class IeeeAddressTest {
 
         address = new IeeeAddress("8418260000D9959B");
         assertEquals("8418260000D9959B", address.toString());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConstructorStringError() {
+        new IeeeAddress("ABCDEFGH");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConstructorArrayError() {
+        new IeeeAddress(new int[4]);
     }
 
     @Test

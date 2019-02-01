@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,16 +8,21 @@
 package com.zsmartsystems.zigbee;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.app.ZigBeeApplication;
+import com.zsmartsystems.zigbee.dao.ZclClusterDao;
+import com.zsmartsystems.zigbee.dao.ZigBeeEndpointDao;
+import com.zsmartsystems.zigbee.transaction.ZigBeeTransactionMatcher;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.general.ReadAttributesResponse;
@@ -35,12 +40,7 @@ public class ZigBeeEndpoint {
     /**
      * The {@link Logger}.
      */
-    private final static Logger logger = LoggerFactory.getLogger(ZigBeeEndpoint.class);
-
-    /**
-     * The {@link ZigBeeNetworkManager} that manages this endpoint
-     */
-    private final ZigBeeNetworkManager networkManager;
+    private final Logger logger = LoggerFactory.getLogger(ZigBeeEndpoint.class);
 
     /**
      * Link to the parent {@link ZigBeeNode} to which this endpoint belongs
@@ -80,27 +80,21 @@ public class ZigBeeEndpoint {
     private final Map<Integer, ZclCluster> outputClusters = new ConcurrentHashMap<Integer, ZclCluster>();
 
     /**
-     * Map of {@link ZigBeeApplication}s that are available to this endpoint. Extensions are added
-     * with the {@link #addExtension(ZigBeeApplication extension)} method and can be retrieved with the
-     * {@link #getExtension(int clusterId)} method.
+     * Map of {@link ZigBeeApplication}s that are available to this endpoint. Applications are added
+     * with the {@link #addApplication(ZigBeeApplication application)} method and can be retrieved with the
+     * {@link #getApplication(int clusterId)} method.
      */
-    private final Map<Integer, ZigBeeApplication> extensions = new ConcurrentHashMap<Integer, ZigBeeApplication>();
+    private final Map<Integer, ZigBeeApplication> applications = new ConcurrentHashMap<Integer, ZigBeeApplication>();
 
     /**
      * Constructor
      *
-     * @param networkManager the {@link ZigBeeNetworkManager} to which the endpoint belongs
      * @param node the parent {@link ZigBeeNode}
      * @param endpoint the endpoint number within the {@link ZigBeeNode}
      */
-    public ZigBeeEndpoint(ZigBeeNetworkManager networkManager, ZigBeeNode node, int endpoint) {
-        this.networkManager = networkManager;
+    public ZigBeeEndpoint(ZigBeeNode node, int endpoint) {
         this.node = node;
         this.endpointId = endpoint;
-    }
-
-    @Override
-    protected void finalize() {
     }
 
     /**
@@ -159,6 +153,22 @@ public class ZigBeeEndpoint {
     }
 
     /**
+     * Adds a specific {@link ZclCluster} to the input clusters in this endpoint.
+     *
+     * @param cluster the {@link ZclCluster} to add
+     * @return true if the cluster was added, false if there was an error (eg the cluster was already included in the
+     *         endpoint)
+     */
+    public boolean addInputCluster(ZclCluster cluster) {
+        if (inputClusters.containsKey(cluster.getClusterId())) {
+            return false;
+        }
+
+        inputClusters.put(cluster.getClusterId(), cluster);
+        return true;
+    }
+
+    /**
      * Gets an input cluster
      *
      * @deprecated Use {@link #getInputCluster}
@@ -192,13 +202,13 @@ public class ZigBeeEndpoint {
     }
 
     /**
-     * Sets input cluster IDs.
+     * Sets input cluster IDs. This will add any new clusters in the list, and remove any that are no longer in the
+     * list.
      *
-     * @param inputClusterIds
-     *            the input cluster IDs
+     * @param inputClusterIds the input cluster IDs
      */
     public void setInputClusterIds(List<Integer> inputClusterIds) {
-        this.inputClusters.clear();
+        inputClusters.clear();
 
         logger.debug("{}: Setting input clusters {}", getEndpointAddress(), inputClusterIds);
 
@@ -234,17 +244,33 @@ public class ZigBeeEndpoint {
     }
 
     /**
-     * Sets output cluster IDs.
+     * Sets output cluster IDs. This will add any new clusters in the list, and remove any that are no longer in the
+     * list.
      *
-     * @param outputClusterIds
-     *            the output cluster IDs
+     * @param outputClusterIds the output cluster IDs
      */
     public void setOutputClusterIds(List<Integer> outputClusterIds) {
-        this.outputClusters.clear();
+        outputClusters.clear();
 
         logger.debug("{}: Setting output clusters {}", getEndpointAddress(), outputClusterIds);
 
         updateClusters(outputClusters, outputClusterIds, false);
+    }
+
+    /**
+     * Adds a specific {@link ZclCluster} to the output clusters in this endpoint.
+     *
+     * @param cluster the {@link ZclCluster} to add
+     * @return true if the cluster was added, false if there was an error (eg the cluster was already included in the
+     *         endpoint)
+     */
+    public boolean addOutputCluster(ZclCluster cluster) {
+        if (outputClusters.containsKey(cluster.getClusterId())) {
+            return false;
+        }
+
+        outputClusters.put(cluster.getClusterId(), cluster);
+        return true;
     }
 
     /**
@@ -266,6 +292,29 @@ public class ZigBeeEndpoint {
         } else {
             return getInputCluster(clusterId);
         }
+    }
+
+    private ZclCluster getClusterClass(int clusterId) {
+        ZclClusterType clusterType = ZclClusterType.getValueById(clusterId);
+        if (clusterType == null) {
+            // Unsupported cluster
+            logger.debug("{}: Unsupported cluster {}", getEndpointAddress(), clusterId);
+            return null;
+        }
+
+        // Create a cluster class
+        ZclCluster cluster = null;
+        Constructor<? extends ZclCluster> constructor;
+        try {
+            constructor = clusterType.getClusterClass().getConstructor(ZigBeeEndpoint.class);
+            cluster = constructor.newInstance(this);
+        } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException e) {
+            logger.debug("{}: Error instantiating cluster {}", getEndpointAddress(), clusterType);
+            return null;
+        }
+
+        return cluster;
     }
 
     private void updateClusters(Map<Integer, ZclCluster> clusters, List<Integer> newList, boolean isInput) {
@@ -290,28 +339,20 @@ public class ZigBeeEndpoint {
         for (int id : newList) {
             if (!clusters.containsKey(id)) {
                 // Get the cluster type
-                ZclClusterType clusterType = ZclClusterType.getValueById(id);
-                ZclCluster clusterClass = null;
-                if (clusterType == null) {
-                    // Unsupported cluster
-                    logger.debug("{}: Unsupported cluster {}", getEndpointAddress(), id);
+                ZclCluster clusterClass = getClusterClass(id);
+                if (clusterClass == null) {
+                    logger.debug("{}: Cluster {} not found cluster {}", getEndpointAddress(),
+                            String.format("%04X", id));
                     continue;
                 }
 
-                // Create a cluster class
-                Constructor<? extends ZclCluster> constructor;
-                try {
-                    constructor = clusterType.getClusterClass().getConstructor(ZigBeeNetworkManager.class,
-                            ZigBeeEndpoint.class);
-                    clusterClass = constructor.newInstance(networkManager, this);
-                } catch (Exception e) {
-                    logger.debug("{}: Error instantiating cluster {}", getEndpointAddress(), clusterType);
-                }
                 if (isInput) {
-                    logger.debug("{}: Setting cluster {} as server", getEndpointAddress(), clusterType);
+                    logger.debug("{}: Setting cluster {} as server", getEndpointAddress(),
+                            ZclClusterType.getValueById(id));
                     clusterClass.setServer();
                 } else {
-                    logger.debug("{}: Setting cluster {} as client", getEndpointAddress(), clusterType);
+                    logger.debug("{}: Setting cluster {} as client", getEndpointAddress(),
+                            ZclClusterType.getValueById(id));
                     clusterClass.setClient();
                 }
 
@@ -349,41 +390,48 @@ public class ZigBeeEndpoint {
     }
 
     /**
-     * Adds an extension and makes it available to this endpoint.
+     * Adds an application and makes it available to this endpoint.
      * The cluster used by the server must be in the output clusters list and this will be passed to the
-     * {@link ZclExtension#serverStartup()) method to start the extension.
+     * {@link ZclApplication#serverStartup()) method to start the application.
      *
-     * @param extension the new {@link ZigBeeApplication}
+     * @param application the new {@link ZigBeeApplication}
      */
-    public void addExtension(ZigBeeApplication extension) {
-        extensions.put(extension.getClusterId(), extension);
-        ZclCluster cluster = outputClusters.get(extension.getClusterId());
+    public void addApplication(ZigBeeApplication application) {
+        applications.put(application.getClusterId(), application);
+        ZclCluster cluster = outputClusters.get(application.getClusterId());
         if (cluster == null) {
-            cluster = inputClusters.get(extension.getClusterId());
+            cluster = inputClusters.get(application.getClusterId());
         }
-        extension.serverStartup(cluster);
+        application.appStartup(cluster);
     }
 
     /**
-     * Gets the extension associated with the clusterId. Returns null if there is no server linked to the requested
+     * Gets the application associated with the clusterId. Returns null if there is no server linked to the requested
      * cluster
      *
      * @param clusterId
-     * @return the {@link ZclServer}
+     * @return the {@link ZigBeeApplication}
      */
-    public ZigBeeApplication getExtension(int clusterId) {
-        return extensions.get(clusterId);
+    public ZigBeeApplication getApplication(int clusterId) {
+        return applications.get(clusterId);
     }
 
+    /**
+     * Incoming command handler. The endpoint will process any commands addressed to this endpoint ID and pass o
+     * clusters and applications
+     *
+     * @param command the {@link ZclCommand} received
+     */
     public void commandReceived(ZclCommand command) {
         if (!command.getSourceAddress().equals(getEndpointAddress())) {
             return;
         }
+        logger.trace("{}: ZigBeeEndpoint.commandReceived({})", getEndpointAddress(), command);
 
-        // Pass all commands received from this endpoint to any registered extensions
-        synchronized (extensions) {
-            for (ZigBeeApplication extension : extensions.values()) {
-                extension.commandReceived(command);
+        // Pass all commands received from this endpoint to any registered applications
+        synchronized (applications) {
+            for (ZigBeeApplication application : applications.values()) {
+                application.commandReceived(command);
             }
         }
 
@@ -415,6 +463,77 @@ public class ZigBeeEndpoint {
         if (!command.isGenericCommand()) {
             cluster.handleCommand(command);
         }
+    }
+
+    /**
+     * Gets a {@link ZigBeeEndpointDao} used for serialisation of the {@link ZigBeeEndpoint}
+     *
+     * @return the {@link ZigBeeEndpointDao}
+     */
+    public ZigBeeEndpointDao getDao() {
+        ZigBeeEndpointDao dao = new ZigBeeEndpointDao();
+
+        dao.setEndpointId(endpointId);
+        dao.setProfileId(profileId);
+
+        List<ZclClusterDao> clusters;
+
+        clusters = new ArrayList<ZclClusterDao>();
+        for (ZclCluster cluster : inputClusters.values()) {
+            clusters.add(cluster.getDao());
+        }
+        dao.setInputClusters(clusters);
+
+        clusters = new ArrayList<ZclClusterDao>();
+        for (ZclCluster cluster : outputClusters.values()) {
+            clusters.add(cluster.getDao());
+        }
+        dao.setOutputClusters(clusters);
+
+        return dao;
+    }
+
+    public void setDao(ZigBeeEndpointDao dao) {
+        endpointId = dao.getEndpointId();
+        if (dao.getProfileId() != null) {
+            profileId = dao.getProfileId();
+        }
+
+        if (dao.getInputClusterIds() != null) {
+            for (ZclClusterDao clusterDao : dao.getInputClusters()) {
+                ZclCluster cluster = getClusterClass(clusterDao.getClusterId());
+                cluster.setDao(clusterDao);
+                inputClusters.put(clusterDao.getClusterId(), cluster);
+            }
+        }
+        if (dao.getOutputClusterIds() != null) {
+            for (ZclClusterDao clusterDao : dao.getOutputClusters()) {
+                ZclCluster cluster = getClusterClass(clusterDao.getClusterId());
+                cluster.setDao(clusterDao);
+                outputClusters.put(clusterDao.getClusterId(), cluster);
+            }
+        }
+    }
+
+    /**
+     * Sends ZigBee command without waiting for response.
+     *
+     * @param command the {@link ZigBeeCommand} to send
+     */
+    public void sendTransaction(ZigBeeCommand command) {
+        command.setDestinationAddress(getEndpointAddress());
+    }
+
+    /**
+     * Sends {@link ZigBeeCommand} command and uses the {@link ZigBeeTransactionMatcher} to match the response.
+     *
+     * @param command the {@link ZigBeeCommand} to send
+     * @param responseMatcher the {@link ZigBeeTransactionMatcher} used to match the response to the request
+     * @return the {@link CommandResult} future.
+     */
+    public Future<CommandResult> sendTransaction(ZigBeeCommand command, ZigBeeTransactionMatcher responseMatcher) {
+        command.setDestinationAddress(getEndpointAddress());
+        return node.sendTransaction(command, responseMatcher);
     }
 
     @Override

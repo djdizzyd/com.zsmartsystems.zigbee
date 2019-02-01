@@ -1,17 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- */
-/**
-<<<<<<< Updated upstream
- * Copyright (c) 2016-2017 by the respective copyright holders.
-=======
- * Copyright (c) 2014-2017 by the respective copyright holders.
- *
->>>>>>> Stashed changes
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -36,7 +24,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberStatus;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspZigbeeKeyEstablishmentHandler extends EzspFrameResponse {
-    public static int FRAME_ID = 0x9B;
+    public static final int FRAME_ID = 0x9B;
 
     /**
      * This is the IEEE address of the partner that the device successfully established a key with.

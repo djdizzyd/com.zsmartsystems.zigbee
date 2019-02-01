@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,7 +13,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import com.zsmartsystems.zigbee.IeeeAddress;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspChildJoinHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNodeType;
 
 /**
@@ -23,8 +25,10 @@ public class EzspChildJoinHandlerTest extends EzspFrameTest {
 
     @Test
     public void testReceive1() {
+        EzspFrame.setEzspVersion(4);
         EzspChildJoinHandler handler = new EzspChildJoinHandler(
                 getPacketData("0B 90 23 00 00 95 87 F9 41 F6 02 00 4B 12 00 04"));
+        System.out.println(handler);
 
         assertTrue(handler.isResponse());
         assertEquals(0, handler.getIndex());

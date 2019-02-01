@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,8 @@ package com.zsmartsystems.zigbee.zcl.protocol;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.annotation.Generated;
 import com.zsmartsystems.zigbee.zcl.field.*;
 import com.zsmartsystems.zigbee.zcl.ZclStatus;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
@@ -24,15 +26,16 @@ import com.zsmartsystems.zigbee.ExtendedPanId;
  *
  * @author Chris Jackson
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:39:59Z")
 public enum ZclDataType {
     BITMAP_16_BIT("16-bit Bitmap", Integer.class, 0x19, false),
     BITMAP_32_BIT("32-bit Bitmap", Integer.class, 0x1B, false),
     BITMAP_8_BIT("Bitmap 8-bit", Integer.class, 0x18, false),
     BOOLEAN("Boolean", Boolean.class, 0x10, false),
     BYTE_ARRAY("Byte array", ByteArray.class, 0x00, false),
-    CHARACTER_STRING("Character string", String.class, 0x42, false),
+    CHARACTER_STRING("Character String", String.class, 0x42, false),
     DATA_8_BIT("8-bit data", Integer.class, 0x08, false),
-    ENUMERATION_16_BIT("16-bit Enumeration", Integer.class, 0x31, false),
+    ENUMERATION_16_BIT("16-bit enumeration", Integer.class, 0x31, false),
     ENUMERATION_8_BIT("8-bit Enumeration", Integer.class, 0x30, false),
     IEEE_ADDRESS("IEEE Address", IeeeAddress.class, 0xF0, false),
     N_X_ATTRIBUTE_IDENTIFIER("N X Attribute identifier", Integer.class, 0x00, false),
@@ -47,15 +50,17 @@ public enum ZclDataType {
     N_X_NEIGHBORS_INFORMATION("N X Neighbors information", NeighborInformation.class, 0x00, false),
     N_X_READ_ATTRIBUTE_STATUS_RECORD("N X Read attribute status record", ReadAttributeStatusRecord.class, 0x00, false),
     N_X_UNSIGNED_16_BIT_INTEGER("N X Unsigned 16-bit integer", Integer.class, 0x00, false),
-    N_X_UNSIGNED_8_BIT_INTEGER("N X Unsigned 8-bit integer", Integer.class, 0x00, false),
+    N_X_UNSIGNED_8_BIT_INTEGER("N x Unsigned 8-bit Integer", Integer.class, 0x00, false),
     N_X_WRITE_ATTRIBUTE_RECORD("N X Write attribute record", WriteAttributeRecord.class, 0x00, false),
     N_X_WRITE_ATTRIBUTE_STATUS_RECORD("N X Write attribute status record", WriteAttributeStatusRecord.class, 0x00, false),
-    OCTET_STRING("Octet string", String.class, 0x41, false),
+    OCTET_STRING("Octet string", ByteArray.class, 0x41, false),
     SIGNED_16_BIT_INTEGER("Signed 16-bit Integer", Integer.class, 0x29, true),
-    SIGNED_32_BIT_INTEGER("Signed 32-bit integer", Integer.class, 0x2B, true),
+    SIGNED_32_BIT_INTEGER("Signed 32-bit Integer", Integer.class, 0x2B, true),
     SIGNED_8_BIT_INTEGER("Signed 8-bit Integer", Integer.class, 0x28, true),
     UNSIGNED_16_BIT_INTEGER("Unsigned 16-bit integer", Integer.class, 0x21, true),
+    UNSIGNED_24_BIT_INTEGER("Unsigned 24-bit integer", Integer.class, 0x22, true),
     UNSIGNED_32_BIT_INTEGER("Unsigned 32-bit integer", Integer.class, 0x23, true),
+    UNSIGNED_48_BIT_INTEGER("Unsigned 48-bit integer", Long.class, 0x25, true),
     UNSIGNED_8_BIT_INTEGER("Unsigned 8-bit integer", Integer.class, 0x20, true),
     UTCTIME("UTCTime", Calendar.class, 0xE2, true),
     X_UNSIGNED_8_BIT_INTEGER("X Unsigned 8-bit integer", Integer.class, 0x00, false),
@@ -84,6 +89,13 @@ public enum ZclDataType {
     private final boolean analogue;
     private static Map<Integer, ZclDataType> codeTypeMapping;
 
+    static {
+        codeTypeMapping = new HashMap<Integer, ZclDataType>();
+        for (ZclDataType s : values()) {
+            codeTypeMapping.put(s.id, s);
+        }
+    }
+
     ZclDataType(final String label, final Class<?> dataClass, final int id, final boolean analogue) {
         this.label = label;
         this.dataClass = dataClass;
@@ -91,16 +103,7 @@ public enum ZclDataType {
         this.analogue = analogue;
     }
 
-    private static void initMapping() {
-        codeTypeMapping = new HashMap<Integer, ZclDataType>();
-        for (ZclDataType s : values()) {
-            codeTypeMapping.put(s.id, s);
-        }
-    }
     public static ZclDataType getType(int id) {
-        if (codeTypeMapping == null) {
-            initMapping();
-        }
         return codeTypeMapping.get(id);
     }
 

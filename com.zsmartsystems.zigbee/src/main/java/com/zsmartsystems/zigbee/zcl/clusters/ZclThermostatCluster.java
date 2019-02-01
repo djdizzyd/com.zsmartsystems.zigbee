@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -22,16 +21,17 @@ import com.zsmartsystems.zigbee.zcl.clusters.thermostat.SetWeeklySchedule;
 import com.zsmartsystems.zigbee.zcl.clusters.thermostat.SetpointRaiseLowerCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Thermostat</b> cluster implementation (<i>Cluster ID 0x0201</i>).
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclThermostatCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -136,10 +136,15 @@ public class ZclThermostatCluster extends ZclCluster {
     /**
      */
     public static final int ATTR_THERMOSTATRUNNINGMODE = 0x001E;
+    /**
+     * This indicates the type of errors encountered within the Mini Split AC. Error values are reported with four bytes
+     * values. Each bit within the four bytes indicates the unique error.
+     */
+    public static final int ATTR_ACERRORCODE = 0x0044;
 
     // Attribute initialisation
     protected Map<Integer, ZclAttribute> initializeAttributes() {
-        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(25);
+        Map<Integer, ZclAttribute> attributeMap = new ConcurrentHashMap<Integer, ZclAttribute>(26);
 
         attributeMap.put(ATTR_LOCALTEMPERATURE, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_LOCALTEMPERATURE, "LocalTemperature", ZclDataType.UNSIGNED_16_BIT_INTEGER, true, true, false, true));
         attributeMap.put(ATTR_OUTDOORTEMPERATURE, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_OUTDOORTEMPERATURE, "OutdoorTemperature", ZclDataType.UNSIGNED_16_BIT_INTEGER, false, true, false, false));
@@ -166,6 +171,7 @@ public class ZclThermostatCluster extends ZclCluster {
         attributeMap.put(ATTR_SYSTEMMODE, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_SYSTEMMODE, "SystemMode", ZclDataType.ENUMERATION_8_BIT, true, true, false, false));
         attributeMap.put(ATTR_ALARMMASK, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_ALARMMASK, "AlarmMask", ZclDataType.ENUMERATION_8_BIT, false, true, false, false));
         attributeMap.put(ATTR_THERMOSTATRUNNINGMODE, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_THERMOSTATRUNNINGMODE, "ThermostatRunningMode", ZclDataType.ENUMERATION_8_BIT, false, true, false, false));
+        attributeMap.put(ATTR_ACERRORCODE, new ZclAttribute(ZclClusterType.THERMOSTAT, ATTR_ACERRORCODE, "ACErrorCode", ZclDataType.BITMAP_32_BIT, false, true, false, false));
 
         return attributeMap;
     }
@@ -173,13 +179,11 @@ public class ZclThermostatCluster extends ZclCluster {
     /**
      * Default constructor to create a Thermostat cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclThermostatCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclThermostatCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>LocalTemperature</i> attribute [attribute ID <b>0</b>].
@@ -195,7 +199,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getLocalTemperatureAsync() {
         return read(attributes.get(ATTR_LOCALTEMPERATURE));
     }
-
 
     /**
      * Synchronously get the <i>LocalTemperature</i> attribute [attribute ID <b>0</b>].
@@ -217,16 +220,12 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocalTemperature(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCALTEMPERATURE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCALTEMPERATURE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCALTEMPERATURE).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCALTEMPERATURE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCALTEMPERATURE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCALTEMPERATURE));
     }
-
 
     /**
      * Set reporting for the <i>LocalTemperature</i> attribute [attribute ID <b>0</b>].
@@ -261,7 +260,6 @@ public class ZclThermostatCluster extends ZclCluster {
         return read(attributes.get(ATTR_OUTDOORTEMPERATURE));
     }
 
-
     /**
      * Synchronously get the <i>OutdoorTemperature</i> attribute [attribute ID <b>1</b>].
      * <p>
@@ -282,11 +280,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOutdoorTemperature(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OUTDOORTEMPERATURE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OUTDOORTEMPERATURE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OUTDOORTEMPERATURE).getLastValue();
-            }
+        if (attributes.get(ATTR_OUTDOORTEMPERATURE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OUTDOORTEMPERATURE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OUTDOORTEMPERATURE));
@@ -306,7 +301,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getOccupancyAsync() {
         return read(attributes.get(ATTR_OCCUPANCY));
     }
-
 
     /**
      * Synchronously get the <i>Occupancy</i> attribute [attribute ID <b>2</b>].
@@ -328,11 +322,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOccupancy(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OCCUPANCY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OCCUPANCY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OCCUPANCY).getLastValue();
-            }
+        if (attributes.get(ATTR_OCCUPANCY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OCCUPANCY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OCCUPANCY));
@@ -353,7 +344,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getAbsMinHeatSetpointLimitAsync() {
         return read(attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>AbsMinHeatSetpointLimit</i> attribute [attribute ID <b>3</b>].
@@ -376,11 +366,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAbsMinHeatSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ABSMINHEATSETPOINTLIMIT));
@@ -401,7 +388,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getAbsMaxHeatSetpointLimitAsync() {
         return read(attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>AbsMaxHeatSetpointLimit</i> attribute [attribute ID <b>4</b>].
@@ -424,11 +410,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAbsMaxHeatSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ABSMAXHEATSETPOINTLIMIT));
@@ -449,7 +432,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getAbsMinCoolSetpointLimitAsync() {
         return read(attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>AbsMinCoolSetpointLimit</i> attribute [attribute ID <b>5</b>].
@@ -472,11 +454,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAbsMinCoolSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ABSMINCOOLSETPOINTLIMIT));
@@ -497,7 +476,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getAbsMaxCoolSetpointLimitAsync() {
         return read(attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>AbsMaxCoolSetpointLimit</i> attribute [attribute ID <b>6</b>].
@@ -520,11 +498,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAbsMaxCoolSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ABSMAXCOOLSETPOINTLIMIT));
@@ -546,7 +521,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getPiCoolingDemandAsync() {
         return read(attributes.get(ATTR_PICOOLINGDEMAND));
     }
-
 
     /**
      * Synchronously get the <i>PICoolingDemand</i> attribute [attribute ID <b>7</b>].
@@ -570,16 +544,12 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPiCoolingDemand(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PICOOLINGDEMAND).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PICOOLINGDEMAND).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PICOOLINGDEMAND).getLastValue();
-            }
+        if (attributes.get(ATTR_PICOOLINGDEMAND).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PICOOLINGDEMAND).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PICOOLINGDEMAND));
     }
-
 
     /**
      * Set reporting for the <i>PICoolingDemand</i> attribute [attribute ID <b>7</b>].
@@ -618,7 +588,6 @@ public class ZclThermostatCluster extends ZclCluster {
         return read(attributes.get(ATTR_PIHEATINGDEMAND));
     }
 
-
     /**
      * Synchronously get the <i>PIHeatingDemand</i> attribute [attribute ID <b>8</b>].
      * <p>
@@ -641,16 +610,12 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPiHeatingDemand(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PIHEATINGDEMAND).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PIHEATINGDEMAND).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PIHEATINGDEMAND).getLastValue();
-            }
+        if (attributes.get(ATTR_PIHEATINGDEMAND).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PIHEATINGDEMAND).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PIHEATINGDEMAND));
     }
-
 
     /**
      * Set reporting for the <i>PIHeatingDemand</i> attribute [attribute ID <b>8</b>].
@@ -685,7 +650,6 @@ public class ZclThermostatCluster extends ZclCluster {
         return read(attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION));
     }
 
-
     /**
      * Synchronously get the <i>HVACSystemTypeConfiguration</i> attribute [attribute ID <b>9</b>].
      * <p>
@@ -704,11 +668,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getHvacSystemTypeConfiguration(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION).getLastValue();
-            }
+        if (attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_HVACSYSTEMTYPECONFIGURATION));
@@ -726,7 +687,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getLocalTemperatureCalibrationAsync() {
         return read(attributes.get(ATTR_LOCALTEMPERATURECALIBRATION));
     }
-
 
     /**
      * Synchronously get the <i>LocalTemperatureCalibration</i> attribute [attribute ID <b>16</b>].
@@ -746,11 +706,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocalTemperatureCalibration(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCALTEMPERATURECALIBRATION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCALTEMPERATURECALIBRATION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCALTEMPERATURECALIBRATION).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCALTEMPERATURECALIBRATION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCALTEMPERATURECALIBRATION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCALTEMPERATURECALIBRATION));
@@ -768,7 +725,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getOccupiedCoolingSetpointAsync() {
         return read(attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT));
     }
-
 
     /**
      * Synchronously get the <i>OccupiedCoolingSetpoint</i> attribute [attribute ID <b>17</b>].
@@ -788,11 +744,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOccupiedCoolingSetpoint(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT).getLastValue();
-            }
+        if (attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OCCUPIEDCOOLINGSETPOINT));
@@ -810,7 +763,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getOccupiedHeatingSetpointAsync() {
         return read(attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT));
     }
-
 
     /**
      * Synchronously get the <i>OccupiedHeatingSetpoint</i> attribute [attribute ID <b>18</b>].
@@ -830,11 +782,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOccupiedHeatingSetpoint(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT).getLastValue();
-            }
+        if (attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OCCUPIEDHEATINGSETPOINT));
@@ -852,7 +801,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getUnoccupiedCoolingSetpointAsync() {
         return read(attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT));
     }
-
 
     /**
      * Synchronously get the <i>UnoccupiedCoolingSetpoint</i> attribute [attribute ID <b>19</b>].
@@ -872,11 +820,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getUnoccupiedCoolingSetpoint(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT).getLastValue();
-            }
+        if (attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_UNOCCUPIEDCOOLINGSETPOINT));
@@ -894,7 +839,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getUnoccupiedHeatingSetpointAsync() {
         return read(attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT));
     }
-
 
     /**
      * Synchronously get the <i>UnoccupiedHeatingSetpoint</i> attribute [attribute ID <b>20</b>].
@@ -914,11 +858,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getUnoccupiedHeatingSetpoint(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT).getLastValue();
-            }
+        if (attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_UNOCCUPIEDHEATINGSETPOINT));
@@ -936,7 +877,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getMinHeatSetpointLimitAsync() {
         return read(attributes.get(ATTR_MINHEATSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>MinHeatSetpointLimit</i> attribute [attribute ID <b>21</b>].
@@ -956,11 +896,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinHeatSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINHEATSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINHEATSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINHEATSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_MINHEATSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINHEATSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINHEATSETPOINTLIMIT));
@@ -978,7 +915,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getMaxHeatSetpointLimitAsync() {
         return read(attributes.get(ATTR_MAXHEATSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>MaxHeatSetpointLimit</i> attribute [attribute ID <b>22</b>].
@@ -998,11 +934,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMaxHeatSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAXHEATSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAXHEATSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAXHEATSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_MAXHEATSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAXHEATSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAXHEATSETPOINTLIMIT));
@@ -1020,7 +953,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getMinCoolSetpointLimitAsync() {
         return read(attributes.get(ATTR_MINCOOLSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>MinCoolSetpointLimit</i> attribute [attribute ID <b>23</b>].
@@ -1040,11 +972,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinCoolSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINCOOLSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINCOOLSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINCOOLSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_MINCOOLSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINCOOLSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINCOOLSETPOINTLIMIT));
@@ -1062,7 +991,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getMaxCoolSetpointLimitAsync() {
         return read(attributes.get(ATTR_MAXCOOLSETPOINTLIMIT));
     }
-
 
     /**
      * Synchronously get the <i>MaxCoolSetpointLimit</i> attribute [attribute ID <b>24</b>].
@@ -1082,11 +1010,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMaxCoolSetpointLimit(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAXCOOLSETPOINTLIMIT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAXCOOLSETPOINTLIMIT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAXCOOLSETPOINTLIMIT).getLastValue();
-            }
+        if (attributes.get(ATTR_MAXCOOLSETPOINTLIMIT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAXCOOLSETPOINTLIMIT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAXCOOLSETPOINTLIMIT));
@@ -1104,7 +1029,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getMinSetpointDeadBandAsync() {
         return read(attributes.get(ATTR_MINSETPOINTDEADBAND));
     }
-
 
     /**
      * Synchronously get the <i>MinSetpointDeadBand</i> attribute [attribute ID <b>25</b>].
@@ -1124,11 +1048,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinSetpointDeadBand(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINSETPOINTDEADBAND).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINSETPOINTDEADBAND).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINSETPOINTDEADBAND).getLastValue();
-            }
+        if (attributes.get(ATTR_MINSETPOINTDEADBAND).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINSETPOINTDEADBAND).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINSETPOINTDEADBAND));
@@ -1146,7 +1067,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getRemoteSensingAsync() {
         return read(attributes.get(ATTR_REMOTESENSING));
     }
-
 
     /**
      * Synchronously get the <i>RemoteSensing</i> attribute [attribute ID <b>26</b>].
@@ -1166,11 +1086,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getRemoteSensing(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_REMOTESENSING).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_REMOTESENSING).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_REMOTESENSING).getLastValue();
-            }
+        if (attributes.get(ATTR_REMOTESENSING).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_REMOTESENSING).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_REMOTESENSING));
@@ -1188,7 +1105,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getControlSequenceOfOperationAsync() {
         return read(attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION));
     }
-
 
     /**
      * Synchronously get the <i>ControlSequenceOfOperation</i> attribute [attribute ID <b>27</b>].
@@ -1208,11 +1124,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getControlSequenceOfOperation(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION).getLastValue();
-            }
+        if (attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CONTROLSEQUENCEOFOPERATION));
@@ -1230,7 +1143,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getSystemModeAsync() {
         return read(attributes.get(ATTR_SYSTEMMODE));
     }
-
 
     /**
      * Synchronously get the <i>SystemMode</i> attribute [attribute ID <b>28</b>].
@@ -1250,11 +1162,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getSystemMode(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_SYSTEMMODE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_SYSTEMMODE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_SYSTEMMODE).getLastValue();
-            }
+        if (attributes.get(ATTR_SYSTEMMODE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_SYSTEMMODE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_SYSTEMMODE));
@@ -1272,7 +1181,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getAlarmMaskAsync() {
         return read(attributes.get(ATTR_ALARMMASK));
     }
-
 
     /**
      * Synchronously get the <i>AlarmMask</i> attribute [attribute ID <b>29</b>].
@@ -1292,11 +1200,8 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAlarmMask(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ALARMMASK).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ALARMMASK).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ALARMMASK).getLastValue();
-            }
+        if (attributes.get(ATTR_ALARMMASK).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ALARMMASK).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ALARMMASK));
@@ -1314,7 +1219,6 @@ public class ZclThermostatCluster extends ZclCluster {
     public Future<CommandResult> getThermostatRunningModeAsync() {
         return read(attributes.get(ATTR_THERMOSTATRUNNINGMODE));
     }
-
 
     /**
      * Synchronously get the <i>ThermostatRunningMode</i> attribute [attribute ID <b>30</b>].
@@ -1334,14 +1238,55 @@ public class ZclThermostatCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getThermostatRunningMode(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_THERMOSTATRUNNINGMODE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_THERMOSTATRUNNINGMODE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_THERMOSTATRUNNINGMODE).getLastValue();
-            }
+        if (attributes.get(ATTR_THERMOSTATRUNNINGMODE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_THERMOSTATRUNNINGMODE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_THERMOSTATRUNNINGMODE));
+    }
+
+    /**
+     * Get the <i>ACErrorCode</i> attribute [attribute ID <b>68</b>].
+     * <p>
+     * This indicates the type of errors encountered within the Mini Split AC. Error values are reported with four bytes
+     * values. Each bit within the four bytes indicates the unique error.
+     * <p>
+     * The attribute is of type {@link Integer}.
+     * <p>
+     * The implementation of this attribute by a device is OPTIONAL
+     *
+     * @return the {@link Future<CommandResult>} command result future
+     */
+    public Future<CommandResult> getAcErrorCodeAsync() {
+        return read(attributes.get(ATTR_ACERRORCODE));
+    }
+
+    /**
+     * Synchronously get the <i>ACErrorCode</i> attribute [attribute ID <b>68</b>].
+     * <p>
+     * This indicates the type of errors encountered within the Mini Split AC. Error values are reported with four bytes
+     * values. Each bit within the four bytes indicates the unique error.
+     * <p>
+     * This method can return cached data if the attribute has already been received.
+     * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
+     * within <i>refreshPeriod</i> milliseconds, then the method will immediately return the last value
+     * received. If <i>refreshPeriod</i> is set to 0, then the attribute will always be updated.
+     * <p>
+     * This method will block until the response is received or a timeout occurs unless the current value is returned.
+     * <p>
+     * The attribute is of type {@link Integer}.
+     * <p>
+     * The implementation of this attribute by a device is OPTIONAL
+     *
+     * @param refreshPeriod the maximum age of the data (in milliseconds) before an update is needed
+     * @return the {@link Integer} attribute value, or null on error
+     */
+    public Integer getAcErrorCode(final long refreshPeriod) {
+        if (attributes.get(ATTR_ACERRORCODE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ACERRORCODE).getLastValue();
+        }
+
+        return (Integer) readSync(attributes.get(ATTR_ACERRORCODE));
     }
 
     /**

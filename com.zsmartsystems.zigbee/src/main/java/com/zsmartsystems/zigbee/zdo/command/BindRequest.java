@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,8 +12,9 @@ import com.zsmartsystems.zigbee.zcl.ZclFieldDeserializer;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
 import com.zsmartsystems.zigbee.zdo.ZdoRequest;
 import com.zsmartsystems.zigbee.ZigBeeCommand;
-import com.zsmartsystems.zigbee.ZigBeeTransactionMatcher;
+import com.zsmartsystems.zigbee.transaction.ZigBeeTransactionMatcher;
 import com.zsmartsystems.zigbee.zdo.command.BindResponse;
+import javax.annotation.Generated;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.IeeeAddress;
 
@@ -30,31 +31,33 @@ import com.zsmartsystems.zigbee.IeeeAddress;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-03-23T21:55:42Z")
 public class BindRequest extends ZdoRequest implements ZigBeeTransactionMatcher {
     /**
      * SrcAddress command message field.
-     *
+     * <p>
      * The IEEE address for the source.
      */
     private IeeeAddress srcAddress;
 
     /**
      * SrcEndpoint command message field.
-     *
+     * <p>
      * The source endpoint for the binding entry.
      */
     private Integer srcEndpoint;
 
     /**
      * BindCluster command message field.
-     *
+     * <p>
      * The identifier of the cluster on the source device that is bound to the destination.
      */
     private Integer bindCluster;
 
     /**
      * DstAddrMode command message field.
-     *
+     * <p>
      * The addressing mode for the destination address used in this command. This field
      * can take one of the non-reserved values from the following list:
      * 0x00 = reserved
@@ -67,14 +70,14 @@ public class BindRequest extends ZdoRequest implements ZigBeeTransactionMatcher 
 
     /**
      * DstAddress command message field.
-     *
+     * <p>
      * The destination address for the binding entry.
      */
     private IeeeAddress dstAddress;
 
     /**
      * DstEndpoint command message field.
-     *
+     * <p>
      * This field shall be present only if the DstAddrMode field has a value of 0x03 and,
      * if present, shall be the destination endpoint for the binding entry.
      */

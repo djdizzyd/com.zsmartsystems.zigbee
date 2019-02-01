@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,7 +25,9 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zsmartsystems.zigbee.dongle.telegesis.ZigBeeDongleTelegesis;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisCommand;
+import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisDisplayNetworkInformationCommand;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisEvent;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisFrame;
 import com.zsmartsystems.zigbee.dongle.telegesis.internal.protocol.TelegesisStatusCode;
@@ -98,22 +100,51 @@ public class TelegesisFrameHandler {
     /**
      * The maximum number of milliseconds to wait for the response from the stick once the request was sent
      */
-    private final int DEFAULT_TRANSACTION_TIMEOUT = 500;
+    private final int DEFAULT_TRANSACTION_TIMEOUT = 1000;
 
     /**
      * The maximum number of milliseconds to wait for the completion of the transaction after it's queued
      */
-    private final int DEFAULT_COMMAND_TIMEOUT = 10000;
+    private final int DEFAULT_COMMAND_TIMEOUT = 5000;
 
+    /**
+     * The maximum number of milliseconds to wait for the response from the stick once the request was sent
+     */
     private int transactionTimeout = DEFAULT_TRANSACTION_TIMEOUT;
 
+    /**
+     * The maximum number of milliseconds to wait for the completion of the transaction after it's queued
+     */
     private int commandTimeout = DEFAULT_COMMAND_TIMEOUT;
+
+    /**
+     * Maximum number of consecutive timeouts allowed while waiting to receive the response
+     */
+    private final int ACK_TIMEOUTS = 2;
+    private int retries = 0;
+
+    private ScheduledExecutorService pollingScheduler;
+    private ScheduledFuture<?> pollingTimer = null;
+
+    /**
+     * The rate at which we will do a status poll if we've not sent any other messages within this period
+     */
+    private int pollRate = 1000;
+
+    /**
+     * The dongle instance to receive notifications
+     */
+    private final ZigBeeDongleTelegesis zigBeeDongleTelegesis;
 
     enum RxStateMachine {
         WAITING,
         RECEIVE_CMD,
         RECEIVE_ASCII,
         RECEIVE_BINARY
+    }
+
+    public TelegesisFrameHandler(ZigBeeDongleTelegesis zigBeeDongleTelegesis) {
+        this.zigBeeDongleTelegesis = zigBeeDongleTelegesis;
     }
 
     /**
@@ -125,7 +156,9 @@ public class TelegesisFrameHandler {
     public void start(final ZigBeePort serialPort) {
 
         this.serialPort = serialPort;
-        this.timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+
+        timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+        pollingScheduler = Executors.newSingleThreadScheduledExecutor();
 
         parserThread = new Thread("TelegesisFrameHandler") {
             @Override
@@ -148,14 +181,15 @@ public class TelegesisFrameHandler {
 
                         StringBuilder builder = new StringBuilder();
                         for (int value : responseData) {
-                            builder.append(String.format(" %02X", value));
+                            builder.append(String.format("%c", value));
                         }
-                        logger.debug("TELEGESIS RX: Data{}", builder.toString());
+                        logger.debug("RX Telegesis Data:{}", builder.toString());
 
                         // Use the Event Factory to get an event
                         TelegesisEvent event = TelegesisEventFactory.getTelegesisFrame(responseData);
                         if (event != null) {
                             notifyEventReceived(event);
+                            scheduleNetworkStatePolling();
                             continue;
                         }
 
@@ -174,6 +208,7 @@ public class TelegesisFrameHandler {
                                 if (done) {
                                     // Command completed
                                     notifyTransactionComplete(sentCommand);
+                                    scheduleNetworkStatePolling();
                                     sentCommand = null;
                                 }
                             }
@@ -188,6 +223,8 @@ public class TelegesisFrameHandler {
 
         parserThread.setDaemon(true);
         parserThread.start();
+
+        scheduleNetworkStatePolling();
     }
 
     private int[] getPacket() {
@@ -210,7 +247,7 @@ public class TelegesisFrameHandler {
                 logger.debug("TELEGESIS RX buffer overrun - resetting!");
             }
 
-            logger.trace("TELEGESIS RX: {}", String.format("%02X %c", val, val));
+            logger.trace("RX Telegesis: {}", String.format("%02X %c", val, val));
 
             switch (rxState) {
                 case WAITING:
@@ -288,6 +325,10 @@ public class TelegesisFrameHandler {
      */
     public void close() {
         setClosing();
+
+        timeoutScheduler.shutdown();
+        pollingScheduler.shutdown();
+
         try {
             parserThread.interrupt();
             parserThread.join();
@@ -328,10 +369,10 @@ public class TelegesisFrameHandler {
             // Send the data
             StringBuilder builder = new StringBuilder();
             for (int sendByte : nextFrame.serialize()) {
-                builder.append(String.format(" %02X", sendByte));
+                builder.append(String.format("%c", sendByte));
                 serialPort.write(sendByte);
             }
-            logger.debug("TELEGESIS TX: Data{}", builder.toString());
+            logger.debug("TX Telegesis Data:{}", builder.toString());
 
             // Start the timeout
             startTimer();
@@ -361,7 +402,7 @@ public class TelegesisFrameHandler {
     private boolean notifyTransactionComplete(final TelegesisCommand response) {
         boolean processed = false;
 
-        logger.debug("Telegesis command complete: {}", response);
+        logger.debug("RX Telegesis: {}", response);
         synchronized (transactionListeners) {
             for (TelegesisListener listener : transactionListeners) {
                 try {
@@ -381,7 +422,7 @@ public class TelegesisFrameHandler {
      * Sets the command timeout. This is the number of milliseconds to wait for a response from the stick once the
      * command has been sent.
      *
-     * @param commandTimeout
+     * @param commandTimeout the number of milliseconds to wait for a response
      */
     public void setCommandTimeout(int commandTimeout) {
         this.commandTimeout = commandTimeout;
@@ -391,7 +432,7 @@ public class TelegesisFrameHandler {
      * Sets the transaction timeout. This is the number of milliseconds to wait for a response from the stick once the
      * command has been initially queued.
      *
-     * @param commandTimeout
+     * @param transactionTimeout the number of milliseconds to wait for a response from the stick
      */
     public void setTransactionTimeout(int transactionTimeout) {
         this.transactionTimeout = transactionTimeout;
@@ -419,7 +460,7 @@ public class TelegesisFrameHandler {
      * @param response the {@link TelegesisEvent} received
      */
     private void notifyEventReceived(final TelegesisEvent event) {
-        logger.debug("Telegesis event received: {}", event);
+        logger.debug("RX Telegesis: {}", event);
         synchronized (eventListeners) {
             for (TelegesisEventListener listener : eventListeners) {
                 try {
@@ -431,6 +472,11 @@ public class TelegesisFrameHandler {
         }
     }
 
+    /**
+     * Add a {@link TelegesisEventListener} to receive events from the dongle
+     *
+     * @param listener the {@link TelegesisEventListener} which will be notified of incoming events
+     */
     public void addEventListener(TelegesisEventListener listener) {
         synchronized (eventListeners) {
             if (eventListeners.contains(listener)) {
@@ -441,6 +487,11 @@ public class TelegesisFrameHandler {
         }
     }
 
+    /**
+     * Remove a {@link TelegesisEventListener}
+     *
+     * @param listener the {@link TelegesisEventListener}
+     */
     public void removeEventListener(TelegesisEventListener listener) {
         synchronized (eventListeners) {
             eventListeners.remove(listener);
@@ -490,8 +541,8 @@ public class TelegesisFrameHandler {
                 }
 
                 // response = request;
-                complete = true;
                 synchronized (this) {
+                    complete = true;
                     notify();
                 }
 
@@ -526,8 +577,8 @@ public class TelegesisFrameHandler {
     /**
      * Sends a Telegesis request to the NCP without waiting for the response.
      *
-     * @param command Request {@link TelegesisCommand} to send
-     * @return response {@link Future} {@link TelegesisCommand}
+     * @param eventClass Request {@link TelegesisCommand} to send
+     * @return response {@link Future} {@link TelegesisEvent}
      */
     public Future<TelegesisEvent> waitEventAsync(final Class<?> eventClass) {
         class TransactionWaiter implements Callable<TelegesisEvent>, TelegesisEventListener {
@@ -565,8 +616,8 @@ public class TelegesisFrameHandler {
 
                 receivedEvent = event;
 
-                complete = true;
                 synchronized (this) {
+                    complete = true;
                     notify();
                 }
             }
@@ -585,7 +636,7 @@ public class TelegesisFrameHandler {
     public TelegesisEvent eventWait(final Class<?> eventClass) {
         Future<TelegesisEvent> future = waitEventAsync(eventClass);
         try {
-            return future.get(transactionTimeout, TimeUnit.MILLISECONDS);
+            return future.get(commandTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             logger.debug("Telegesis interrupted in eventWait {}", eventClass);
             future.cancel(true);
@@ -604,8 +655,17 @@ public class TelegesisFrameHandler {
             @Override
             public void run() {
                 timeoutTimer = null;
-                logger.debug("TELEGESIS Timer: Timeout");
+                logger.debug("TELEGESIS Timer: Timeout {}", retries);
                 synchronized (commandLock) {
+                    if (retries++ >= ACK_TIMEOUTS) {
+                        // Too many retries.
+                        // We should alert the upper layer so they can reset the link?
+                        zigBeeDongleTelegesis.notifyStateUpdate(false);
+
+                        logger.debug("Error: number of retries exceeded [{}].", retries);
+                        return;
+                    }
+
                     if (sentCommand != null) {
                         sentCommand = null;
                         sendNextFrame();
@@ -626,4 +686,23 @@ public class TelegesisFrameHandler {
     interface TelegesisListener {
         boolean transactionEvent(TelegesisCommand response);
     }
+
+    private void scheduleNetworkStatePolling() {
+        if (pollingTimer != null) {
+            pollingTimer.cancel(true);
+        }
+
+        retries = 0;
+
+        pollingTimer = pollingScheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                if (sendQueue.isEmpty() && sentCommand == null) {
+                    queueFrame(new TelegesisDisplayNetworkInformationCommand());
+                    sendNextFrame();
+                }
+            }
+        }, pollRate, pollRate, TimeUnit.MILLISECONDS);
+    }
+
 }

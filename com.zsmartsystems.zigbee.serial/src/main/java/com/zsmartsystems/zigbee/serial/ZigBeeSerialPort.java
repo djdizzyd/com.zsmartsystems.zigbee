@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -126,7 +126,7 @@ public class ZigBeeSerialPort implements ZigBeePort, SerialPortEventListener {
             throw new RuntimeException("Serial port already open.");
         }
 
-        logger.debug("Opening port {} at {} baud with {}.", baudRate, baudRate, flowControl);
+        logger.debug("Opening port {} at {} baud with {}.", portName, baudRate, flowControl);
 
         serialPort = new jssc.SerialPort(portName);
         try {
@@ -137,7 +137,8 @@ public class ZigBeeSerialPort implements ZigBeePort, SerialPortEventListener {
                     serialPort.setFlowControlMode(jssc.SerialPort.FLOWCONTROL_NONE);
                     break;
                 case FLOWCONTROL_OUT_RTSCTS:
-                    serialPort.setFlowControlMode(jssc.SerialPort.FLOWCONTROL_RTSCTS_OUT);
+                    serialPort.setFlowControlMode(
+                            jssc.SerialPort.FLOWCONTROL_RTSCTS_IN | jssc.SerialPort.FLOWCONTROL_RTSCTS_OUT);
                     break;
                 case FLOWCONTROL_OUT_XONOFF:
                     serialPort.setFlowControlMode(jssc.SerialPort.FLOWCONTROL_XONXOFF_OUT);
@@ -213,7 +214,6 @@ public class ZigBeeSerialPort implements ZigBeePort, SerialPortEventListener {
             }
             return -1;
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         return -1;
     }

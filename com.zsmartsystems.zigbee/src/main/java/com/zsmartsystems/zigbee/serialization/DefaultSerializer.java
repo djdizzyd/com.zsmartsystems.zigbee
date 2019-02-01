@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -140,13 +140,25 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 break;
             case N_X_WRITE_ATTRIBUTE_STATUS_RECORD:
                 break;
-            case CHARACTER_STRING:
             case OCTET_STRING:
+                final ByteArray array = (ByteArray) data;
+                buffer[length++] = ((byte) (array.size() & 0xFF));
+                for (byte arrayByte : array.get()) {
+                    buffer[length++] = arrayByte;
+                }
+                break;
+            case CHARACTER_STRING:
                 final String str = (String) data;
-                buffer[length++] = ((byte) (str.length() & (0xFF)));
+                buffer[length++] = ((byte) (str.length() & 0xFF));
                 for (int strByte : str.getBytes()) {
                     buffer[length++] = strByte;
                 }
+                break;
+            case UNSIGNED_24_BIT_INTEGER:
+                final int uint24Value = (Integer) data;
+                buffer[length++] = uint24Value & 0xFF;
+                buffer[length++] = (uint24Value >> 8) & 0xFF;
+                buffer[length++] = (uint24Value >> 16) & 0xFF;
                 break;
             case SIGNED_32_BIT_INTEGER:
                 final int intValue = (Integer) data;
@@ -155,12 +167,22 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 buffer[length++] = (intValue >> 16) & 0xFF;
                 buffer[length++] = (intValue >> 24) & 0xFF;
                 break;
+            case BITMAP_32_BIT:
             case UNSIGNED_32_BIT_INTEGER:
-                final int uintValue = (Integer) data;
-                buffer[length++] = uintValue & 0xFF;
-                buffer[length++] = (uintValue >> 8) & 0xFF;
-                buffer[length++] = (uintValue >> 16) & 0xFF;
-                buffer[length++] = (uintValue >> 24) & 0xFF;
+                final int uint32Value = (Integer) data;
+                buffer[length++] = uint32Value & 0xFF;
+                buffer[length++] = (uint32Value >> 8) & 0xFF;
+                buffer[length++] = (uint32Value >> 16) & 0xFF;
+                buffer[length++] = (uint32Value >> 24) & 0xFF;
+                break;
+            case UNSIGNED_48_BIT_INTEGER:
+                final long uint48Value = (Long) data;
+                buffer[length++] = (int) (uint48Value & 0xFF);
+                buffer[length++] = (int) ((uint48Value >> 8) & 0xFF);
+                buffer[length++] = (int) ((uint48Value >> 16) & 0xFF);
+                buffer[length++] = (int) ((uint48Value >> 24) & 0xFF);
+                buffer[length++] = (int) ((uint48Value >> 32) & 0xFF);
+                buffer[length++] = (int) ((uint48Value >> 40) & 0xFF);
                 break;
             case UTCTIME:
                 break;

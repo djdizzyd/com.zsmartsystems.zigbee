@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,7 @@ package com.zsmartsystems.zigbee.dongle.ember.ezsp;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
 
 /**
  * The EmberZNet Serial Protocol (EZSP) is the protocol used by a host
@@ -18,10 +18,20 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
  *
  * UG100: EZSP Reference Guide
  *
- * An EZSP Frame is made up as follows -:
+ * An EZSP V4 Frame is made up as follows -:
  * <ul>
  * <li>Sequence : 1 byte sequence number
  * <li>Frame Control: 1 byte
+ * <li>Frame ID : 1 byte
+ * <li>Parameters : variable length
+ * </ul>
+ * <p>
+ * An EZSP V5+ Frame is made up as follows -:
+ * <ul>
+ * <li>Sequence : 1 byte sequence number
+ * <li>Frame Control: 1 byte
+ * <li>Legacy Frame ID : 1 byte
+ * <li>Extended Frame Control : 1 byte
  * <li>Frame ID : 1 byte
  * <li>Parameters : variable length
  * </ul>
@@ -31,8 +41,6 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
  */
 public abstract class EzspFrameRequest extends EzspFrame {
     private final static AtomicLong sequence = new AtomicLong(1);
-
-    protected EzspFrameResponse response = null;
 
     /**
      * Constructor used to create an outgoing frame
@@ -51,7 +59,12 @@ public abstract class EzspFrameRequest extends EzspFrame {
         serializer.serializeUInt8(sequenceNumber);
 
         // Output Frame Control Byte
-        serializer.serializeUInt8(0);
+        serializer.serializeUInt8(EZSP_FC_REQUEST);
+
+        if (ezspVersion > 4) {
+            serializer.serializeUInt8(EZSP_LEGACY_FRAME_ID);
+            serializer.serializeUInt8(0x00);
+        }
 
         // Output Frame ID
         serializer.serializeUInt8(frameId);

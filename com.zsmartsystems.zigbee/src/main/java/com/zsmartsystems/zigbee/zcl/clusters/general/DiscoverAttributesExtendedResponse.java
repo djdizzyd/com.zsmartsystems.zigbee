@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.general;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -19,14 +21,15 @@ import com.zsmartsystems.zigbee.zcl.field.ExtendedAttributeInformation;
 /**
  * Discover Attributes Extended Response value object class.
  * <p>
- * The Discover Attributes Extended Response command is generated in response to a Discover Attributes
- * Extended command.
- * <p>
  * Cluster: <b>General</b>. Command is sent <b>TO</b> the server.
  * This command is a <b>generic</b> command used across the profile.
  * <p>
+ * The Discover Attributes Extended Response command is generated in response to a Discover Attributes
+ * Extended command.
+ * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class DiscoverAttributesExtendedResponse extends ZclCommand {
     /**
      * Discovery complete command message field.

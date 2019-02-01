@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,21 +9,21 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Diagnostics</b> cluster implementation (<i>Cluster ID 0x0B05</i>).
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclDiagnosticsCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -168,13 +168,11 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     /**
      * Default constructor to create a Diagnostics cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclDiagnosticsCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclDiagnosticsCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>MacRxBcast</i> attribute [attribute ID <b>256</b>].
@@ -188,7 +186,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacRxBcastAsync() {
         return read(attributes.get(ATTR_MACRXBCAST));
     }
-
 
     /**
      * Synchronously get the <i>MacRxBcast</i> attribute [attribute ID <b>256</b>].
@@ -208,11 +205,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacRxBcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACRXBCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACRXBCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACRXBCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_MACRXBCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACRXBCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACRXBCAST));
@@ -230,7 +224,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacTxBcastAsync() {
         return read(attributes.get(ATTR_MACTXBCAST));
     }
-
 
     /**
      * Synchronously get the <i>MacTxBcast</i> attribute [attribute ID <b>257</b>].
@@ -250,11 +243,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacTxBcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACTXBCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACTXBCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACTXBCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_MACTXBCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACTXBCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACTXBCAST));
@@ -272,7 +262,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacRxUcastAsync() {
         return read(attributes.get(ATTR_MACRXUCAST));
     }
-
 
     /**
      * Synchronously get the <i>MacRxUcast</i> attribute [attribute ID <b>258</b>].
@@ -292,11 +281,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacRxUcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACRXUCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACRXUCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACRXUCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_MACRXUCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACRXUCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACRXUCAST));
@@ -314,7 +300,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacTxUcastAsync() {
         return read(attributes.get(ATTR_MACTXUCAST));
     }
-
 
     /**
      * Synchronously get the <i>MacTxUcast</i> attribute [attribute ID <b>259</b>].
@@ -334,11 +319,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacTxUcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACTXUCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACTXUCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACTXUCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_MACTXUCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACTXUCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACTXUCAST));
@@ -356,7 +338,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacTxUcastRetryAsync() {
         return read(attributes.get(ATTR_MACTXUCASTRETRY));
     }
-
 
     /**
      * Synchronously get the <i>MacTxUcastRetry</i> attribute [attribute ID <b>260</b>].
@@ -376,11 +357,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacTxUcastRetry(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACTXUCASTRETRY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACTXUCASTRETRY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACTXUCASTRETRY).getLastValue();
-            }
+        if (attributes.get(ATTR_MACTXUCASTRETRY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACTXUCASTRETRY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACTXUCASTRETRY));
@@ -398,7 +376,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getMacTxUcastFailAsync() {
         return read(attributes.get(ATTR_MACTXUCASTFAIL));
     }
-
 
     /**
      * Synchronously get the <i>MacTxUcastFail</i> attribute [attribute ID <b>261</b>].
@@ -418,11 +395,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMacTxUcastFail(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MACTXUCASTFAIL).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MACTXUCASTFAIL).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MACTXUCASTFAIL).getLastValue();
-            }
+        if (attributes.get(ATTR_MACTXUCASTFAIL).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MACTXUCASTFAIL).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MACTXUCASTFAIL));
@@ -440,7 +414,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsRxBcastAsync() {
         return read(attributes.get(ATTR_APSRXBCAST));
     }
-
 
     /**
      * Synchronously get the <i>APSRxBcast</i> attribute [attribute ID <b>262</b>].
@@ -460,11 +433,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsRxBcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSRXBCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSRXBCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSRXBCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_APSRXBCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSRXBCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSRXBCAST));
@@ -482,7 +452,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsTxBcastAsync() {
         return read(attributes.get(ATTR_APSTXBCAST));
     }
-
 
     /**
      * Synchronously get the <i>APSTxBcast</i> attribute [attribute ID <b>263</b>].
@@ -502,11 +471,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsTxBcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSTXBCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSTXBCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSTXBCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_APSTXBCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSTXBCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSTXBCAST));
@@ -524,7 +490,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsRxUcastAsync() {
         return read(attributes.get(ATTR_APSRXUCAST));
     }
-
 
     /**
      * Synchronously get the <i>APSRxUcast</i> attribute [attribute ID <b>264</b>].
@@ -544,11 +509,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsRxUcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSRXUCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSRXUCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSRXUCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_APSRXUCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSRXUCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSRXUCAST));
@@ -566,7 +528,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsTxUcastSuccessAsync() {
         return read(attributes.get(ATTR_APSTXUCASTSUCCESS));
     }
-
 
     /**
      * Synchronously get the <i>APSTxUcastSuccess</i> attribute [attribute ID <b>265</b>].
@@ -586,11 +547,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsTxUcastSuccess(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSTXUCASTSUCCESS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSTXUCASTSUCCESS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSTXUCASTSUCCESS).getLastValue();
-            }
+        if (attributes.get(ATTR_APSTXUCASTSUCCESS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSTXUCASTSUCCESS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSTXUCASTSUCCESS));
@@ -608,7 +566,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsTxUcastRetryAsync() {
         return read(attributes.get(ATTR_APSTXUCASTRETRY));
     }
-
 
     /**
      * Synchronously get the <i>APSTxUcastRetry</i> attribute [attribute ID <b>266</b>].
@@ -628,11 +585,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsTxUcastRetry(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSTXUCASTRETRY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSTXUCASTRETRY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSTXUCASTRETRY).getLastValue();
-            }
+        if (attributes.get(ATTR_APSTXUCASTRETRY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSTXUCASTRETRY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSTXUCASTRETRY));
@@ -650,7 +604,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsTxUcastFailAsync() {
         return read(attributes.get(ATTR_APSTXUCASTFAIL));
     }
-
 
     /**
      * Synchronously get the <i>APSTxUcastFail</i> attribute [attribute ID <b>267</b>].
@@ -670,11 +623,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsTxUcastFail(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSTXUCASTFAIL).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSTXUCASTFAIL).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSTXUCASTFAIL).getLastValue();
-            }
+        if (attributes.get(ATTR_APSTXUCASTFAIL).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSTXUCASTFAIL).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSTXUCASTFAIL));
@@ -692,7 +642,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getRouteDiscInitiatedAsync() {
         return read(attributes.get(ATTR_ROUTEDISCINITIATED));
     }
-
 
     /**
      * Synchronously get the <i>RouteDiscInitiated</i> attribute [attribute ID <b>268</b>].
@@ -712,11 +661,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getRouteDiscInitiated(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ROUTEDISCINITIATED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ROUTEDISCINITIATED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ROUTEDISCINITIATED).getLastValue();
-            }
+        if (attributes.get(ATTR_ROUTEDISCINITIATED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ROUTEDISCINITIATED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ROUTEDISCINITIATED));
@@ -734,7 +680,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getNeighborAddedAsync() {
         return read(attributes.get(ATTR_NEIGHBORADDED));
     }
-
 
     /**
      * Synchronously get the <i>NeighborAdded</i> attribute [attribute ID <b>269</b>].
@@ -754,11 +699,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNeighborAdded(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NEIGHBORADDED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NEIGHBORADDED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NEIGHBORADDED).getLastValue();
-            }
+        if (attributes.get(ATTR_NEIGHBORADDED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NEIGHBORADDED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NEIGHBORADDED));
@@ -776,7 +718,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getNeighborRemovedAsync() {
         return read(attributes.get(ATTR_NEIGHBORREMOVED));
     }
-
 
     /**
      * Synchronously get the <i>NeighborRemoved</i> attribute [attribute ID <b>270</b>].
@@ -796,11 +737,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNeighborRemoved(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NEIGHBORREMOVED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NEIGHBORREMOVED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NEIGHBORREMOVED).getLastValue();
-            }
+        if (attributes.get(ATTR_NEIGHBORREMOVED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NEIGHBORREMOVED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NEIGHBORREMOVED));
@@ -818,7 +756,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getNeighborStaleAsync() {
         return read(attributes.get(ATTR_NEIGHBORSTALE));
     }
-
 
     /**
      * Synchronously get the <i>NeighborStale</i> attribute [attribute ID <b>271</b>].
@@ -838,11 +775,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNeighborStale(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NEIGHBORSTALE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NEIGHBORSTALE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NEIGHBORSTALE).getLastValue();
-            }
+        if (attributes.get(ATTR_NEIGHBORSTALE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NEIGHBORSTALE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NEIGHBORSTALE));
@@ -860,7 +794,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getJoinIndicationAsync() {
         return read(attributes.get(ATTR_JOININDICATION));
     }
-
 
     /**
      * Synchronously get the <i>JoinIndication</i> attribute [attribute ID <b>272</b>].
@@ -880,11 +813,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getJoinIndication(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_JOININDICATION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_JOININDICATION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_JOININDICATION).getLastValue();
-            }
+        if (attributes.get(ATTR_JOININDICATION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_JOININDICATION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_JOININDICATION));
@@ -902,7 +832,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getChildMovedAsync() {
         return read(attributes.get(ATTR_CHILDMOVED));
     }
-
 
     /**
      * Synchronously get the <i>ChildMoved</i> attribute [attribute ID <b>273</b>].
@@ -922,11 +851,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getChildMoved(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CHILDMOVED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CHILDMOVED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CHILDMOVED).getLastValue();
-            }
+        if (attributes.get(ATTR_CHILDMOVED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CHILDMOVED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CHILDMOVED));
@@ -944,7 +870,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getNwkfcFailureAsync() {
         return read(attributes.get(ATTR_NWKFCFAILURE));
     }
-
 
     /**
      * Synchronously get the <i>NWKFCFailure</i> attribute [attribute ID <b>274</b>].
@@ -964,11 +889,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNwkfcFailure(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NWKFCFAILURE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NWKFCFAILURE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NWKFCFAILURE).getLastValue();
-            }
+        if (attributes.get(ATTR_NWKFCFAILURE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NWKFCFAILURE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NWKFCFAILURE));
@@ -986,7 +908,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsfcFailureAsync() {
         return read(attributes.get(ATTR_APSFCFAILURE));
     }
-
 
     /**
      * Synchronously get the <i>APSFCFailure</i> attribute [attribute ID <b>275</b>].
@@ -1006,11 +927,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsfcFailure(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSFCFAILURE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSFCFAILURE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSFCFAILURE).getLastValue();
-            }
+        if (attributes.get(ATTR_APSFCFAILURE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSFCFAILURE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSFCFAILURE));
@@ -1028,7 +946,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsUnauthorizedKeyAsync() {
         return read(attributes.get(ATTR_APSUNAUTHORIZEDKEY));
     }
-
 
     /**
      * Synchronously get the <i>APSUnauthorizedKey</i> attribute [attribute ID <b>276</b>].
@@ -1048,11 +965,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsUnauthorizedKey(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSUNAUTHORIZEDKEY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSUNAUTHORIZEDKEY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSUNAUTHORIZEDKEY).getLastValue();
-            }
+        if (attributes.get(ATTR_APSUNAUTHORIZEDKEY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSUNAUTHORIZEDKEY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSUNAUTHORIZEDKEY));
@@ -1070,7 +984,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getNwkDecryptFailuresAsync() {
         return read(attributes.get(ATTR_NWKDECRYPTFAILURES));
     }
-
 
     /**
      * Synchronously get the <i>NWKDecryptFailures</i> attribute [attribute ID <b>277</b>].
@@ -1090,11 +1003,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNwkDecryptFailures(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NWKDECRYPTFAILURES).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NWKDECRYPTFAILURES).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NWKDECRYPTFAILURES).getLastValue();
-            }
+        if (attributes.get(ATTR_NWKDECRYPTFAILURES).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NWKDECRYPTFAILURES).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NWKDECRYPTFAILURES));
@@ -1112,7 +1022,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getApsDecryptFailuresAsync() {
         return read(attributes.get(ATTR_APSDECRYPTFAILURES));
     }
-
 
     /**
      * Synchronously get the <i>APSDecryptFailures</i> attribute [attribute ID <b>278</b>].
@@ -1132,11 +1041,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getApsDecryptFailures(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_APSDECRYPTFAILURES).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_APSDECRYPTFAILURES).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_APSDECRYPTFAILURES).getLastValue();
-            }
+        if (attributes.get(ATTR_APSDECRYPTFAILURES).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_APSDECRYPTFAILURES).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_APSDECRYPTFAILURES));
@@ -1154,7 +1060,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getPacketBufferAllocateFailuresAsync() {
         return read(attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES));
     }
-
 
     /**
      * Synchronously get the <i>PacketBufferAllocateFailures</i> attribute [attribute ID <b>279</b>].
@@ -1174,11 +1079,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPacketBufferAllocateFailures(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES).getLastValue();
-            }
+        if (attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PACKETBUFFERALLOCATEFAILURES));
@@ -1196,7 +1098,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getRelayedUcastAsync() {
         return read(attributes.get(ATTR_RELAYEDUCAST));
     }
-
 
     /**
      * Synchronously get the <i>RelayedUcast</i> attribute [attribute ID <b>280</b>].
@@ -1216,11 +1117,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getRelayedUcast(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_RELAYEDUCAST).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_RELAYEDUCAST).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_RELAYEDUCAST).getLastValue();
-            }
+        if (attributes.get(ATTR_RELAYEDUCAST).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_RELAYEDUCAST).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_RELAYEDUCAST));
@@ -1238,7 +1136,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getPhytoMaCqueuelimitreachedAsync() {
         return read(attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED));
     }
-
 
     /**
      * Synchronously get the <i>PhytoMACqueuelimitreached</i> attribute [attribute ID <b>281</b>].
@@ -1258,11 +1155,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPhytoMaCqueuelimitreached(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED).getLastValue();
-            }
+        if (attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PHYTOMACQUEUELIMITREACHED));
@@ -1280,7 +1174,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getPacketValidatedropcountAsync() {
         return read(attributes.get(ATTR_PACKETVALIDATEDROPCOUNT));
     }
-
 
     /**
      * Synchronously get the <i>PacketValidatedropcount</i> attribute [attribute ID <b>282</b>].
@@ -1300,11 +1193,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPacketValidatedropcount(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PACKETVALIDATEDROPCOUNT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PACKETVALIDATEDROPCOUNT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PACKETVALIDATEDROPCOUNT).getLastValue();
-            }
+        if (attributes.get(ATTR_PACKETVALIDATEDROPCOUNT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PACKETVALIDATEDROPCOUNT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PACKETVALIDATEDROPCOUNT));
@@ -1322,7 +1212,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getAverageMacRetryPerApsMessageSentAsync() {
         return read(attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT));
     }
-
 
     /**
      * Synchronously get the <i>AverageMACRetryPerAPSMessageSent</i> attribute [attribute ID <b>283</b>].
@@ -1342,11 +1231,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAverageMacRetryPerApsMessageSent(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT).getLastValue();
-            }
+        if (attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_AVERAGEMACRETRYPERAPSMESSAGESENT));
@@ -1364,7 +1250,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getLastMessageLqiAsync() {
         return read(attributes.get(ATTR_LASTMESSAGELQI));
     }
-
 
     /**
      * Synchronously get the <i>LastMessageLQI</i> attribute [attribute ID <b>284</b>].
@@ -1384,11 +1269,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLastMessageLqi(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LASTMESSAGELQI).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LASTMESSAGELQI).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LASTMESSAGELQI).getLastValue();
-            }
+        if (attributes.get(ATTR_LASTMESSAGELQI).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LASTMESSAGELQI).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LASTMESSAGELQI));
@@ -1406,7 +1288,6 @@ public class ZclDiagnosticsCluster extends ZclCluster {
     public Future<CommandResult> getLastMessageRssiAsync() {
         return read(attributes.get(ATTR_LASTMESSAGERSSI));
     }
-
 
     /**
      * Synchronously get the <i>LastMessageRSSI</i> attribute [attribute ID <b>285</b>].
@@ -1426,11 +1307,8 @@ public class ZclDiagnosticsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLastMessageRssi(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LASTMESSAGERSSI).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LASTMESSAGERSSI).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LASTMESSAGERSSI).getLastValue();
-            }
+        if (attributes.get(ATTR_LASTMESSAGERSSI).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LASTMESSAGERSSI).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LASTMESSAGERSSI));

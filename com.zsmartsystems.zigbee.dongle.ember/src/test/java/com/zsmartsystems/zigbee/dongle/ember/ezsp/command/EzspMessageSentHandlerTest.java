@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,7 +13,9 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspMessageSentHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsOption;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberOutgoingMessageType;
@@ -26,8 +28,10 @@ public class EzspMessageSentHandlerTest extends EzspFrameTest {
 
     @Test
     public void testReceive1() {
+        EzspFrame.setEzspVersion(4);
         EzspMessageSentHandler messageSentHandler = new EzspMessageSentHandler(
                 getPacketData("01 90 3F 00 00 00 00 01 00 00 00 00 00 01 00 00 45 00 00 00"));
+        System.out.println(messageSentHandler);
 
         assertTrue(messageSentHandler.isResponse());
         assertEquals(EmberStatus.EMBER_SUCCESS, messageSentHandler.getStatus());
@@ -36,10 +40,11 @@ public class EzspMessageSentHandlerTest extends EzspFrameTest {
 
     @Test
     public void testReceive2() {
+        EzspFrame.setEzspVersion(4);
         EzspMessageSentHandler messageSentHandler = new EzspMessageSentHandler(
                 getPacketData("04 90 3F 00 00 00 00 00 04 00 00 00 40 11 00 00 78 04 00 00"));
-
         System.out.println(messageSentHandler);
+
         assertTrue(messageSentHandler.isResponse());
         assertEquals(EmberStatus.EMBER_SUCCESS, messageSentHandler.getStatus());
         assertEquals(0, messageSentHandler.getMessageContents().length);

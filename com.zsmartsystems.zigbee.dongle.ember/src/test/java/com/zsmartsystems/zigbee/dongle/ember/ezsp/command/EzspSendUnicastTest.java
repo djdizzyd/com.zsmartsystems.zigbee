@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,10 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import com.zsmartsystems.zigbee.ZigBeeEndpointAddress;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSendUnicastResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsOption;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberOutgoingMessageType;
@@ -31,15 +34,18 @@ public class EzspSendUnicastTest extends EzspFrameTest {
 
     @Test
     public void testReceive1() {
-        EzspSendUnicastResponse unicastResponse = new EzspSendUnicastResponse(getPacketData("02 80 34 00 9E"));
+        EzspFrame.setEzspVersion(4);
+        EzspSendUnicastResponse response = new EzspSendUnicastResponse(getPacketData("02 80 34 00 9E"));
+        System.out.println(response);
 
-        assertEquals(0x34, unicastResponse.getFrameId());
-        assertTrue(unicastResponse.isResponse());
-        assertEquals(EmberStatus.EMBER_SUCCESS, unicastResponse.getStatus());
+        assertEquals(0x34, response.getFrameId());
+        assertTrue(response.isResponse());
+        assertEquals(EmberStatus.EMBER_SUCCESS, response.getStatus());
     }
 
     @Test
     public void testSendPermitJoining() {
+        EzspFrame.setEzspVersion(4);
         ManagementPermitJoiningRequest permitJoining = new ManagementPermitJoiningRequest();
 
         permitJoining.setDestinationAddress(new ZigBeeEndpointAddress(0x401C));
@@ -81,9 +87,5 @@ public class EzspSendUnicastTest extends EzspFrameTest {
             out += String.format("%02X ", c);
         }
         System.out.println(out);
-
-        // assertTrue(Arrays.equals(getPacketData("02 00 02 01 04 01 00 00 00 03 03 00 00 01 00 06 00 00 00 01 00 06
-        // 00"),
-        // messageToSend));
     }
 }

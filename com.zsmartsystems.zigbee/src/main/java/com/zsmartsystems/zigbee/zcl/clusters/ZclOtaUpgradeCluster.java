@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -28,16 +27,35 @@ import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.UpgradeEndResponse;
 import com.zsmartsystems.zigbee.zcl.field.ByteArray;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>OTA Upgrade</b> cluster implementation (<i>Cluster ID 0x0019</i>).
  * <p>
+ * The cluster provides a standard way to upgrade devices in the network via OTA messages. Thus the upgrade process MAY be performed between two
+ * devices from different manufacturers. Devices are required to have application bootloader and additional memory space in order to
+ * successfully implement the cluster.
+ * <p>
+ * It is the responsibility of the server to indicate to the clients when update images are available. The client MAY be upgraded or
+ * downgraded64. The upgrade server knows which client devices to upgrade and to what file version. The upgrade server MAY be notified of such
+ * information via the backend system. For ZR clients, the server MAY send a message to notify the device when an updated image is available. It
+ * is assumed that ZED clients will not be awake to receive an unsolicited notification of an available image. All clients (ZR and ZED) SHALL
+ * query (poll) the server periodically to determine whether the server has an image update for them. Image Notify is optional.
+ * <p>
+ * The cluster is implemented in such a way that the client service works on both ZED and ZR devices. Being able to handle polling is mandatory for
+ * all server devices while being able to send a notify is optional. Hence, all client devices must be able to use a ‘poll’ mechanism to send query
+ * message to the server in order to see if the server has any new file for it. The polling mechanism also puts fewer resources on the upgrade
+ * server. It is ideal to have the server maintain as little state as possible since this will scale when there are hundreds of clients in the
+ * network. The upgrade server is not required to keep track of what pieces of an image that a particular client has received; instead the client
+ * SHALL do that. Lastly poll makes more sense for devices that MAY need to perform special setup to get ready to receive an image, such as
+ * unlocking flash or allocating space for the new image.
+ * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclOtaUpgradeCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -139,13 +157,11 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     /**
      * Default constructor to create a OTA Upgrade cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclOtaUpgradeCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclOtaUpgradeCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>UpgradeServerID</i> attribute [attribute ID <b>0</b>].
@@ -164,7 +180,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getUpgradeServerIdAsync() {
         return read(attributes.get(ATTR_UPGRADESERVERID));
     }
-
 
     /**
      * Synchronously get the <i>UpgradeServerID</i> attribute [attribute ID <b>0</b>].
@@ -189,11 +204,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link IeeeAddress} attribute value, or null on error
      */
     public IeeeAddress getUpgradeServerId(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_UPGRADESERVERID).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_UPGRADESERVERID).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (IeeeAddress) attributes.get(ATTR_UPGRADESERVERID).getLastValue();
-            }
+        if (attributes.get(ATTR_UPGRADESERVERID).isLastValueCurrent(refreshPeriod)) {
+            return (IeeeAddress) attributes.get(ATTR_UPGRADESERVERID).getLastValue();
         }
 
         return (IeeeAddress) readSync(attributes.get(ATTR_UPGRADESERVERID));
@@ -216,7 +228,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getFileOffsetAsync() {
         return read(attributes.get(ATTR_FILEOFFSET));
     }
-
 
     /**
      * Synchronously get the <i>FileOffset</i> attribute [attribute ID <b>1</b>].
@@ -241,11 +252,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getFileOffset(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_FILEOFFSET).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_FILEOFFSET).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_FILEOFFSET).getLastValue();
-            }
+        if (attributes.get(ATTR_FILEOFFSET).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_FILEOFFSET).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_FILEOFFSET));
@@ -266,7 +274,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getCurrentFileVersionAsync() {
         return read(attributes.get(ATTR_CURRENTFILEVERSION));
     }
-
 
     /**
      * Synchronously get the <i>CurrentFileVersion</i> attribute [attribute ID <b>2</b>].
@@ -289,11 +296,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentFileVersion(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTFILEVERSION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTFILEVERSION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTFILEVERSION).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTFILEVERSION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTFILEVERSION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTFILEVERSION));
@@ -314,7 +318,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getCurrentZigBeeStackVersionAsync() {
         return read(attributes.get(ATTR_CURRENTZIGBEESTACKVERSION));
     }
-
 
     /**
      * Synchronously get the <i>CurrentZigBeeStackVersion</i> attribute [attribute ID <b>3</b>].
@@ -337,11 +340,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentZigBeeStackVersion(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTZIGBEESTACKVERSION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTZIGBEESTACKVERSION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTZIGBEESTACKVERSION).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTZIGBEESTACKVERSION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTZIGBEESTACKVERSION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTZIGBEESTACKVERSION));
@@ -364,7 +364,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getDownloadedFileVersionAsync() {
         return read(attributes.get(ATTR_DOWNLOADEDFILEVERSION));
     }
-
 
     /**
      * Synchronously get the <i>DownloadedFileVersion</i> attribute [attribute ID <b>4</b>].
@@ -389,11 +388,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDownloadedFileVersion(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DOWNLOADEDFILEVERSION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DOWNLOADEDFILEVERSION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DOWNLOADEDFILEVERSION).getLastValue();
-            }
+        if (attributes.get(ATTR_DOWNLOADEDFILEVERSION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DOWNLOADEDFILEVERSION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DOWNLOADEDFILEVERSION));
@@ -416,7 +412,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getDownloadedZigBeeStackVersionAsync() {
         return read(attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION));
     }
-
 
     /**
      * Synchronously get the <i>DownloadedZigBeeStackVersion</i> attribute [attribute ID <b>5</b>].
@@ -441,11 +436,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDownloadedZigBeeStackVersion(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION).getLastValue();
-            }
+        if (attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DOWNLOADEDZIGBEESTACKVERSION));
@@ -469,7 +461,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getImageUpgradeStatusAsync() {
         return read(attributes.get(ATTR_IMAGEUPGRADESTATUS));
     }
-
 
     /**
      * Synchronously get the <i>ImageUpgradeStatus</i> attribute [attribute ID <b>6</b>].
@@ -495,11 +486,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getImageUpgradeStatus(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_IMAGEUPGRADESTATUS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_IMAGEUPGRADESTATUS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_IMAGEUPGRADESTATUS).getLastValue();
-            }
+        if (attributes.get(ATTR_IMAGEUPGRADESTATUS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_IMAGEUPGRADESTATUS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_IMAGEUPGRADESTATUS));
@@ -517,7 +505,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getManufacturerIdAsync() {
         return read(attributes.get(ATTR_MANUFACTURERID));
     }
-
 
     /**
      * Synchronously get the <i>ManufacturerID</i> attribute [attribute ID <b>7</b>].
@@ -537,11 +524,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getManufacturerId(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MANUFACTURERID).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MANUFACTURERID).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MANUFACTURERID).getLastValue();
-            }
+        if (attributes.get(ATTR_MANUFACTURERID).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MANUFACTURERID).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MANUFACTURERID));
@@ -559,7 +543,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getImageTypeIdAsync() {
         return read(attributes.get(ATTR_IMAGETYPEID));
     }
-
 
     /**
      * Synchronously get the <i>ImageTypeID</i> attribute [attribute ID <b>8</b>].
@@ -579,11 +562,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getImageTypeId(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_IMAGETYPEID).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_IMAGETYPEID).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_IMAGETYPEID).getLastValue();
-            }
+        if (attributes.get(ATTR_IMAGETYPEID).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_IMAGETYPEID).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_IMAGETYPEID));
@@ -610,7 +590,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getMinimumBlockRequestDelayAsync() {
         return read(attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY));
     }
-
 
     /**
      * Synchronously get the <i>MinimumBlockRequestDelay</i> attribute [attribute ID <b>9</b>].
@@ -639,11 +618,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMinimumBlockRequestDelay(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY).getLastValue();
-            }
+        if (attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MINIMUMBLOCKREQUESTDELAY));
@@ -661,7 +637,6 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
     public Future<CommandResult> getImageStampAsync() {
         return read(attributes.get(ATTR_IMAGESTAMP));
     }
-
 
     /**
      * Synchronously get the <i>ImageStamp</i> attribute [attribute ID <b>10</b>].
@@ -681,11 +656,8 @@ public class ZclOtaUpgradeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getImageStamp(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_IMAGESTAMP).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_IMAGESTAMP).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_IMAGESTAMP).getLastValue();
-            }
+        if (attributes.get(ATTR_IMAGESTAMP).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_IMAGESTAMP).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_IMAGESTAMP));

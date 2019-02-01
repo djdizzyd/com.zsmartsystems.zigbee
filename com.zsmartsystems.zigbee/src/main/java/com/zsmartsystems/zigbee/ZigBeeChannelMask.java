@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,19 +11,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A class to hold a set of channels and methods to construct channel masks
  *
  * @author Chris Jackson
  *
  */
 public class ZigBeeChannelMask {
     /**
+     * No channels selected
+     */
+    public final static int CHANNEL_MASK_NONE = 0x00000000;
+    /**
      * All currently defined ZigBee channels in all bands
      */
-    public static int CHANNEL_MASK_ALL = 0x07FFFFFF;
+    public final static int CHANNEL_MASK_ALL = 0x07FFFFFF;
     /**
      * All currently defined ZigBee channels in the 2.4GHz band
      */
-    public static int CHANNEL_MASK_2GHZ = 0x07FFF800;
+    public final static int CHANNEL_MASK_2GHZ = 0x07FFF800;
 
     /**
      * The channel mask

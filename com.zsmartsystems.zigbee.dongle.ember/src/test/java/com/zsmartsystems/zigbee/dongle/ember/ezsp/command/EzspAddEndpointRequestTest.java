@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,7 +13,9 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspAddEndpointRequest;
 
 /**
  *
@@ -23,6 +25,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
 public class EzspAddEndpointRequestTest extends EzspFrameTest {
     @Test
     public void testAddEndpointRequest() {
+        EzspFrame.setEzspVersion(4);
         int[] clusters = new int[] { 0, 1, 6 };
         EzspAddEndpointRequest request = new EzspAddEndpointRequest();
         request.setAppFlags(0);
@@ -32,7 +35,6 @@ public class EzspAddEndpointRequestTest extends EzspFrameTest {
         request.setOutputClusterList(clusters);
         request.setProfileId(0x104);
         request.setSequenceNumber(2);
-
         System.out.println(request);
 
         assertTrue(Arrays.equals(getPacketData("02 00 02 01 04 01 00 00 00 03 03 00 00 01 00 06 00 00 00 01 00 06 00"),
@@ -41,6 +43,7 @@ public class EzspAddEndpointRequestTest extends EzspFrameTest {
 
     @Test
     public void testAddEndpointRequestNoClusters() {
+        EzspFrame.setEzspVersion(4);
         int[] clusters = new int[] {};
         EzspAddEndpointRequest request = new EzspAddEndpointRequest();
         request.setDeviceId(0);
@@ -49,10 +52,8 @@ public class EzspAddEndpointRequestTest extends EzspFrameTest {
         request.setOutputClusterList(clusters);
         request.setProfileId(0x104);
         request.setSequenceNumber(170);
-
         System.out.println(request);
 
         assertTrue(Arrays.equals(getPacketData("AA 00 02 01 04 01 00 00 00 00 00"), request.serialize()));
     }
 }
-// [2, 0, 2, 1, 4, 1, 0, 0, 0, 0, 0]

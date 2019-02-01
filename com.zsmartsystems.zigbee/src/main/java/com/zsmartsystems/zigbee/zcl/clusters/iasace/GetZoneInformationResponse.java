@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.iasace;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -20,13 +22,9 @@ import com.zsmartsystems.zigbee.IeeeAddress;
  * Cluster: <b>IAS ACE</b>. Command is sent <b>FROM</b> the server.
  * This command is a <b>specific</b> command used for the IAS ACE cluster.
  * <p>
- * The IAS ACE cluster defines an interface to the functionality of any Ancillary
- * Control Equipment of the IAS system. Using this cluster, a ZigBee enabled ACE
- * device can access a IAS CIE device and manipulate the IAS system, on behalf of a
- * level-2 user.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-13T17:16:42Z")
 public class GetZoneInformationResponse extends ZclCommand {
     /**
      * Zone ID command message field.
@@ -42,6 +40,17 @@ public class GetZoneInformationResponse extends ZclCommand {
      * IEEE address command message field.
      */
     private IeeeAddress ieeeAddress;
+
+    /**
+     * Zone Label command message field.
+     * <p>
+     * Provides the ZoneLabel stored in the IAS CIE. If none is programmed, the IAS ACE server SHALL transmit a string with a length
+     * of zero.There is no minimum or maximum length to the Zone Label field; however, the Zone Label SHOULD be between 16 to 24
+     * alphanumeric characters in length.
+     * <p>
+     * The string encoding SHALL be UTF-8.
+     */
+    private String zoneLabel;
 
     /**
      * Default constructor.
@@ -107,11 +116,42 @@ public class GetZoneInformationResponse extends ZclCommand {
         this.ieeeAddress = ieeeAddress;
     }
 
+    /**
+     * Gets Zone Label.
+     *
+     * Provides the ZoneLabel stored in the IAS CIE. If none is programmed, the IAS ACE server SHALL transmit a string with a length
+     * of zero.There is no minimum or maximum length to the Zone Label field; however, the Zone Label SHOULD be between 16 to 24
+     * alphanumeric characters in length.
+     * <p>
+     * The string encoding SHALL be UTF-8.
+     *
+     * @return the Zone Label
+     */
+    public String getZoneLabel() {
+        return zoneLabel;
+    }
+
+    /**
+     * Sets Zone Label.
+     *
+     * Provides the ZoneLabel stored in the IAS CIE. If none is programmed, the IAS ACE server SHALL transmit a string with a length
+     * of zero.There is no minimum or maximum length to the Zone Label field; however, the Zone Label SHOULD be between 16 to 24
+     * alphanumeric characters in length.
+     * <p>
+     * The string encoding SHALL be UTF-8.
+     *
+     * @param zoneLabel the Zone Label
+     */
+    public void setZoneLabel(final String zoneLabel) {
+        this.zoneLabel = zoneLabel;
+    }
+
     @Override
     public void serialize(final ZclFieldSerializer serializer) {
         serializer.serialize(zoneId, ZclDataType.UNSIGNED_8_BIT_INTEGER);
         serializer.serialize(zoneType, ZclDataType.ENUMERATION_16_BIT);
         serializer.serialize(ieeeAddress, ZclDataType.IEEE_ADDRESS);
+        serializer.serialize(zoneLabel, ZclDataType.CHARACTER_STRING);
     }
 
     @Override
@@ -119,11 +159,12 @@ public class GetZoneInformationResponse extends ZclCommand {
         zoneId = (Integer) deserializer.deserialize(ZclDataType.UNSIGNED_8_BIT_INTEGER);
         zoneType = (Integer) deserializer.deserialize(ZclDataType.ENUMERATION_16_BIT);
         ieeeAddress = (IeeeAddress) deserializer.deserialize(ZclDataType.IEEE_ADDRESS);
+        zoneLabel = (String) deserializer.deserialize(ZclDataType.CHARACTER_STRING);
     }
 
     @Override
     public String toString() {
-        final StringBuilder builder = new StringBuilder(114);
+        final StringBuilder builder = new StringBuilder(143);
         builder.append("GetZoneInformationResponse [");
         builder.append(super.toString());
         builder.append(", zoneId=");
@@ -132,6 +173,8 @@ public class GetZoneInformationResponse extends ZclCommand {
         builder.append(zoneType);
         builder.append(", ieeeAddress=");
         builder.append(ieeeAddress);
+        builder.append(", zoneLabel=");
+        builder.append(zoneLabel);
         builder.append(']');
         return builder.toString();
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,6 +8,7 @@
 package com.zsmartsystems.zigbee.app.otaserver;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ import com.zsmartsystems.zigbee.zcl.field.ByteArray;
  * Defines a ZigBee Over The Air upgrade file.
  * <p>
  * This class will read the file header, and each tag from the file and provide methods to read this data within the
- * {@link ZigBeeOtaServer}.
+ * {@link ZclOtaUpgradeServer}.
  * <p>
  * The OTA file format is composed of a header followed by a number of sub-elements. The header
  * describes general information about the file such as version, the manufacturer that created it, and the
@@ -227,11 +228,10 @@ public class ZigBeeOtaFile {
         fileVersion = readUnsigned32();
 
         // Unsigned 16-bit integer, ZigBee Stack version
-        stackVersion = ZigBeeStackType.getStackType(readUnsigned16());
+        stackVersion = ZigBeeStackType.getByValue(readUnsigned16());
 
         // Character string [32], OTA Header string
-        byte[] stringBytes = new byte[32];
-        stringBytes = Arrays.copyOfRange(fileData, filePointer, filePointer + 32);
+        byte[] stringBytes = Arrays.copyOfRange(fileData, filePointer, filePointer + 32);
         filePointer += 32;
         for (int cnt = 0; cnt < 32; cnt++) {
             if (stringBytes[cnt] == 0) {
@@ -239,7 +239,11 @@ public class ZigBeeOtaFile {
                 break;
             }
         }
-        headerString = new String(stringBytes);
+        try {
+            headerString = new String(stringBytes, "ASCII");
+        } catch (UnsupportedEncodingException e) {
+            headerString = "";
+        }
 
         // Unsigned 32-bit integer, Total Image size (including header)
         imageSize = readUnsigned32();

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,11 +7,14 @@
  */
 package com.zsmartsystems.zigbee.zcl.clusters.doorlock;
 
+import javax.annotation.Generated;
+
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
 import com.zsmartsystems.zigbee.zcl.ZclFieldDeserializer;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
+import com.zsmartsystems.zigbee.zcl.field.ByteArray;
 
 /**
  * Unlock Door Command value object class.
@@ -21,11 +24,12 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:39:59Z")
 public class UnlockDoorCommand extends ZclCommand {
     /**
      * Pin code command message field.
      */
-    private String pinCode;
+    private ByteArray pinCode;
 
     /**
      * Default constructor.
@@ -42,7 +46,7 @@ public class UnlockDoorCommand extends ZclCommand {
      *
      * @return the Pin code
      */
-    public String getPinCode() {
+    public ByteArray getPinCode() {
         return pinCode;
     }
 
@@ -51,7 +55,7 @@ public class UnlockDoorCommand extends ZclCommand {
      *
      * @param pinCode the Pin code
      */
-    public void setPinCode(final String pinCode) {
+    public void setPinCode(final ByteArray pinCode) {
         this.pinCode = pinCode;
     }
 
@@ -62,7 +66,7 @@ public class UnlockDoorCommand extends ZclCommand {
 
     @Override
     public void deserialize(final ZclFieldDeserializer deserializer) {
-        pinCode = (String) deserializer.deserialize(ZclDataType.OCTET_STRING);
+        pinCode = (ByteArray) deserializer.deserialize(ZclDataType.OCTET_STRING);
     }
 
     @Override

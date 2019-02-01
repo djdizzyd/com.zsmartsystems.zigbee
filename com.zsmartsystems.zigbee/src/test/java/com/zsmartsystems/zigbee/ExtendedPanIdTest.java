@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,10 +9,10 @@ package com.zsmartsystems.zigbee;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
-import java.security.InvalidParameterException;
 
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class ExtendedPanIdTest {
         assertEquals("0017880100DC880B", address.toString());
     }
 
-    @Test(expected = InvalidParameterException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorArrayShort() {
         new ExtendedPanId(new int[] { 0x0b, 0x88, 0xdc, 0x00, 0x01, 0x88, 0x17 });
     }
@@ -82,5 +82,13 @@ public class ExtendedPanIdTest {
     public void testToString() {
         ExtendedPanId address = new ExtendedPanId("17880100dc880b");
         assertEquals("0017880100DC880B", address.toString());
+    }
+
+    @Test
+    public void createRandom() {
+        // Ok, technically this can fail, but the probability is VERY low
+        ExtendedPanId pan1 = ExtendedPanId.createRandom();
+        ExtendedPanId pan2 = ExtendedPanId.createRandom();
+        assertNotEquals(pan1, pan2);
     }
 }

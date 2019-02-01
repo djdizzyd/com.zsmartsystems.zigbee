@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -54,6 +54,12 @@ public class SerializerIntegrationTest {
     }
 
     @Test
+    public void testDeserialize_OCTET_STRING() {
+        ByteArray valIn = new ByteArray(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+        testSerializer(valIn, ZclDataType.OCTET_STRING);
+    }
+
+    @Test
     public void testDeserialize_N_X_ATTRIBUTE_IDENTIFIER() {
         List<Integer> valIn = Arrays.asList(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 192 });
         testSerializer(valIn, ZclDataType.N_X_UNSIGNED_8_BIT_INTEGER);
@@ -81,6 +87,12 @@ public class SerializerIntegrationTest {
     public void testDeserialize_N_X_UNSIGNED_16_BIT_INTEGER() {
         List<Integer> valIn = Arrays.asList(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0x8888 });
         testSerializer(valIn, ZclDataType.N_X_UNSIGNED_16_BIT_INTEGER);
+    }
+
+    @Test
+    public void testDeserialize_BITMAP_32_BIT() {
+        int valIn = 0x9119;
+        testSerializer(valIn, ZclDataType.BITMAP_32_BIT);
     }
 
     @Test
@@ -158,6 +170,12 @@ public class SerializerIntegrationTest {
     }
 
     @Test
+    public void testDeserialize_UNSIGNED_24_BIT_INTEGER() {
+        int valIn = 0x997186;
+        testSerializer(valIn, ZclDataType.UNSIGNED_24_BIT_INTEGER);
+    }
+
+    @Test
     public void testDeserialize_SIGNED_32_BIT_INTEGER() {
         int valIn = -2345;
         testSerializer(valIn, ZclDataType.SIGNED_32_BIT_INTEGER);
@@ -167,6 +185,12 @@ public class SerializerIntegrationTest {
     public void testDeserialize_UNSIGNED_32_BIT_INTEGER() {
         int valIn = 0xE3970456;
         testSerializer(valIn, ZclDataType.UNSIGNED_32_BIT_INTEGER);
+    }
+
+    @Test
+    public void testDeserialize_UNSIGNED_48_BIT_INTEGER() {
+        long valIn = 0xE39704561234L;
+        testSerializer(valIn, ZclDataType.UNSIGNED_48_BIT_INTEGER);
     }
 
     @Test

@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -15,6 +17,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
 
 /**
  * Upgrade End Response value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * When an upgrade server receives an Upgrade End Request command with a status of
  * INVALID_IMAGE, REQUIRE_MORE_IMAGE, or ABORT, no additional processing shall be done
@@ -29,11 +34,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * indicating a single client device or multiple client devices shall switch to using their new images. The
  * command may not be reliably received by sleepy devices if it is sent unsolicited.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class UpgradeEndResponse extends ZclCommand {
     /**
      * Manufacturer code command message field.

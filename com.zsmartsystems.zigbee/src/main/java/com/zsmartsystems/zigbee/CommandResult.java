@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,7 +37,7 @@ public class CommandResult {
      * Constructor for timeout situations.
      */
     public CommandResult() {
-        this.response = null;
+        response = null;
     }
 
     /**
@@ -59,9 +59,9 @@ public class CommandResult {
     }
 
     /**
-     * Checks if message status code was received in default response.
+     * Checks if command was successful, or resulted in an error.
      *
-     * @return the message status code
+     * @return true if the command resulted in an error
      */
     public boolean isError() {
         if (hasStatusCode()) {
@@ -87,7 +87,7 @@ public class CommandResult {
     /**
      * Gets status code received in default response.
      *
-     * @return the status code
+     * @return the status code as {@link Integer}
      */
     public Integer getStatusCode() {
         if (hasStatusCode()) {
@@ -123,7 +123,7 @@ public class CommandResult {
             final ZclStatus status = ZclStatus.getStatus((byte) getStatusCode().intValue());
             builder.append("ERROR (");
             builder.append(status.name());
-            builder.append(String.format(",0x02), ", status.getId()));
+            builder.append(String.format(",0x%02X), ", status.getId()));
             builder.append(response);
         }
         builder.append(']');

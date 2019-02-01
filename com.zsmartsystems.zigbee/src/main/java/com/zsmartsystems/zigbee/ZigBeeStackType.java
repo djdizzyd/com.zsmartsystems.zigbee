@@ -1,80 +1,69 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Generated;
+
+
 /**
- * Defines the ZigBee stack types
- *
- * @author Chris Jackson
+ * ZigBee Stack Type value enumeration.
+ * <p>
+ * <p>
+ * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-08-29T17:17:08Z")
 public enum ZigBeeStackType {
-    UNKNOWN(0xFF),
 
     /**
      * ZigBee 2006
      */
-    ZIGBEE_2006(0x00),
+    ZIGBEE_2006(0x0000),
+
     /**
      * ZigBee 2007
      */
-    ZIGBEE_2007(0x01),
+    ZIGBEE_2007(0x0001),
+
     /**
      * ZigBee Pro
      */
-    ZIGBEE_PRO(0x02),
+    ZIGBEE_PRO(0x0002),
+
     /**
      * ZigBee IP
      */
-    ZIGBEE_IP(0x03);
+    ZIGBEE_IP(0x0003);
 
     /**
-     * The stack type value
+     * A mapping between the integer code and its corresponding ZigBeeStackType type to facilitate lookup by value.
      */
-    private final int stackId;
+    private static Map<Integer, ZigBeeStackType> idMap;
 
-    /**
-     * Map containing the link of stack type value to the enum
-     */
-    private static Map<Integer, ZigBeeStackType> map = null;
-
-    private ZigBeeStackType(int stackId) {
-        this.stackId = stackId;
+    static {
+        idMap = new HashMap<Integer, ZigBeeStackType>();
+        for (ZigBeeStackType enumValue : values()) {
+            idMap.put(enumValue.key, enumValue);
+        }
     }
 
-    /**
-     * Get a {@link ZigBeeStackType} from an integer
-     *
-     * @param stackTypeValue integer value defining the stack type
-     * @return {@link ZigBeeStackType} or {@link #UNKNOWN} if the value could not be converted
-     */
-    public static ZigBeeStackType getStackType(int stackTypeValue) {
-        if (map == null) {
-            map = new HashMap<Integer, ZigBeeStackType>();
-            for (ZigBeeStackType stackType : values()) {
-                map.put(stackType.stackId, stackType);
-            }
+    private final int key;
 
-        }
-        if (map.get(stackTypeValue) == null) {
-            return UNKNOWN;
-        }
-        return map.get(stackTypeValue);
+    private ZigBeeStackType(final int key) {
+        this.key = key;
     }
 
-    /**
-     * Gets the integer value for the stack type
-     *
-     * @return int defining the stack type
-     */
-    public int getId() {
-        return stackId;
+    public int getKey() {
+        return key;
+    }
+
+    public static ZigBeeStackType getByValue(final int value) {
+        return idMap.get(value);
     }
 }

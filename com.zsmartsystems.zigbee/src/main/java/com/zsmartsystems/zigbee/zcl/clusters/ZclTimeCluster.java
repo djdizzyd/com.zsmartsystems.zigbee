@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
@@ -18,12 +17,14 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Time</b> cluster implementation (<i>Cluster ID 0x000A</i>).
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclTimeCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -121,14 +122,11 @@ public class ZclTimeCluster extends ZclCluster {
     /**
      * Default constructor to create a Time cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclTimeCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclTimeCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
-
 
     /**
      * Set the <i>Time</i> attribute [attribute ID <b>0</b>].
@@ -173,7 +171,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_TIME));
     }
 
-
     /**
      * Synchronously get the <i>Time</i> attribute [attribute ID <b>0</b>].
      * <p>
@@ -200,16 +197,12 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Calendar} attribute value, or null on error
      */
     public Calendar getTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_TIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_TIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Calendar) attributes.get(ATTR_TIME).getLastValue();
-            }
+        if (attributes.get(ATTR_TIME).isLastValueCurrent(refreshPeriod)) {
+            return (Calendar) attributes.get(ATTR_TIME).getLastValue();
         }
 
         return (Calendar) readSync(attributes.get(ATTR_TIME));
     }
-
 
     /**
      * Set the <i>TimeStatus</i> attribute [attribute ID <b>1</b>].
@@ -242,7 +235,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_TIMESTATUS));
     }
 
-
     /**
      * Synchronously get the <i>TimeStatus</i> attribute [attribute ID <b>1</b>].
      * <p>
@@ -263,16 +255,12 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getTimeStatus(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_TIMESTATUS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_TIMESTATUS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_TIMESTATUS).getLastValue();
-            }
+        if (attributes.get(ATTR_TIMESTATUS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_TIMESTATUS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_TIMESTATUS));
     }
-
 
     /**
      * Set the <i>TimeZone</i> attribute [attribute ID <b>2</b>].
@@ -307,7 +295,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_TIMEZONE));
     }
 
-
     /**
      * Synchronously get the <i>TimeZone</i> attribute [attribute ID <b>2</b>].
      * <p>
@@ -329,16 +316,12 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getTimeZone(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_TIMEZONE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_TIMEZONE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_TIMEZONE).getLastValue();
-            }
+        if (attributes.get(ATTR_TIMEZONE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_TIMEZONE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_TIMEZONE));
     }
-
 
     /**
      * Set the <i>DstStart</i> attribute [attribute ID <b>3</b>].
@@ -373,7 +356,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_DSTSTART));
     }
 
-
     /**
      * Synchronously get the <i>DstStart</i> attribute [attribute ID <b>3</b>].
      * <p>
@@ -395,16 +377,12 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDstStart(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DSTSTART).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DSTSTART).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DSTSTART).getLastValue();
-            }
+        if (attributes.get(ATTR_DSTSTART).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DSTSTART).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DSTSTART));
     }
-
 
     /**
      * Set the <i>DstEnd</i> attribute [attribute ID <b>4</b>].
@@ -463,7 +441,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_DSTEND));
     }
 
-
     /**
      * Synchronously get the <i>DstEnd</i> attribute [attribute ID <b>4</b>].
      * <p>
@@ -497,16 +474,12 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDstEnd(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DSTEND).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DSTEND).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DSTEND).getLastValue();
-            }
+        if (attributes.get(ATTR_DSTEND).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DSTEND).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DSTEND));
     }
-
 
     /**
      * Set the <i>DstShift</i> attribute [attribute ID <b>5</b>].
@@ -551,7 +524,6 @@ public class ZclTimeCluster extends ZclCluster {
         return read(attributes.get(ATTR_DSTSHIFT));
     }
 
-
     /**
      * Synchronously get the <i>DstShift</i> attribute [attribute ID <b>5</b>].
      * <p>
@@ -578,11 +550,8 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDstShift(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DSTSHIFT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DSTSHIFT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DSTSHIFT).getLastValue();
-            }
+        if (attributes.get(ATTR_DSTSHIFT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DSTSHIFT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DSTSHIFT));
@@ -605,7 +574,6 @@ public class ZclTimeCluster extends ZclCluster {
     public Future<CommandResult> getStandardTimeAsync() {
         return read(attributes.get(ATTR_STANDARDTIME));
     }
-
 
     /**
      * Synchronously get the <i>StandardTime</i> attribute [attribute ID <b>6</b>].
@@ -630,11 +598,8 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getStandardTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_STANDARDTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_STANDARDTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_STANDARDTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_STANDARDTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_STANDARDTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_STANDARDTIME));
@@ -657,7 +622,6 @@ public class ZclTimeCluster extends ZclCluster {
     public Future<CommandResult> getLocalTimeAsync() {
         return read(attributes.get(ATTR_LOCALTIME));
     }
-
 
     /**
      * Synchronously get the <i>LocalTime</i> attribute [attribute ID <b>7</b>].
@@ -682,11 +646,8 @@ public class ZclTimeCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocalTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCALTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCALTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCALTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCALTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCALTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCALTIME));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -41,7 +41,7 @@ public class TelegesisFrameHandlerTest {
     private String CRLF = "\r\n";
 
     private int[] getPacket(String packet) {
-        TelegesisFrameHandler frameHandler = new TelegesisFrameHandler();
+        TelegesisFrameHandler frameHandler = new TelegesisFrameHandler(null);
         ByteArrayInputStream stream = new ByteArrayInputStream(packet.getBytes());
 
         ZigBeePort port = new TestPort(stream, null);
@@ -58,7 +58,6 @@ public class TelegesisFrameHandlerTest {
             return (int[]) privateMethod.invoke(frameHandler);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException | NoSuchFieldException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -107,7 +106,7 @@ public class TelegesisFrameHandlerTest {
 
     @Test
     public void testRunning() {
-        TelegesisFrameHandler frameHandler = new TelegesisFrameHandler();
+        TelegesisFrameHandler frameHandler = new TelegesisFrameHandler(null);
         frameHandler.start(null);
 
         assertTrue(frameHandler.isAlive());
@@ -126,7 +125,7 @@ public class TelegesisFrameHandlerTest {
     @Ignore
     @Test
     public void testEventWait() {
-        final TelegesisFrameHandler frameHandler = new TelegesisFrameHandler();
+        final TelegesisFrameHandler frameHandler = new TelegesisFrameHandler(null);
 
         final List<TelegesisEvent> eventCapture = new ArrayList<TelegesisEvent>();
 
@@ -156,7 +155,6 @@ public class TelegesisFrameHandlerTest {
                 privateMethod.invoke(frameHandler, eventOk);
             } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                     | InvocationTargetException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
 
@@ -164,7 +162,6 @@ public class TelegesisFrameHandlerTest {
                 eventCapture.wait(1000);
             }
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 

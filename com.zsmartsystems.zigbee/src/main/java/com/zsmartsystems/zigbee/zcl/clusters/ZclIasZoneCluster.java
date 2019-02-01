@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,19 +10,20 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iaszone.InitiateNormalOperationModeCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iaszone.InitiateTestModeCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneEnrollRequestCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneEnrollResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneStatusChangeNotificationCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>IAS Zone</b> cluster implementation (<i>Cluster ID 0x0500</i>).
@@ -33,6 +34,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclIasZoneCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -70,12 +72,32 @@ public class ZclIasZoneCluster extends ZclCluster {
      */
     public static final int ATTR_IASCIEADDRESS = 0x0010;
     /**
+     * A unique reference number allocated by the CIE at zone enrollment time.
+     * <p>
+     * Used by IAS devices to reference specific zones when communicating with the CIE. The ZoneID of each zone stays fixed until that zone is
+     * unenrolled.
      */
     public static final int ATTR_ZONEID = 0x0011;
     /**
+     * Provides the total number of sensitivity levels supported by the IAS Zone server. The purpose of this attribute is to support devices that
+     * can be configured to be more or less sensitive (e.g., motion sensor). It provides IAS Zone clients with the range of sensitivity levels that
+     * are supported so they MAY be presented to the user for configuration.
+     * <p>
+     * The values 0x00 and 0x01 are reserved because a device that has zero or one sensitivity level SHOULD NOT support this attribute because no
+     * configuration of the IAS Zone server’s sensitivity level is possible.
+     * <p>
+     * The meaning of each sensitivity level is manufacturer-specific. However, the sensitivity level of the IAS Zone server SHALL become more
+     * sensitive as they ascend. For example, if the server supports three sen- sitivity levels, then the value of this attribute would be 0x03
+     * where 0x03 is more sensitive than 0x02, which is more sensitive than 0x01.
      */
     public static final int ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED = 0x0012;
     /**
+     * Allows an IAS Zone client to query and configure the IAS Zone server’s sensitivity level. Please see
+     * NumberOfZoneSensitivityLevelsSupported Attribute for more detail on how to interpret this attribute.
+     * <p>
+     * The default value 0x00 is the device’s default sensitivity level as configured by the manufacturer. It MAY correspond to the same
+     * sensitivity as another value in the NumberOfZoneSensitivityLevelsSupported, but this is the default sensitivity to be used if the
+     * CurrentZoneSensitivityLevel attribute is not otherwise configured by an IAS Zone client.
      */
     public static final int ATTR_CURRENTZONESENSITIVITYLEVEL = 0x0013;
 
@@ -87,7 +109,7 @@ public class ZclIasZoneCluster extends ZclCluster {
         attributeMap.put(ATTR_ZONETYPE, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_ZONETYPE, "ZoneType", ZclDataType.ENUMERATION_16_BIT, true, true, false, false));
         attributeMap.put(ATTR_ZONESTATUS, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_ZONESTATUS, "ZoneStatus", ZclDataType.BITMAP_16_BIT, true, true, false, false));
         attributeMap.put(ATTR_IASCIEADDRESS, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_IASCIEADDRESS, "IASCIEAddress", ZclDataType.IEEE_ADDRESS, true, true, true, false));
-        attributeMap.put(ATTR_ZONEID, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_ZONEID, "ZoneID", ZclDataType.UNSIGNED_8_BIT_INTEGER, true, true, false, false));
+        attributeMap.put(ATTR_ZONEID, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_ZONEID, "ZoneID", ZclDataType.UNSIGNED_8_BIT_INTEGER, true, true, true, false));
         attributeMap.put(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED, "NumberOfZoneSensitivityLevelsSupported", ZclDataType.UNSIGNED_8_BIT_INTEGER, false, true, false, false));
         attributeMap.put(ATTR_CURRENTZONESENSITIVITYLEVEL, new ZclAttribute(ZclClusterType.IAS_ZONE, ATTR_CURRENTZONESENSITIVITYLEVEL, "CurrentZoneSensitivityLevel", ZclDataType.UNSIGNED_8_BIT_INTEGER, false, true, true, false));
 
@@ -97,13 +119,11 @@ public class ZclIasZoneCluster extends ZclCluster {
     /**
      * Default constructor to create a IAS Zone cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclIasZoneCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclIasZoneCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>ZoneState</i> attribute [attribute ID <b>0</b>].
@@ -119,7 +139,6 @@ public class ZclIasZoneCluster extends ZclCluster {
     public Future<CommandResult> getZoneStateAsync() {
         return read(attributes.get(ATTR_ZONESTATE));
     }
-
 
     /**
      * Synchronously get the <i>ZoneState</i> attribute [attribute ID <b>0</b>].
@@ -141,11 +160,8 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneState(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONESTATE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONESTATE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONESTATE).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONESTATE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONESTATE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONESTATE));
@@ -165,7 +181,6 @@ public class ZclIasZoneCluster extends ZclCluster {
     public Future<CommandResult> getZoneTypeAsync() {
         return read(attributes.get(ATTR_ZONETYPE));
     }
-
 
     /**
      * Synchronously get the <i>ZoneType</i> attribute [attribute ID <b>1</b>].
@@ -187,11 +202,8 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneType(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONETYPE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONETYPE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONETYPE).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONETYPE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONETYPE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONETYPE));
@@ -211,7 +223,6 @@ public class ZclIasZoneCluster extends ZclCluster {
     public Future<CommandResult> getZoneStatusAsync() {
         return read(attributes.get(ATTR_ZONESTATUS));
     }
-
 
     /**
      * Synchronously get the <i>ZoneStatus</i> attribute [attribute ID <b>2</b>].
@@ -233,16 +244,12 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneStatus(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONESTATUS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONESTATUS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONESTATUS).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONESTATUS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONESTATUS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONESTATUS));
     }
-
 
     /**
      * Set the <i>IASCIEAddress</i> attribute [attribute ID <b>16</b>].
@@ -291,7 +298,6 @@ public class ZclIasZoneCluster extends ZclCluster {
         return read(attributes.get(ATTR_IASCIEADDRESS));
     }
 
-
     /**
      * Synchronously get the <i>IASCIEAddress</i> attribute [attribute ID <b>16</b>].
      * <p>
@@ -320,18 +326,39 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link IeeeAddress} attribute value, or null on error
      */
     public IeeeAddress getIascieAddress(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_IASCIEADDRESS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_IASCIEADDRESS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (IeeeAddress) attributes.get(ATTR_IASCIEADDRESS).getLastValue();
-            }
+        if (attributes.get(ATTR_IASCIEADDRESS).isLastValueCurrent(refreshPeriod)) {
+            return (IeeeAddress) attributes.get(ATTR_IASCIEADDRESS).getLastValue();
         }
 
         return (IeeeAddress) readSync(attributes.get(ATTR_IASCIEADDRESS));
     }
 
     /**
+     * Set the <i>ZoneID</i> attribute [attribute ID <b>17</b>].
+     * <p>
+     * A unique reference number allocated by the CIE at zone enrollment time.
+     * <p>
+     * Used by IAS devices to reference specific zones when communicating with the CIE. The ZoneID of each zone stays fixed until that zone is
+     * unenrolled.
+     * <p>
+     * The attribute is of type {@link Integer}.
+     * <p>
+     * The implementation of this attribute by a device is MANDATORY
+     *
+     * @param zoneId the {@link Integer} attribute value to be set
+     * @return the {@link Future<CommandResult>} command result future
+     */
+    public Future<CommandResult> setZoneId(final Object value) {
+        return write(attributes.get(ATTR_ZONEID), value);
+    }
+
+    /**
      * Get the <i>ZoneID</i> attribute [attribute ID <b>17</b>].
+     * <p>
+     * A unique reference number allocated by the CIE at zone enrollment time.
+     * <p>
+     * Used by IAS devices to reference specific zones when communicating with the CIE. The ZoneID of each zone stays fixed until that zone is
+     * unenrolled.
      * <p>
      * The attribute is of type {@link Integer}.
      * <p>
@@ -343,9 +370,13 @@ public class ZclIasZoneCluster extends ZclCluster {
         return read(attributes.get(ATTR_ZONEID));
     }
 
-
     /**
      * Synchronously get the <i>ZoneID</i> attribute [attribute ID <b>17</b>].
+     * <p>
+     * A unique reference number allocated by the CIE at zone enrollment time.
+     * <p>
+     * Used by IAS devices to reference specific zones when communicating with the CIE. The ZoneID of each zone stays fixed until that zone is
+     * unenrolled.
      * <p>
      * This method can return cached data if the attribute has already been received.
      * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
@@ -362,11 +393,8 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneId(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONEID).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONEID).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONEID).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONEID).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONEID).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONEID));
@@ -374,6 +402,17 @@ public class ZclIasZoneCluster extends ZclCluster {
 
     /**
      * Get the <i>NumberOfZoneSensitivityLevelsSupported</i> attribute [attribute ID <b>18</b>].
+     * <p>
+     * Provides the total number of sensitivity levels supported by the IAS Zone server. The purpose of this attribute is to support devices that
+     * can be configured to be more or less sensitive (e.g., motion sensor). It provides IAS Zone clients with the range of sensitivity levels that
+     * are supported so they MAY be presented to the user for configuration.
+     * <p>
+     * The values 0x00 and 0x01 are reserved because a device that has zero or one sensitivity level SHOULD NOT support this attribute because no
+     * configuration of the IAS Zone server’s sensitivity level is possible.
+     * <p>
+     * The meaning of each sensitivity level is manufacturer-specific. However, the sensitivity level of the IAS Zone server SHALL become more
+     * sensitive as they ascend. For example, if the server supports three sen- sitivity levels, then the value of this attribute would be 0x03
+     * where 0x03 is more sensitive than 0x02, which is more sensitive than 0x01.
      * <p>
      * The attribute is of type {@link Integer}.
      * <p>
@@ -385,9 +424,19 @@ public class ZclIasZoneCluster extends ZclCluster {
         return read(attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED));
     }
 
-
     /**
      * Synchronously get the <i>NumberOfZoneSensitivityLevelsSupported</i> attribute [attribute ID <b>18</b>].
+     * <p>
+     * Provides the total number of sensitivity levels supported by the IAS Zone server. The purpose of this attribute is to support devices that
+     * can be configured to be more or less sensitive (e.g., motion sensor). It provides IAS Zone clients with the range of sensitivity levels that
+     * are supported so they MAY be presented to the user for configuration.
+     * <p>
+     * The values 0x00 and 0x01 are reserved because a device that has zero or one sensitivity level SHOULD NOT support this attribute because no
+     * configuration of the IAS Zone server’s sensitivity level is possible.
+     * <p>
+     * The meaning of each sensitivity level is manufacturer-specific. However, the sensitivity level of the IAS Zone server SHALL become more
+     * sensitive as they ascend. For example, if the server supports three sen- sitivity levels, then the value of this attribute would be 0x03
+     * where 0x03 is more sensitive than 0x02, which is more sensitive than 0x01.
      * <p>
      * This method can return cached data if the attribute has already been received.
      * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
@@ -404,19 +453,22 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNumberOfZoneSensitivityLevelsSupported(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED).getLastValue();
-            }
+        if (attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NUMBEROFZONESENSITIVITYLEVELSSUPPORTED));
     }
 
-
     /**
      * Set the <i>CurrentZoneSensitivityLevel</i> attribute [attribute ID <b>19</b>].
+     * <p>
+     * Allows an IAS Zone client to query and configure the IAS Zone server’s sensitivity level. Please see
+     * NumberOfZoneSensitivityLevelsSupported Attribute for more detail on how to interpret this attribute.
+     * <p>
+     * The default value 0x00 is the device’s default sensitivity level as configured by the manufacturer. It MAY correspond to the same
+     * sensitivity as another value in the NumberOfZoneSensitivityLevelsSupported, but this is the default sensitivity to be used if the
+     * CurrentZoneSensitivityLevel attribute is not otherwise configured by an IAS Zone client.
      * <p>
      * The attribute is of type {@link Integer}.
      * <p>
@@ -432,6 +484,13 @@ public class ZclIasZoneCluster extends ZclCluster {
     /**
      * Get the <i>CurrentZoneSensitivityLevel</i> attribute [attribute ID <b>19</b>].
      * <p>
+     * Allows an IAS Zone client to query and configure the IAS Zone server’s sensitivity level. Please see
+     * NumberOfZoneSensitivityLevelsSupported Attribute for more detail on how to interpret this attribute.
+     * <p>
+     * The default value 0x00 is the device’s default sensitivity level as configured by the manufacturer. It MAY correspond to the same
+     * sensitivity as another value in the NumberOfZoneSensitivityLevelsSupported, but this is the default sensitivity to be used if the
+     * CurrentZoneSensitivityLevel attribute is not otherwise configured by an IAS Zone client.
+     * <p>
      * The attribute is of type {@link Integer}.
      * <p>
      * The implementation of this attribute by a device is OPTIONAL
@@ -442,9 +501,15 @@ public class ZclIasZoneCluster extends ZclCluster {
         return read(attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL));
     }
 
-
     /**
      * Synchronously get the <i>CurrentZoneSensitivityLevel</i> attribute [attribute ID <b>19</b>].
+     * <p>
+     * Allows an IAS Zone client to query and configure the IAS Zone server’s sensitivity level. Please see
+     * NumberOfZoneSensitivityLevelsSupported Attribute for more detail on how to interpret this attribute.
+     * <p>
+     * The default value 0x00 is the device’s default sensitivity level as configured by the manufacturer. It MAY correspond to the same
+     * sensitivity as another value in the NumberOfZoneSensitivityLevelsSupported, but this is the default sensitivity to be used if the
+     * CurrentZoneSensitivityLevel attribute is not otherwise configured by an IAS Zone client.
      * <p>
      * This method can return cached data if the attribute has already been received.
      * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
@@ -461,11 +526,8 @@ public class ZclIasZoneCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentZoneSensitivityLevel(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTZONESENSITIVITYLEVEL));
@@ -484,6 +546,58 @@ public class ZclIasZoneCluster extends ZclCluster {
         // Set the fields
         command.setEnrollResponseCode(enrollResponseCode);
         command.setZoneId(zoneId);
+
+        return send(command);
+    }
+
+    /**
+     * The Initiate Normal Operation Mode Command
+     * <p>
+     * Used to tell the IAS Zone server to commence normal operation mode.
+     * <br>
+     * Upon receipt, the IAS Zone server SHALL commence normal operational mode.
+     * <br>
+     * Any configurations and changes made (e.g., CurrentZoneSensitivityLevel attribute) to the IAS Zone server SHALL be retained.
+     * <br>
+     * Upon commencing normal operation mode, the IAS Zone server SHALL send a Zone Status Change Notification command updating the ZoneStatus
+     * attribute Test bit to zero (i.e., “operation mode”).
+     *
+     * @return the {@link Future<CommandResult>} command result future
+     */
+    public Future<CommandResult> initiateNormalOperationModeCommand() {
+        InitiateNormalOperationModeCommand command = new InitiateNormalOperationModeCommand();
+
+        return send(command);
+    }
+
+    /**
+     * The Initiate Test Mode Command
+     * <p>
+     * Certain IAS Zone servers MAY have operational configurations that could be configured OTA or locally on the device. This command enables
+     * them to be remotely placed into a test mode so that the user or installer MAY configure their field of view, sensitivity, and other
+     * operational parameters. They MAY also verify the placement and proper operation of the IAS Zone server, which MAY have been placed in a
+     * difficult to reach location (i.e., making a physical input on the device impractical to trigger).
+     * <br>
+     * Another use case for this command is large deployments, especially commercial and industrial, where placing the entire IAS system into
+     * test mode instead of a single IAS Zone server is infeasible due to the vulnerabilities that might arise. This command enables only a single
+     * IAS Zone server to be placed into test mode.
+     * <br>
+     * The biggest limitation of this command is that most IAS Zone servers today are battery-powered sleepy nodes that cannot reliably receive
+     * commands. However, implementers MAY decide to program an IAS Zone server by factory default to maintain a limited duration of normal
+     * polling upon initialization/joining to a new network. Some IAS Zone servers MAY also have AC mains power and are able to receive commands.
+     * Some types of IAS Zone servers that MAY benefit from this command are: motion sensors and fire sensor/smoke alarm listeners (i.e., a device
+     * that listens for a non-communicating fire sensor to alarm and communicates this to the IAS CIE).
+     *
+     * @param testModeDuration {@link Integer} Test Mode Duration
+     * @param currentZoneSensitivityLevel {@link Integer} Current Zone Sensitivity Level
+     * @return the {@link Future<CommandResult>} command result future
+     */
+    public Future<CommandResult> initiateTestModeCommand(Integer testModeDuration, Integer currentZoneSensitivityLevel) {
+        InitiateTestModeCommand command = new InitiateTestModeCommand();
+
+        // Set the fields
+        command.setTestModeDuration(testModeDuration);
+        command.setCurrentZoneSensitivityLevel(currentZoneSensitivityLevel);
 
         return send(command);
     }
@@ -531,6 +645,10 @@ public class ZclIasZoneCluster extends ZclCluster {
         switch (commandId) {
             case 0: // ZONE_ENROLL_RESPONSE
                 return new ZoneEnrollResponse();
+            case 1: // INITIATE_NORMAL_OPERATION_MODE_COMMAND
+                return new InitiateNormalOperationModeCommand();
+            case 2: // INITIATE_TEST_MODE_COMMAND
+                return new InitiateTestModeCommand();
             default:
                 return null;
         }

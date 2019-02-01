@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2019 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.autocode.zcl;
 
 import java.util.HashMap;
@@ -79,7 +86,10 @@ public class ZclDataType {
         dataTypeMapping.put("SIGNED_32_BIT_INTEGER", new DataTypeMap("Integer", 0x2b, 4, true, 0x80000000));
         dataTypeMapping.put("UNSIGNED_8_BIT_INTEGER", new DataTypeMap("Integer", 0x20, 1, true, 0xff));
         dataTypeMapping.put("UNSIGNED_16_BIT_INTEGER", new DataTypeMap("Integer", 0x21, 2, true, 0xffff));
+        dataTypeMapping.put("UNSIGNED_24_BIT_INTEGER", new DataTypeMap("Integer", 0x22, 3, true, 0xffffff));
         dataTypeMapping.put("UNSIGNED_32_BIT_INTEGER", new DataTypeMap("Integer", 0x23, 4, true, 0xffffffff));
+        dataTypeMapping.put("UNSIGNED_40_BIT_INTEGER", new DataTypeMap("Integer", 0x24, 4, true, 0));// 0xffffffffff));
+        dataTypeMapping.put("UNSIGNED_48_BIT_INTEGER", new DataTypeMap("Integer", 0x25, 6, true, 0));// 0xffffffffffff));
         dataTypeMapping.put("BITMAP_8_BIT", new DataTypeMap("Integer", 0x18, 1, false));
         dataTypeMapping.put("BITMAP_16_BIT", new DataTypeMap("Integer", 0x19, 2, false));
         dataTypeMapping.put("BITMAP_24_BIT", new DataTypeMap("Integer", 0x1a, 3, false));
@@ -87,7 +97,7 @@ public class ZclDataType {
         dataTypeMapping.put("ENUMERATION_16_BIT", new DataTypeMap("Integer", 0x31, 2, false, 0xffff));
         dataTypeMapping.put("ENUMERATION_8_BIT", new DataTypeMap("Integer", 0x30, 1, false, 0xff));
         dataTypeMapping.put("DATA_8_BIT", new DataTypeMap("Integer", 0x08, 1, false));
-        dataTypeMapping.put("OCTET_STRING", new DataTypeMap("String", 0x41, -1, false));
+        dataTypeMapping.put("OCTET_STRING", new DataTypeMap("ByteArray", 0x41, -1, false));
         dataTypeMapping.put("UTCTIME", new DataTypeMap("Calendar", 0xe2, 4, true, 0xffffffff));
         dataTypeMapping.put("ZDO_STATUS", new DataTypeMap("ZdoStatus", 0, 0, false));
         dataTypeMapping.put("ZCL_STATUS", new DataTypeMap("ZclStatus", 0, 0, false));

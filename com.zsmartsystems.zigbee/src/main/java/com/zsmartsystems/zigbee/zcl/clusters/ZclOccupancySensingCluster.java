@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,15 +9,14 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Occupancy sensing</b> cluster implementation (<i>Cluster ID 0x0406</i>).
@@ -27,6 +26,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclOccupancySensingCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -51,9 +51,17 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      */
     public static final int ATTR_OCCUPANCYSENSORTYPE = 0x0001;
     /**
+     * The PIROccupiedToUnoccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its occupied state
+     * when the sensed area becomes unoccupied. This attribute, along with
+     * PIRUnoccupiedToOccupiedTime, may be used to reduce sensor 'chatter' when
+     * used in an area where occupation changes frequently.
      */
     public static final int ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY = 0x0010;
     /**
+     * The PIRUnoccupiedToOccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its unoccupied state
+     * when the sensed area becomes occupied.
      */
     public static final int ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY = 0x0011;
     /**
@@ -92,13 +100,11 @@ public class ZclOccupancySensingCluster extends ZclCluster {
     /**
      * Default constructor to create a Occupancy sensing cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclOccupancySensingCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclOccupancySensingCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>Occupancy</i> attribute [attribute ID <b>0</b>].
@@ -117,7 +123,6 @@ public class ZclOccupancySensingCluster extends ZclCluster {
     public Future<CommandResult> getOccupancyAsync() {
         return read(attributes.get(ATTR_OCCUPANCY));
     }
-
 
     /**
      * Synchronously get the <i>Occupancy</i> attribute [attribute ID <b>0</b>].
@@ -142,16 +147,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOccupancy(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OCCUPANCY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OCCUPANCY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OCCUPANCY).getLastValue();
-            }
+        if (attributes.get(ATTR_OCCUPANCY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OCCUPANCY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OCCUPANCY));
     }
-
 
     /**
      * Set reporting for the <i>Occupancy</i> attribute [attribute ID <b>0</b>].
@@ -188,7 +189,6 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_OCCUPANCYSENSORTYPE));
     }
 
-
     /**
      * Synchronously get the <i>OccupancySensorType</i> attribute [attribute ID <b>1</b>].
      * <p>
@@ -209,19 +209,21 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOccupancySensorType(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OCCUPANCYSENSORTYPE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OCCUPANCYSENSORTYPE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OCCUPANCYSENSORTYPE).getLastValue();
-            }
+        if (attributes.get(ATTR_OCCUPANCYSENSORTYPE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OCCUPANCYSENSORTYPE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OCCUPANCYSENSORTYPE));
     }
 
-
     /**
      * Set the <i>PIROccupiedToUnoccupiedDelay</i> attribute [attribute ID <b>16</b>].
+     * <p>
+     * The PIROccupiedToUnoccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its occupied state
+     * when the sensed area becomes unoccupied. This attribute, along with
+     * PIRUnoccupiedToOccupiedTime, may be used to reduce sensor 'chatter' when
+     * used in an area where occupation changes frequently.
      * <p>
      * The attribute is of type {@link Integer}.
      * <p>
@@ -237,6 +239,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
     /**
      * Get the <i>PIROccupiedToUnoccupiedDelay</i> attribute [attribute ID <b>16</b>].
      * <p>
+     * The PIROccupiedToUnoccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its occupied state
+     * when the sensed area becomes unoccupied. This attribute, along with
+     * PIRUnoccupiedToOccupiedTime, may be used to reduce sensor 'chatter' when
+     * used in an area where occupation changes frequently.
+     * <p>
      * The attribute is of type {@link Integer}.
      * <p>
      * The implementation of this attribute by a device is OPTIONAL
@@ -247,9 +255,14 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY));
     }
 
-
     /**
      * Synchronously get the <i>PIROccupiedToUnoccupiedDelay</i> attribute [attribute ID <b>16</b>].
+     * <p>
+     * The PIROccupiedToUnoccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its occupied state
+     * when the sensed area becomes unoccupied. This attribute, along with
+     * PIRUnoccupiedToOccupiedTime, may be used to reduce sensor 'chatter' when
+     * used in an area where occupation changes frequently.
      * <p>
      * This method can return cached data if the attribute has already been received.
      * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
@@ -266,19 +279,19 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPirOccupiedToUnoccupiedDelay(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY).getLastValue();
-            }
+        if (attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PIROCCUPIEDTOUNOCCUPIEDDELAY));
     }
 
-
     /**
      * Set the <i>PIRUnoccupiedToOccupiedDelay</i> attribute [attribute ID <b>17</b>].
+     * <p>
+     * The PIRUnoccupiedToOccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its unoccupied state
+     * when the sensed area becomes occupied.
      * <p>
      * The attribute is of type {@link Integer}.
      * <p>
@@ -294,6 +307,10 @@ public class ZclOccupancySensingCluster extends ZclCluster {
     /**
      * Get the <i>PIRUnoccupiedToOccupiedDelay</i> attribute [attribute ID <b>17</b>].
      * <p>
+     * The PIRUnoccupiedToOccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its unoccupied state
+     * when the sensed area becomes occupied.
+     * <p>
      * The attribute is of type {@link Integer}.
      * <p>
      * The implementation of this attribute by a device is OPTIONAL
@@ -304,9 +321,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY));
     }
 
-
     /**
      * Synchronously get the <i>PIRUnoccupiedToOccupiedDelay</i> attribute [attribute ID <b>17</b>].
+     * <p>
+     * The PIRUnoccupiedToOccupiedDelay attribute is 8-bits in length and specifies
+     * the time delay, in seconds, before the PIR sensor changes to its unoccupied state
+     * when the sensed area becomes occupied.
      * <p>
      * This method can return cached data if the attribute has already been received.
      * The parameter <i>refreshPeriod</i> is used to control this. If the attribute has been received
@@ -323,16 +343,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPirUnoccupiedToOccupiedDelay(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY).getLastValue();
-            }
+        if (attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PIRUNOCCUPIEDTOOCCUPIEDDELAY));
     }
-
 
     /**
      * Set the <i>UltraSonicOccupiedToUnoccupiedDelay</i> attribute [attribute ID <b>32</b>].
@@ -373,7 +389,6 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY));
     }
 
-
     /**
      * Synchronously get the <i>UltraSonicOccupiedToUnoccupiedDelay</i> attribute [attribute ID <b>32</b>].
      * <p>
@@ -398,16 +413,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getUltraSonicOccupiedToUnoccupiedDelay(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY).getLastValue();
-            }
+        if (attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ULTRASONICOCCUPIEDTOUNOCCUPIEDDELAY));
     }
-
 
     /**
      * Set the <i>UltraSonicUnoccupiedToOccupiedDelay</i> attribute [attribute ID <b>33</b>].
@@ -444,7 +455,6 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY));
     }
 
-
     /**
      * Synchronously get the <i>UltraSonicUnoccupiedToOccupiedDelay</i> attribute [attribute ID <b>33</b>].
      * <p>
@@ -467,16 +477,12 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getUltraSonicUnoccupiedToOccupiedDelay(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY).getLastValue();
-            }
+        if (attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDDELAY));
     }
-
 
     /**
      * Set the <i>UltrasonicUnoccupiedToOccupiedThreshold</i> attribute [attribute ID <b>34</b>].
@@ -505,7 +511,6 @@ public class ZclOccupancySensingCluster extends ZclCluster {
         return read(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD));
     }
 
-
     /**
      * Synchronously get the <i>UltrasonicUnoccupiedToOccupiedThreshold</i> attribute [attribute ID <b>34</b>].
      * <p>
@@ -524,11 +529,8 @@ public class ZclOccupancySensingCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getUltrasonicUnoccupiedToOccupiedThreshold(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD).getLastValue();
-            }
+        if (attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ULTRASONICUNOCCUPIEDTOOCCUPIEDTHRESHOLD));

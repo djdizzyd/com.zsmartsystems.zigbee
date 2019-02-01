@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2016-2019 by the respective copyright holders.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package com.zsmartsystems.zigbee.autocode;
 
 import java.util.ArrayList;
@@ -468,13 +475,12 @@ public class ZclProtocolDefinitionParser {
         final DataType dataType = new DataType();
         dataType.dataTypeName = columns[2].trim();
         dataType.dataTypeType = attribute.dataType;
+        System.out.println(" Type:::" + attribute.attributeLabel + ":: " + dataType.dataTypeType);
         dataType.dataTypeClass = ZclDataType.getDataTypeMapping().get(attribute.dataType).dataClass;
         if (dataType.dataTypeClass == null) {
             throw new IllegalArgumentException("Type not mapped: " + attribute.dataType);
         }
         attribute.dataTypeClass = dataType.dataTypeClass;
-
-        System.out.println(" Type::::: " + dataType.dataTypeType);
 
         context.dataTypes.put(attribute.dataType, dataType);
         context.cluster.attributes.put(attribute.attributeId, attribute);

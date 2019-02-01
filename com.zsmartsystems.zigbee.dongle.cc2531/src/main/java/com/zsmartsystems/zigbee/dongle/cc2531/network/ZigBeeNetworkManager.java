@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,6 +30,7 @@ package com.zsmartsystems.zigbee.dongle.cc2531.network;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
+import com.zsmartsystems.zigbee.ZigBeeStatus;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.impl.BlockingCommandReceiver;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.ResponseStatus;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.ZToolCMD;
@@ -57,8 +59,12 @@ import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.simple.ZB_WRITE_CON
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.simple.ZB_WRITE_CONFIGURATION_RSP;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_RESET;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_RESET_RESPONSE;
+import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_SET_TX_POWER;
+import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_SET_TX_POWER_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_VERSION;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.system.SYS_VERSION_RESPONSE;
+import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_LED_CONTROL;
+import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.util.UTIL_LED_CONTROL_RESPONSE;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_MSG_CB_REGISTER;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_MSG_CB_REGISTER_SRSP;
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_STARTUP_FROM_APP;
@@ -66,6 +72,7 @@ import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_STARTUP_FRO
 import com.zsmartsystems.zigbee.dongle.cc2531.network.packet.zdo.ZDO_STATE_CHANGE_IND;
 import com.zsmartsystems.zigbee.dongle.cc2531.zigbee.util.DoubleByte;
 import com.zsmartsystems.zigbee.dongle.cc2531.zigbee.util.Integers;
+import com.zsmartsystems.zigbee.security.ZigBeeKey;
 
 /**
  * The ZigBee network manager implementation.
@@ -428,7 +435,7 @@ public class ZigBeeNetworkManager {
             }
         }
         if (networkKey != null) {
-            logger.debug("Setting NETWORK_KEY.");
+            logger.debug("Setting NETWORK_KEY to {}.", networkKey);
             if (!dongleSetNetworkKey()) {
                 logger.error("Unable to set NETWORK_KEY for ZigBee Network");
                 return false;
@@ -550,6 +557,17 @@ public class ZigBeeNetworkManager {
         this.securityMode = securityMode;
 
         return dongleSetSecurityMode();
+    }
+
+    public ZigBeeStatus setTxPower(int txPower) {
+        return dongleSetTxPower(txPower) ? ZigBeeStatus.SUCCESS : ZigBeeStatus.FAILURE;
+    }
+
+    public ZigBeeStatus setLedMode(int ledId, boolean mode) {
+        UTIL_LED_CONTROL_RESPONSE response = (UTIL_LED_CONTROL_RESPONSE) sendSynchronous(
+                new UTIL_LED_CONTROL(ledId, mode));
+
+        return (response != null && response.Status == 0) ? ZigBeeStatus.SUCCESS : ZigBeeStatus.FAILURE;
     }
 
     public void addAsynchronousCommandListener(final AsynchronousCommandListener asynchronousCommandListener) {
@@ -821,6 +839,12 @@ public class ZigBeeNetworkManager {
         return response != null && response.Status == 0;
     }
 
+    private boolean dongleSetTxPower(int txPower) {
+        SYS_SET_TX_POWER_RESPONSE response = (SYS_SET_TX_POWER_RESPONSE) sendSynchronous(new SYS_SET_TX_POWER(txPower));
+
+        return response != null;
+    }
+
     /**
      * Sends a command without waiting for the response
      *
@@ -1060,7 +1084,7 @@ public class ZigBeeNetworkManager {
         }
 
         if (!waitForHardware()) {
-            logger.info("Failed to reach the {} level: getIeeeAddress() failed", DriverStatus.HARDWARE_READY);
+            logger.debug("Failed to reach the {} level: getIeeeAddress() failed", DriverStatus.HARDWARE_READY);
             return -1;
         }
 
@@ -1099,7 +1123,7 @@ public class ZigBeeNetworkManager {
     }
 
     /**
-     * Gets the current ZigBee channe number
+     * Gets the current ZigBee channel number
      *
      * @return the current channel as an int, or -1 on failure
      */
@@ -1142,31 +1166,14 @@ public class ZigBeeNetworkManager {
         }
     }
 
-    public byte[] getZigBeeNetworkKey() {
+    public ZigBeeKey getZigBeeNetworkKey() {
         ZB_READ_CONFIGURATION_RSP response = (ZB_READ_CONFIGURATION_RSP) sendSynchronous(
                 new ZB_READ_CONFIGURATION(ZB_WRITE_CONFIGURATION.CONFIG_ID.ZCD_NV_PRECFGKEY));
         if (response != null && response.Status == 0) {
-            byte[] readNetworkKey = new byte[16];
-            readNetworkKey[0] = (byte) response.Value[0];
-            readNetworkKey[1] = (byte) response.Value[1];
-            readNetworkKey[2] = (byte) response.Value[2];
-            readNetworkKey[3] = (byte) response.Value[3];
-            readNetworkKey[4] = (byte) response.Value[4];
-            readNetworkKey[5] = (byte) response.Value[5];
-            readNetworkKey[6] = (byte) response.Value[6];
-            readNetworkKey[7] = (byte) response.Value[7];
-            readNetworkKey[8] = (byte) response.Value[8];
-            readNetworkKey[9] = (byte) response.Value[9];
-            readNetworkKey[10] = (byte) response.Value[10];
-            readNetworkKey[11] = (byte) response.Value[11];
-            readNetworkKey[12] = (byte) response.Value[12];
-            readNetworkKey[13] = (byte) response.Value[13];
-            readNetworkKey[14] = (byte) response.Value[14];
-            readNetworkKey[15] = (byte) response.Value[15];
-            return readNetworkKey;
+            return new ZigBeeKey(Arrays.copyOfRange(response.Value, 0, 16));
         } else {
             logger.error("Error reading zigbee network key: " + ResponseStatus.getStatus(response.Status));
-            return null;
+            return new ZigBeeKey();
         }
     }
 

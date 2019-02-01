@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,6 +38,11 @@ public class ZigBeeCommand {
      * The transaction ID.
      */
     private Integer transactionId;
+
+    /**
+     * True if the command uses APS security
+     */
+    private boolean apsSecurity = false;
 
     /**
      * Gets destination address.
@@ -91,6 +96,24 @@ public class ZigBeeCommand {
      */
     public Integer getTransactionId() {
         return transactionId;
+    }
+
+    /**
+     * Enables or disables APS security on the command.
+     *
+     * @param apsSecurity set to true if the command uses APS security, false if not using APS security
+     */
+    public void setApsSecurity(boolean apsSecurity) {
+        this.apsSecurity = apsSecurity;
+    }
+
+    /**
+     * Gets the state of APS security for this command
+     * 
+     * @return true if the command uses APS security, false if not using APS security
+     */
+    public boolean getApsSecurity() {
+        return apsSecurity;
     }
 
     /**

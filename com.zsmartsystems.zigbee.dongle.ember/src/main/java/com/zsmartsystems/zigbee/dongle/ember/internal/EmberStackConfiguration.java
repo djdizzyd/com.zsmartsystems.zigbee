@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,26 +9,14 @@ package com.zsmartsystems.zigbee.dongle.ember.internal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetConfigurationValueRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetConfigurationValueResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetPolicyRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetPolicyResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetConfigurationValueRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetConfigurationValueResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetPolicyRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetPolicyResponse;
+import com.zsmartsystems.zigbee.dongle.ember.EmberNcp;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspConfigId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspDecisionId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspPolicyId;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspStatus;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspSingleResponseTransaction;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
 
 /**
  * This class provides utility functions to configure, and read the configuration from the Ember stack.
@@ -38,64 +26,17 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
  */
 public class EmberStackConfiguration {
     /**
-     * The {@link Logger}.
+     * The {@link EmberNcp} used to send the EZSP frames to the NCP
      */
-    private final Logger logger = LoggerFactory.getLogger(EmberStackConfiguration.class);
-
-    private AshFrameHandler ashHandler;
+    private EmberNcp ncp;
 
     /**
-     * Constructor to set the {@link AshFrameHandler}
+     * Constructor to set the {@link EzspProtocolHandler}
      *
-     * @param ashHandler the {@link AshFrameHandler} used to communicate with the NCP
+     * @param frameHandler the {@link EzspProtocolHandler} used to communicate with the NCP
      */
-    public EmberStackConfiguration(AshFrameHandler ashHandler) {
-        this.ashHandler = ashHandler;
-    }
-
-    /**
-     * Set a configuration value
-     *
-     * @param configId the {@link EzspConfigId} to set
-     * @param value the value to set
-     * @return true if the configuration returns ok
-     */
-    public boolean setConfiguration(EzspConfigId configId, Integer value) {
-        EzspSetConfigurationValueRequest configValue = new EzspSetConfigurationValueRequest();
-        configValue.setConfigId(configId);
-        configValue.setValue(value);
-        logger.debug(configValue.toString());
-
-        EzspTransaction configTransaction = ashHandler.sendEzspTransaction(
-                new EzspSingleResponseTransaction(configValue, EzspSetConfigurationValueResponse.class));
-        EzspSetConfigurationValueResponse configResponse = (EzspSetConfigurationValueResponse) configTransaction
-                .getResponse();
-        logger.debug(configResponse.toString());
-
-        return configResponse.getStatus() == EzspStatus.EZSP_SUCCESS;
-    }
-
-    /**
-     * Get a configuration value
-     *
-     * @param configId the {@link EzspConfigId} to set
-     * @return the configuration value as {@link Integer} or null on error
-     */
-    public Integer getConfiguration(EzspConfigId configId) {
-        EzspGetConfigurationValueRequest configValue = new EzspGetConfigurationValueRequest();
-        configValue.setConfigId(configId);
-
-        EzspTransaction configTransaction = ashHandler.sendEzspTransaction(
-                new EzspSingleResponseTransaction(configValue, EzspGetConfigurationValueResponse.class));
-        EzspGetConfigurationValueResponse configResponse = (EzspGetConfigurationValueResponse) configTransaction
-                .getResponse();
-        logger.debug(configResponse.toString());
-
-        if (configResponse.getStatus() != EzspStatus.EZSP_SUCCESS) {
-            return null;
-        }
-
-        return configResponse.getValue();
+    public EmberStackConfiguration(EmberNcp ncp) {
+        this.ncp = ncp;
     }
 
     /**
@@ -108,8 +49,8 @@ public class EmberStackConfiguration {
     public boolean setConfiguration(Map<EzspConfigId, Integer> configuration) {
         boolean success = true;
 
-        for (EzspConfigId configId : configuration.keySet()) {
-            if (!setConfiguration(configId, configuration.get(configId))) {
+        for (Entry<EzspConfigId, Integer> config : configuration.entrySet()) {
+            if (ncp.setConfiguration(config.getKey(), config.getValue()) != EzspStatus.EZSP_SUCCESS) {
                 success = false;
             }
         }
@@ -128,57 +69,10 @@ public class EmberStackConfiguration {
         Map<EzspConfigId, Integer> response = new HashMap<EzspConfigId, Integer>();
 
         for (EzspConfigId configId : configuration) {
-            response.put(configId, getConfiguration(configId));
+            response.put(configId, ncp.getConfiguration(configId));
         }
 
         return response;
-    }
-
-    /**
-     * Set a policy used by the NCP to make fast decisions.
-     *
-     * @param policyId the {@link EzspPolicyId} to set
-     * @param decisionId the {@link EzspDecisionId} to set to
-     * @return true if the policy setting was successful
-     */
-    public boolean setPolicy(EzspPolicyId policyId, EzspDecisionId decisionId) {
-        EzspSetPolicyRequest setPolicyRequest = new EzspSetPolicyRequest();
-        setPolicyRequest.setPolicyId(policyId);
-        setPolicyRequest.setDecisionId(decisionId);
-        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(setPolicyRequest,
-                EzspSetPolicyResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspSetPolicyResponse setPolicyResponse = (EzspSetPolicyResponse) transaction.getResponse();
-        logger.debug(setPolicyResponse.toString());
-        if (setPolicyResponse.getStatus() != EzspStatus.EZSP_SUCCESS) {
-            logger.debug("Error during setting policy: {}", setPolicyResponse);
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Get a policy used by the NCP to make fast decisions.
-     *
-     * @param policyId the {@link EzspPolicyId} to set
-     * @return the returned {@link EzspDecisionId} if the policy was retrieved successfully or null if there was an
-     *         error
-     */
-    public EzspDecisionId getPolicy(EzspPolicyId policyId) {
-        EzspGetPolicyRequest getPolicyRequest = new EzspGetPolicyRequest();
-        getPolicyRequest.setPolicyId(policyId);
-        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(getPolicyRequest,
-                EzspGetPolicyResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspGetPolicyResponse getPolicyResponse = (EzspGetPolicyResponse) transaction.getResponse();
-        logger.debug(getPolicyResponse.toString());
-        if (getPolicyResponse.getStatus() != EzspStatus.EZSP_SUCCESS) {
-            logger.debug("Error getting policy: {}", getPolicyResponse);
-            return null;
-        }
-
-        return getPolicyResponse.getDecisionId();
     }
 
     /**
@@ -191,8 +85,8 @@ public class EmberStackConfiguration {
     public boolean setPolicy(Map<EzspPolicyId, EzspDecisionId> policies) {
         boolean success = true;
 
-        for (EzspPolicyId policyId : policies.keySet()) {
-            if (!setPolicy(policyId, policies.get(policyId))) {
+        for (Entry<EzspPolicyId, EzspDecisionId> policy : policies.entrySet()) {
+            if (ncp.setPolicy(policy.getKey(), policy.getValue()) != EzspStatus.EZSP_SUCCESS) {
                 success = false;
             }
         }
@@ -211,7 +105,7 @@ public class EmberStackConfiguration {
         Map<EzspPolicyId, EzspDecisionId> response = new HashMap<EzspPolicyId, EzspDecisionId>();
 
         for (EzspPolicyId policyId : policies) {
-            response.put(policyId, getPolicy(policyId));
+            response.put(policyId, ncp.getPolicy(policyId));
         }
 
         return response;

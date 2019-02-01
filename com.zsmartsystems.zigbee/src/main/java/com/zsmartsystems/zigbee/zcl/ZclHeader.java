@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -52,13 +52,13 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
  *
  */
 public class ZclHeader {
-    private final int MASK_FRAME_TYPE = 0b00000011;
-    private final int MASK_MANUFACTURER_SPECIFIC = 0b00000100;
-    private final int MASK_DIRECTION = 0b00001000;
-    private final int MASK_DEFAULT_RESPONSE = 0b00010000;
+    private final static int MASK_FRAME_TYPE = 0b00000011;
+    private final static int MASK_MANUFACTURER_SPECIFIC = 0b00000100;
+    private final static int MASK_DIRECTION = 0b00001000;
+    private final static int MASK_DEFAULT_RESPONSE = 0b00010000;
 
-    private final int FRAME_TYPE_ENTIRE_PROFILE = 0x00;
-    private final int FRAME_TYPE_CLUSTER_SPECIFIC = 0x01;
+    private final static int FRAME_TYPE_ENTIRE_PROFILE = 0x00;
+    private final static int FRAME_TYPE_CLUSTER_SPECIFIC = 0x01;
 
     /**
      * The frame type sub-field.
@@ -336,16 +336,23 @@ public class ZclHeader {
                 break;
         }
 
+        frameControl |= manufacturerSpecific ? MASK_MANUFACTURER_SPECIFIC : 0b00000000;
         frameControl |= direction == ZclCommandDirection.SERVER_TO_CLIENT ? MASK_DIRECTION : 0b00000000;
         frameControl |= disableDefaultResponse ? MASK_DEFAULT_RESPONSE : 0b00000000;
 
-        int[] zclFrame = new int[payload.length + 3];
+        int manufacturerCodeLength = manufacturerSpecific ? 2 : 0;
+
+        int[] zclFrame = new int[payload.length + 3 + manufacturerCodeLength];
         zclFrame[0] = frameControl;
-        zclFrame[1] = sequenceNumber;
-        zclFrame[2] = commandId;
+        if (manufacturerSpecific) {
+            zclFrame[1] = manufacturerCode & 0xFF; // low byte of manufacturer code
+            zclFrame[2] = (manufacturerCode >> 8) & 0xFF; // high byte of manufacturer code
+        }
+        zclFrame[1 + manufacturerCodeLength] = sequenceNumber;
+        zclFrame[2 + manufacturerCodeLength] = commandId;
 
         for (int cnt = 0; cnt < payload.length; cnt++) {
-            zclFrame[cnt + 3] = payload[cnt];
+            zclFrame[cnt + 3 + manufacturerCodeLength] = payload[cnt];
         }
         return zclFrame;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,29 +13,30 @@ import org.slf4j.LoggerFactory;
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
+import com.zsmartsystems.zigbee.ZigBeeChannel;
 import com.zsmartsystems.zigbee.ZigBeeEndpointAddress;
 import com.zsmartsystems.zigbee.ZigBeeGroupAddress;
-import com.zsmartsystems.zigbee.ZigBeeKey;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeAddressMode;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeDeviceState;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeDeviceStateChanged;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeDeviceStateRequest;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeDeviceStateResponse;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeEnqueueSendDataRequest;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeFrame;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeNetworkParameter;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeNetworkState;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeReadParameterRequest;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeReadParameterResponse;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeReadReceivedDataResponse;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeStatus;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeVersionRequest;
-import com.zsmartsystems.zigbee.dongle.conbee.frame.ConBeeVersionResponse;
-import com.zsmartsystems.zigbee.dongle.conbee.transaction.ConBeeSingleResponseTransaction;
+import com.zsmartsystems.zigbee.ZigBeeStatus;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.ConBeeFrameHandler;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeAddressMode;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeDeviceState;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeDeviceStateChanged;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeDeviceStateRequest;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeDeviceStateResponse;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeEnqueueSendDataRequest;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeFrame;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeNetworkParameter;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeNetworkState;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeReadParameterRequest;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeReadParameterResponse;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeReadReceivedDataResponse;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeStatus;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeVersionRequest;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.frame.ConBeeVersionResponse;
+import com.zsmartsystems.zigbee.dongle.conbee.internal.transaction.ConBeeSingleResponseTransaction;
+import com.zsmartsystems.zigbee.security.ZigBeeKey;
 import com.zsmartsystems.zigbee.transport.TransportConfig;
 import com.zsmartsystems.zigbee.transport.TransportConfigOption;
-import com.zsmartsystems.zigbee.transport.TransportConfigResult;
 import com.zsmartsystems.zigbee.transport.ZigBeePort;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportReceive;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportState;
@@ -98,14 +99,14 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
     }
 
     @Override
-    public ZigBeeInitializeResponse initialize() {
+    public ZigBeeStatus initialize() {
         logger.debug("ConBee transport initialize");
 
         zigbeeNetworkReceive.setNetworkState(ZigBeeTransportState.UNINITIALISED);
 
         if (!serialPort.open()) {
             logger.error("Unable to open ConBee serial port");
-            return ZigBeeInitializeResponse.FAILED;
+            return ZigBeeStatus.COMMUNICATION_ERROR;
         }
 
         conbeeHandler = new ConBeeFrameHandler(serialPort, this);
@@ -163,7 +164,7 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
 
         initialisationComplete = true;
 
-        return ZigBeeInitializeResponse.JOINED;
+        return ZigBeeStatus.SUCCESS;
     }
 
     @Override
@@ -172,19 +173,24 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
     }
 
     @Override
-    public int getZigBeeChannel() {
+    public Integer getNwkAddress() {
+        return 0;
+    }
+
+    @Override
+    public ZigBeeChannel getZigBeeChannel() {
         ConBeeReadParameterRequest readParameter = new ConBeeReadParameterRequest();
         readParameter.setParameter(ConBeeNetworkParameter.CURRENT_CHANNEL);
         ConBeeReadParameterResponse response = (ConBeeReadParameterResponse) conbeeHandler
                 .sendTransaction(new ConBeeSingleResponseTransaction(readParameter, ConBeeReadParameterResponse.class))
                 .getResponse();
 
-        return (int) response.getValue();
+        return ZigBeeChannel.create((int) response.getValue());
     }
 
     @Override
-    public boolean setZigBeeChannel(int channel) {
-        return false;
+    public ZigBeeStatus setZigBeeChannel(ZigBeeChannel channel) {
+        return ZigBeeStatus.UNSUPPORTED;
     }
 
     @Override
@@ -199,9 +205,9 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
     }
 
     @Override
-    public boolean setZigBeePanId(int panId) {
+    public ZigBeeStatus setZigBeePanId(int panId) {
         // Can not set the PAN ID with the ConBee
-        return false;
+        return ZigBeeStatus.UNSUPPORTED;
     }
 
     @Override
@@ -216,15 +222,19 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
     }
 
     @Override
-    public boolean setZigBeeExtendedPanId(ExtendedPanId panId) {
+    public ZigBeeStatus setZigBeeExtendedPanId(ExtendedPanId panId) {
         // Can not set the Extended PAN ID with the ConBee
-        return false;
+        return ZigBeeStatus.UNSUPPORTED;
     }
 
     @Override
-    public boolean setZigBeeNetworkKey(ZigBeeKey key) {
-        // TODO Auto-generated method stub
-        return false;
+    public ZigBeeStatus setZigBeeNetworkKey(ZigBeeKey key) {
+        return ZigBeeStatus.UNSUPPORTED;
+    }
+
+    @Override
+    public ZigBeeKey getZigBeeNetworkKey() {
+        return null;
     }
 
     @Override
@@ -233,24 +243,28 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
             try {
                 switch (option) {
                     default:
-                        configuration.setResult(option, TransportConfigResult.ERROR_UNSUPPORTED);
+                        configuration.setResult(option, ZigBeeStatus.UNSUPPORTED);
                         logger.debug("Unsupported configuration option \"{}\" in Telegesis dongle", option);
                         break;
                 }
             } catch (ClassCastException e) {
-                configuration.setResult(option, TransportConfigResult.ERROR_INVALID_VALUE);
+                configuration.setResult(option, ZigBeeStatus.INVALID_ARGUMENTS);
             }
         }
     }
 
     @Override
-    public boolean setTcLinkKey(ZigBeeKey key) {
-        // TODO Auto-generated method stub
-        return false;
+    public ZigBeeStatus setTcLinkKey(ZigBeeKey key) {
+        return ZigBeeStatus.UNSUPPORTED;
     }
 
     @Override
-    public boolean startup(boolean reinitialize) {
+    public ZigBeeKey getTcLinkKey() {
+        return null;
+    }
+
+    @Override
+    public ZigBeeStatus startup(boolean reinitialize) {
         logger.debug("ConBee transport startup");
 
         ConBeeDeviceStateRequest stateRequest = new ConBeeDeviceStateRequest();
@@ -260,7 +274,7 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
 
         stateResponse.getDeviceState();
 
-        return true;
+        return ZigBeeStatus.SUCCESS;
     }
 
     @Override
@@ -284,7 +298,7 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
     public void sendCommand(final ZigBeeApsFrame apsFrame) {
         ConBeeEnqueueSendDataRequest request = new ConBeeEnqueueSendDataRequest();
 
-        request.setRequestId(apsFrame.getSequence());
+        request.setRequestId(apsFrame.getApsCounter());
         request.setClusterId(apsFrame.getCluster());
         switch (apsFrame.getAddressMode()) {
             case DEVICE:
@@ -372,5 +386,4 @@ public class ZigBeeDongleConBee implements ZigBeeTransportTransmit {
             }
         }
     }
-
 }

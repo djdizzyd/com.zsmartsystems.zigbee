@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,10 +7,8 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.internal;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,34 +16,34 @@ import org.slf4j.LoggerFactory;
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeChannelMask;
-import com.zsmartsystems.zigbee.dongle.ember.ash.AshFrameHandler;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
+import com.zsmartsystems.zigbee.dongle.ember.EmberNcp;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspEnergyScanResultHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspFindAndRejoinNetworkRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspFindAndRejoinNetworkResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspFormNetworkRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspFormNetworkResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspGetNetworkParametersResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspLeaveNetworkRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspLeaveNetworkResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkFoundHandler;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspJoinNetworkRequest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspJoinNetworkResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspNetworkStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspScanCompleteHandler;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetInitialSecurityStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetInitialSecurityStateResponse;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStartScanRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspStartScanResponse;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberInitialSecurityBitmask;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberInitialSecurityState;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberJoinMethod;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberKeyData;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNetworkParameters;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNetworkStatus;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberNodeType;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberStatus;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspNetworkScanType;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspMultiResponseTransaction;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspSingleResponseTransaction;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.transaction.EzspTransaction;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspStatus;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspValueId;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.transaction.EzspSingleResponseTransaction;
+import com.zsmartsystems.zigbee.dongle.ember.internal.transaction.EzspTransaction;
+import com.zsmartsystems.zigbee.security.ZigBeeKey;
 
 /**
  * This class provides utility functions to establish an Ember ZigBee network
@@ -59,13 +57,31 @@ public class EmberNetworkInitialisation {
      */
     private final Logger logger = LoggerFactory.getLogger(EmberNetworkInitialisation.class);
 
-    private AshFrameHandler ashHandler;
+    /**
+     * The frame handler used to send the EZSP frames to the NCP
+     */
+    private EzspProtocolHandler protocolHandler;
 
     /**
-     * @param ashHandler the {@link AshFrameHandler} used to communicate with the NCP
+     * Scan duration used for scans
      */
-    public EmberNetworkInitialisation(AshFrameHandler ashHandler) {
-        this.ashHandler = ashHandler;
+    private int scanDuration = 1;
+
+    /**
+     * @param protocolHandler the {@link EzspProtocolHandler} used to communicate with the NCP
+     */
+    public EmberNetworkInitialisation(EzspProtocolHandler protocolHandler) {
+        this.protocolHandler = protocolHandler;
+    }
+
+    /**
+     * Sets the scan duration used when performing scans.
+     *
+     * @param scanDuration the scan duration. Sets the exponent of the number of scan periods, where a scan period is
+     *            960 symbols. The scan will occur for ((2^duration) + 1) scan periods.
+     */
+    public void setScanDuration(int scanDuration) {
+        this.scanDuration = scanDuration;
     }
 
     /**
@@ -78,22 +94,29 @@ public class EmberNetworkInitialisation {
      * If channel is set to 0, the quietest channel will be used.
      *
      * @param networkParameters the required {@link EmberNetworkParameters}
-     * @param networkKey the {@link EmberKeyData} with the network key. This can not be set to all 00 or all FF.
+     * @param linkKey the {@link ZigBeeKey} with the link key. This can not be set to all 00 or all FF.
+     * @param networkKey the {@link ZigBeeKey} with the network key. This can not be set to all 00 or all FF.
      */
-    public void formNetwork(EmberNetworkParameters networkParameters, EmberKeyData networkKey) {
-        int scanDuration = 1; // 6
+    public void formNetwork(EmberNetworkParameters networkParameters, ZigBeeKey linkKey, ZigBeeKey networkKey) {
+        if (networkParameters.getExtendedPanId() == null) {
+            networkParameters.setExtendedPanId(new ExtendedPanId());
+        }
+
+        logger.debug("Initialising Ember network with configuration {}", networkParameters);
+
+        EmberNcp ncp = new EmberNcp(protocolHandler);
 
         // Leave the current network so we can initialise a new network
         if (checkNetworkJoined()) {
-            doLeaveNetwork();
+            ncp.leaveNetwork();
         }
 
         // Perform an energy scan to find a clear channel
-        int quietestChannel = doEnergyScan(scanDuration);
-        logger.debug("Energy scan reports quietest channel is " + quietestChannel);
+        int quietestChannel = doEnergyScan(ncp, scanDuration);
+        logger.debug("Energy scan reports quietest channel is {}", quietestChannel);
 
         // Check if any current networks were found and avoid those channels, PAN ID and especially Extended PAN ID
-        doActiveScan(scanDuration);
+        ncp.doActiveScan(ZigBeeChannelMask.CHANNEL_MASK_2GHZ, scanDuration);
 
         // Read the current network parameters
         getNetworkParameters();
@@ -112,7 +135,7 @@ public class EmberNetworkInitialisation {
                 extendedPanIdBuilder.append(String.format("%02X", extendedPanId[cnt]));
             }
 
-            networkParameters.setExtendedPanId(extendedPanId);
+            networkParameters.setExtendedPanId(new ExtendedPanId(extendedPanId));
             logger.debug("Created random Extended PAN ID: {}", extendedPanIdBuilder.toString());
         }
 
@@ -126,17 +149,45 @@ public class EmberNetworkInitialisation {
         }
 
         // Initialise security
-        setSecurityState(networkKey);
+        setSecurityState(linkKey, networkKey);
 
         // And now form the network
-        doFormNetwork(networkParameters.getPanId(), networkParameters.getExtendedPanId(),
-                networkParameters.getRadioChannel());
+        doFormNetwork(networkParameters);
+    }
+
+    /**
+     * Utility function to join an existing network as a Router
+     *
+     * @param networkParameters the required {@link EmberNetworkParameters}
+     * @param linkKey the {@link ZigBeeKey} with the initial link key. This cannot be set to all 00 or all FF.
+     */
+    public void joinNetwork(EmberNetworkParameters networkParameters, ZigBeeKey linkKey) {
+        logger.debug("Joining Ember network with configuration {}", networkParameters);
+
+        // Leave the current network so we can initialise a new network
+        if (checkNetworkJoined()) {
+            EmberNcp ncp = new EmberNcp(protocolHandler);
+            ncp.leaveNetwork();
+        }
+
+        // Initialise security - no network key as we'll get that from the coordinator
+        setSecurityState(linkKey, null);
+
+        doJoinNetwork(networkParameters);
+    }
+
+    /**
+     * Searches for the current network, assuming that we know the network key.
+     * This will search all current channels.
+     */
+    public void rejoinNetwork() {
+        doRejoinNetwork(true, new ZigBeeChannelMask(0));
     }
 
     private boolean checkNetworkJoined() {
         // Check if the network is initialised
         EzspNetworkStateRequest networkStateRequest = new EzspNetworkStateRequest();
-        EzspTransaction networkStateTransaction = ashHandler.sendEzspTransaction(
+        EzspTransaction networkStateTransaction = protocolHandler.sendEzspTransaction(
                 new EzspSingleResponseTransaction(networkStateRequest, EzspNetworkStateResponse.class));
         EzspNetworkStateResponse networkStateResponse = (EzspNetworkStateResponse) networkStateTransaction
                 .getResponse();
@@ -146,88 +197,32 @@ public class EmberNetworkInitialisation {
         return networkStateResponse.getStatus() == EmberNetworkStatus.EMBER_JOINED_NETWORK;
     }
 
-    private boolean doLeaveNetwork() {
-        EzspLeaveNetworkRequest leaveNetworkRequest = new EzspLeaveNetworkRequest();
-        EzspTransaction leaveNetworkTransaction = ashHandler.sendEzspTransaction(
-                new EzspSingleResponseTransaction(leaveNetworkRequest, EzspLeaveNetworkResponse.class));
-        EzspLeaveNetworkResponse leaveNetworkResponse = (EzspLeaveNetworkResponse) leaveNetworkTransaction
-                .getResponse();
-        logger.debug(leaveNetworkResponse.toString());
-
-        return leaveNetworkResponse.getStatus() == EmberStatus.EMBER_SUCCESS;
-    }
-
     /**
      * Performs an energy scan and returns the quietest channel
      *
+     * @param ncp {@link EmberNcp}
      * @param scanDuration duration of the scan on each channel
      * @return the quietest channel, or null on error
      */
-    private Integer doEnergyScan(int scanDuration) {
-        EzspStartScanRequest energyScan = new EzspStartScanRequest();
-        energyScan.setChannelMask(ZigBeeChannelMask.CHANNEL_MASK_2GHZ);
-        energyScan.setDuration(scanDuration);
-        energyScan.setScanType(EzspNetworkScanType.EZSP_ENERGY_SCAN);
+    private Integer doEnergyScan(EmberNcp ncp, int scanDuration) {
+        List<EzspEnergyScanResultHandler> channels = ncp.doEnergyScan(ZigBeeChannelMask.CHANNEL_MASK_2GHZ,
+                scanDuration);
 
-        Set<Class<?>> relatedResponses = new HashSet<Class<?>>(Arrays.asList(EzspStartScanResponse.class,
-                EzspNetworkFoundHandler.class, EzspEnergyScanResultHandler.class));
-        EzspMultiResponseTransaction scanTransaction = new EzspMultiResponseTransaction(energyScan,
-                EzspScanCompleteHandler.class, relatedResponses);
-        ashHandler.sendEzspTransaction(scanTransaction);
-
-        EzspScanCompleteHandler scanCompleteResponse = (EzspScanCompleteHandler) scanTransaction.getResponse();
-        logger.debug(scanCompleteResponse.toString());
-
-        if (scanCompleteResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
-            logger.debug("Error during energy scan: {}", scanCompleteResponse);
-            // TODO: Error handling
-
+        if (channels == null) {
+            logger.debug("Error during energy scan: {}", ncp.getLastStatus());
             return null;
         }
 
         int lowestRSSI = 999;
         int lowestChannel = 11;
-        for (EzspFrameResponse response : scanTransaction.getResponses()) {
-            if (!(response instanceof EzspEnergyScanResultHandler)) {
-                continue;
-            }
-
-            EzspEnergyScanResultHandler energyResponse = (EzspEnergyScanResultHandler) response;
-            if (energyResponse.getMaxRssiValue() < lowestRSSI) {
-                lowestRSSI = energyResponse.getMaxRssiValue();
-                lowestChannel = energyResponse.getChannel();
+        for (EzspEnergyScanResultHandler channel : channels) {
+            if (channel.getMaxRssiValue() < lowestRSSI) {
+                lowestRSSI = channel.getMaxRssiValue();
+                lowestChannel = channel.getChannel();
             }
         }
 
         return lowestChannel;
-    }
-
-    /**
-     * Perform an active scan of all channels
-     *
-     * @param scanDuration
-     * @return true if the security state was set successfully
-     */
-    private boolean doActiveScan(int scanDuration) {
-        // Now do an active scan to see if there are other networks operating
-        EzspStartScanRequest activeScan = new EzspStartScanRequest();
-        activeScan.setChannelMask(ZigBeeChannelMask.CHANNEL_MASK_2GHZ);
-        activeScan.setDuration(scanDuration);
-        activeScan.setScanType(EzspNetworkScanType.EZSP_ACTIVE_SCAN);
-
-        Set<Class<?>> relatedResponses = new HashSet<Class<?>>(Arrays.asList(EzspStartScanResponse.class,
-                EzspNetworkFoundHandler.class, EzspEnergyScanResultHandler.class));
-        EzspMultiResponseTransaction transaction = new EzspMultiResponseTransaction(activeScan,
-                EzspScanCompleteHandler.class, relatedResponses);
-        ashHandler.sendEzspTransaction(transaction);
-        EzspScanCompleteHandler activeScanCompleteResponse = (EzspScanCompleteHandler) transaction.getResponse();
-        logger.debug(activeScanCompleteResponse.toString());
-
-        if (activeScanCompleteResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
-            logger.debug("Error during active scan: {}", activeScanCompleteResponse);
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -239,7 +234,7 @@ public class EmberNetworkInitialisation {
         EzspGetNetworkParametersRequest networkParms = new EzspGetNetworkParametersRequest();
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(networkParms,
                 EzspGetNetworkParametersResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
+        protocolHandler.sendEzspTransaction(transaction);
         EzspGetNetworkParametersResponse getNetworkParametersResponse = (EzspGetNetworkParametersResponse) transaction
                 .getResponse();
         logger.debug(getNetworkParametersResponse.toString());
@@ -253,35 +248,39 @@ public class EmberNetworkInitialisation {
     /**
      * Sets the initial security state
      *
-     * @param networkKey the initial {@link EmberKeyData}
+     * @param linkKey the initial {@link ZigBeeKey}
+     * @param networkKey the initial {@link ZigBeeKey}
      * @return true if the security state was set successfully
      */
-    private boolean setSecurityState(EmberKeyData networkKey) {
-        // Define the ZigBeeAliance09 key for HA link-key
-        // This is used to encrypt the network key when it is transferred to a newly joining device.
-        EmberKeyData linkKey = new EmberKeyData();
-        linkKey.setContents(new int[] { 0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63,
-                0x65, 0x30, 0x39 });
-        // linkKey.setContents(new int[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        // 0xFF, 0xFF, 0xFF });
-
+    private boolean setSecurityState(ZigBeeKey linkKey, ZigBeeKey networkKey) {
         EzspSetInitialSecurityStateRequest securityState = new EzspSetInitialSecurityStateRequest();
         EmberInitialSecurityState state = new EmberInitialSecurityState();
-        // state.addBitmask(EmberInitialSecurityBitmask.EMBER_STANDARD_SECURITY_MODE);
-        // state.addBitmask(EmberInitialSecurityBitmask.EMBER_DISTRIBUTED_TRUST_CENTER_MODE);//
-        // EMBER_TRUST_CENTER_GLOBAL_LINK_KEY);
         state.addBitmask(EmberInitialSecurityBitmask.EMBER_TRUST_CENTER_GLOBAL_LINK_KEY);
-        state.addBitmask(EmberInitialSecurityBitmask.EMBER_HAVE_PRECONFIGURED_KEY);
-        state.addBitmask(EmberInitialSecurityBitmask.EMBER_HAVE_NETWORK_KEY);
-        state.addBitmask(EmberInitialSecurityBitmask.EMBER_NO_FRAME_COUNTER_RESET);
-        state.addBitmask(EmberInitialSecurityBitmask.EMBER_REQUIRE_ENCRYPTED_KEY);
-        state.setNetworkKey(networkKey);
-        state.setPreconfiguredKey(linkKey);
+
+        EmberKeyData networkKeyData = new EmberKeyData();
+        if (networkKey != null) {
+            networkKeyData.setContents(networkKey.getValue());
+            state.addBitmask(EmberInitialSecurityBitmask.EMBER_HAVE_NETWORK_KEY);
+            if (networkKey.hasSequenceNumber()) {
+                state.setNetworkKeySequenceNumber(networkKey.getSequenceNumber());
+            }
+        }
+        state.setNetworkKey(networkKeyData);
+
+        EmberKeyData linkKeyData = new EmberKeyData();
+        if (linkKey != null) {
+            linkKeyData.setContents(linkKey.getValue());
+            state.addBitmask(EmberInitialSecurityBitmask.EMBER_HAVE_PRECONFIGURED_KEY);
+            state.addBitmask(EmberInitialSecurityBitmask.EMBER_REQUIRE_ENCRYPTED_KEY);
+        }
+        state.setPreconfiguredKey(linkKeyData);
+
         state.setPreconfiguredTrustCenterEui64(new IeeeAddress());
+
         securityState.setState(state);
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(securityState,
                 EzspSetInitialSecurityStateResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
+        protocolHandler.sendEzspTransaction(transaction);
         EzspSetInitialSecurityStateResponse securityStateResponse = (EzspSetInitialSecurityStateResponse) transaction
                 .getResponse();
         logger.debug(securityStateResponse.toString());
@@ -290,35 +289,101 @@ public class EmberNetworkInitialisation {
             return false;
         }
 
+        EmberNcp ncp = new EmberNcp(protocolHandler);
+        if (networkKey != null && networkKey.hasOutgoingFrameCounter()) {
+            EzspSerializer serializer = new EzspSerializer();
+            serializer.serializeUInt32(networkKey.getOutgoingFrameCounter());
+            if (ncp.setValue(EzspValueId.EZSP_VALUE_NWK_FRAME_COUNTER,
+                    serializer.getPayload()) != EzspStatus.EZSP_SUCCESS) {
+                return false;
+            }
+        }
+        if (linkKey != null && linkKey.hasOutgoingFrameCounter()) {
+            EzspSerializer serializer = new EzspSerializer();
+            serializer.serializeUInt32(linkKey.getOutgoingFrameCounter());
+            if (ncp.setValue(EzspValueId.EZSP_VALUE_APS_FRAME_COUNTER,
+                    serializer.getPayload()) != EzspStatus.EZSP_SUCCESS) {
+                return false;
+            }
+        }
+
         return true;
     }
 
     /**
-     * Forms the ZigBee network
+     * Forms the ZigBee network as a coordinator
      *
-     * @param panId the panId as int
-     * @param extendedPanId the extended pan ID as {@link ExtendedPanId}
-     * @param channel the radio channel to use
+     * @param networkParameters the {@link EmberNetworkParameters}
      * @return true if the network was formed successfully
      */
-    private boolean doFormNetwork(int panId, ExtendedPanId extendedPanId, int channel) {
-        EmberNetworkParameters networkParameters = new EmberNetworkParameters();
+    private boolean doFormNetwork(EmberNetworkParameters networkParameters) {
         networkParameters.setJoinMethod(EmberJoinMethod.EMBER_USE_MAC_ASSOCIATION);
-        networkParameters.setExtendedPanId(extendedPanId.getValue());
-        networkParameters.setPanId(panId);
-        networkParameters.setRadioChannel(channel);
+
         EzspFormNetworkRequest formNetwork = new EzspFormNetworkRequest();
         formNetwork.setParameters(networkParameters);
         EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(formNetwork,
                 EzspFormNetworkResponse.class);
-        ashHandler.sendEzspTransaction(transaction);
+        protocolHandler.sendEzspTransaction(transaction);
         EzspFormNetworkResponse formNetworkResponse = (EzspFormNetworkResponse) transaction.getResponse();
         logger.debug(formNetworkResponse.toString());
         if (formNetworkResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
-            logger.debug("Error during retrieval of network parameters: {}", formNetworkResponse);
+            logger.debug("Error forming network: {}", formNetworkResponse);
             return false;
         }
 
         return true;
     }
+
+    /**
+     * Joins an existing ZigBee network as a router
+     *
+     * @param networkParameters the {@link EmberNetworkParameters}
+     * @return true if the network was joined successfully
+     */
+    private boolean doJoinNetwork(EmberNetworkParameters networkParameters) {
+        networkParameters.setJoinMethod(EmberJoinMethod.EMBER_USE_MAC_ASSOCIATION);
+
+        EzspJoinNetworkRequest joinNetwork = new EzspJoinNetworkRequest();
+        joinNetwork.setNodeType(EmberNodeType.EMBER_ROUTER);
+        joinNetwork.setParameters(networkParameters);
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(joinNetwork,
+                EzspJoinNetworkResponse.class);
+        protocolHandler.sendEzspTransaction(transaction);
+
+        EzspJoinNetworkResponse joinNetworkResponse = (EzspJoinNetworkResponse) transaction.getResponse();
+        logger.debug(joinNetworkResponse.toString());
+        if (joinNetworkResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
+            logger.debug("Error joining network: {}", joinNetworkResponse);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Rejoins an existing ZigBee network as a router.
+     *
+     * @param haveCurrentNetworkKey true if we already know the network key
+     * @param channelMask the channel mask to scan.
+     * @return true if the network was joined successfully
+     */
+    private boolean doRejoinNetwork(boolean haveCurrentNetworkKey, ZigBeeChannelMask channelMask) {
+        EzspFindAndRejoinNetworkRequest rejoinNetwork = new EzspFindAndRejoinNetworkRequest();
+        rejoinNetwork.setHaveCurrentNetworkKey(haveCurrentNetworkKey);
+        rejoinNetwork.setChannelMask(channelMask.getChannelMask());
+        EzspSingleResponseTransaction transaction = new EzspSingleResponseTransaction(rejoinNetwork,
+                EzspFindAndRejoinNetworkResponse.class);
+        protocolHandler.sendEzspTransaction(transaction);
+
+        EzspFindAndRejoinNetworkResponse rejoinNetworkResponse = (EzspFindAndRejoinNetworkResponse) transaction
+                .getResponse();
+        logger.debug(rejoinNetworkResponse.toString());
+        if (rejoinNetworkResponse.getStatus() != EmberStatus.EMBER_SUCCESS) {
+            logger.debug("Error rejoining network: {}", rejoinNetworkResponse);
+            return false;
+        }
+
+        return true;
+    }
+
 }

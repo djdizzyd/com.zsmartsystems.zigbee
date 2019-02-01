@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,9 @@
  */
 package com.zsmartsystems.zigbee;
 
+import java.util.concurrent.Future;
+
+import com.zsmartsystems.zigbee.transaction.ZigBeeTransactionMatcher;
 import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
 
 /**
@@ -17,12 +20,20 @@ import com.zsmartsystems.zigbee.transport.ZigBeeTransportTransmit;
  */
 public interface ZigBeeNetwork {
     /**
-     * Sends ZigBee library command without waiting for response.
+     * Sends ZigBee command without waiting for response.
      *
-     * @param command the command
-     * @return transactionId an {@link int} specifying the transaction ID for this transaction
+     * @param command the {@link ZigBeeCommand} to send
      */
-    int sendCommand(final ZigBeeCommand command);
+    void sendTransaction(final ZigBeeCommand command);
+
+    /**
+     * Sends {@link ZigBeeCommand} command and uses the {@link ZigBeeTransactionMatcher} to match the response.
+     *
+     * @param command the {@link ZigBeeCommand} to send
+     * @param responseMatcher the {@link ZigBeeTransactionMatcher} used to match the response to the request
+     * @return the {@link CommandResult} future.
+     */
+    Future<CommandResult> sendTransaction(final ZigBeeCommand command, final ZigBeeTransactionMatcher responseMatcher);
 
     /**
      * Adds ZigBee library command listener.

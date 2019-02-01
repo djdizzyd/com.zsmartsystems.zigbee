@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import com.zsmartsystems.zigbee.ZigBeeCommand;
 import com.zsmartsystems.zigbee.ZigBeeEndpointAddress;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorRequest;
+import com.zsmartsystems.zigbee.zdo.command.MatchDescriptorResponse;
 
 /**
  *
@@ -112,11 +113,15 @@ public class ClusterMatcherTest {
         clusterListOut.add(0x500);
         MatchDescriptorRequest request = new MatchDescriptorRequest();
         request.setSourceAddress(new ZigBeeEndpointAddress(1234, 5));
+        request.setNwkAddrOfInterest(4321);
         request.setProfileId(0x104);
         request.setInClusterList(clusterListIn);
         request.setOutClusterList(clusterListOut);
 
         matcher.commandReceived(request);
         assertEquals(1, mockedCommandCaptor.getAllValues().size());
+        MatchDescriptorResponse response = (MatchDescriptorResponse) mockedCommandCaptor.getValue();
+        assertEquals(1234, response.getDestinationAddress().getAddress());
+        assertEquals(Integer.valueOf(4321), response.getNwkAddrOfInterest());
     }
 }

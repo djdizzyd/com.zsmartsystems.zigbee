@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -54,7 +54,6 @@ public class EmberFirmwareUpdateHandlerTest {
             return (boolean) privateMethod.invoke(firmwareHandler);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -74,7 +73,6 @@ public class EmberFirmwareUpdateHandlerTest {
             return (int) privateMethod.invoke(firmwareHandler);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -121,7 +119,6 @@ public class EmberFirmwareUpdateHandlerTest {
             returnVal = (boolean) privateMethod.invoke(firmwareHandler);
         } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
                 | InvocationTargetException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             returnVal = false;
         }

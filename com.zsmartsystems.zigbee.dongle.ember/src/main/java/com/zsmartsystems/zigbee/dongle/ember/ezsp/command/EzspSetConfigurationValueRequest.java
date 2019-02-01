@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,8 +8,8 @@
 package com.zsmartsystems.zigbee.dongle.ember.ezsp.command;
 
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspConfigId;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
 
 /**
  * Class to implement the Ember EZSP command <b>setConfigurationValue</b>.
@@ -26,7 +26,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EzspConfigId;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspSetConfigurationValueRequest extends EzspFrameRequest {
-    public static int FRAME_ID = 0x53;
+    public static final int FRAME_ID = 0x53;
 
     /**
      * Identifies which configuration value to change.
@@ -43,7 +43,7 @@ public class EzspSetConfigurationValueRequest extends EzspFrameRequest {
     private int value;
 
     /**
-     * Serialiser used to seialise to binary line data
+     * Serialiser used to serialise to binary line data
      */
     private EzspSerializer serializer;
 

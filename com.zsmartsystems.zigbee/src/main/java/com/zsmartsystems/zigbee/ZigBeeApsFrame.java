@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,6 +35,11 @@ public class ZigBeeApsFrame {
      * Destination address.
      */
     private int destinationAddress;
+
+    /**
+     * Destination address.
+     */
+    private IeeeAddress destinationIeeeAddress;
 
     /**
      * Source address
@@ -121,8 +126,6 @@ public class ZigBeeApsFrame {
      */
     private int apsCounter;
 
-    private int sequence;
-
     /**
      * The APS payload.
      * <p>
@@ -137,6 +140,14 @@ public class ZigBeeApsFrame {
 
     public void setDestinationAddress(int destinationAddress) {
         this.destinationAddress = destinationAddress;
+    }
+
+    public IeeeAddress getDestinationIeeeAddress() {
+        return destinationIeeeAddress;
+    }
+
+    public void setDestinationIeeeAddress(IeeeAddress destinationIeeeAddress) {
+        this.destinationIeeeAddress = destinationIeeeAddress;
     }
 
     public int getSourceAddress() {
@@ -160,19 +171,21 @@ public class ZigBeeApsFrame {
         this.radius = radius;
     }
 
-    public int getSequence() {
-        return sequence;
-    }
-
-    public void setSequence(int sequence) {
-        this.sequence = sequence;
-    }
-
-    public boolean isSecurityEnable() {
+    /**
+     * Gets APS security state
+     *
+     * @return true if APS security is enabled
+     */
+    public boolean getSecurityEnabled() {
         return securityEnable;
     }
 
-    public void setSecurityEnable(boolean securityEnable) {
+    /**
+     * Sets APS security state
+     *
+     * @param securityEnable true to enable APS security
+     */
+    public void setSecurityEnabled(boolean securityEnable) {
         this.securityEnable = securityEnable;
     }
 
@@ -261,32 +274,32 @@ public class ZigBeeApsFrame {
         StringBuilder builder = new StringBuilder();
         builder.append("ZigBeeApsFrame [sourceAddress=");
         builder.append(sourceAddress);
-        builder.append("/");
+        builder.append('/');
         builder.append(sourceEndpoint);
         builder.append(", destinationAddress=");
         builder.append(destinationAddress);
-        builder.append("/");
+        builder.append('/');
         builder.append(destinationEndpoint);
-        builder.append(", profile=");
-        builder.append(String.format("%04X", profile));
-        builder.append(", cluster=");
-        builder.append(cluster);
+        builder.append(String.format(", profile=%04X", profile));
+        builder.append(String.format(", cluster=%04X", cluster));
         builder.append(", addressMode=");
         builder.append(addressMode);
         builder.append(", radius=");
         builder.append(radius);
-        builder.append(", sequence=");
-        builder.append(sequence);
+        builder.append(", apsSecurity=");
+        builder.append(securityEnable);
+        builder.append(String.format(", apsCounter=%02X", apsCounter));
         builder.append(", payload=");
         if (payload != null) {
             for (int c = 0; c < payload.length; c++) {
                 if (c != 0) {
-                    builder.append(" ");
+                    builder.append(' ');
                 }
                 builder.append(String.format("%02X", payload[c]));
             }
         }
-        builder.append("]");
+        builder.append(']');
         return builder.toString();
     }
+
 }

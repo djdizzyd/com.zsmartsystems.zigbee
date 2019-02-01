@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,7 +24,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberStatus;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspMessageSentHandler extends EzspFrameResponse {
-    public static int FRAME_ID = 0x3F;
+    public static final int FRAME_ID = 0x3F;
 
     /**
      * The type of message sent.
@@ -230,13 +230,13 @@ public class EzspMessageSentHandler extends EzspFrameResponse {
         builder.append(", apsFrame=");
         builder.append(apsFrame);
         builder.append(", messageTag=");
-        builder.append(messageTag);
+        builder.append(String.format("%02X", messageTag));
         builder.append(", status=");
         builder.append(status);
         builder.append(", messageContents=");
         for (int c = 0; c < messageContents.length; c++) {
             if (c > 0) {
-                builder.append(" ");
+                builder.append(' ');
             }
             builder.append(String.format("%02X", messageContents[c]));
         }

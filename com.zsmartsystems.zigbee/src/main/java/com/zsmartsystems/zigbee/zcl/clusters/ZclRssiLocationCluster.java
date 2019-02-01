@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -32,17 +31,18 @@ import com.zsmartsystems.zigbee.zcl.clusters.rssilocation.SetDeviceConfiguration
 import com.zsmartsystems.zigbee.zcl.field.NeighborInformation;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>RSSI Location</b> cluster implementation (<i>Cluster ID 0x000B</i>).
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclRssiLocationCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -184,13 +184,11 @@ public class ZclRssiLocationCluster extends ZclCluster {
     /**
      * Default constructor to create a RSSI Location cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclRssiLocationCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclRssiLocationCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>LocationType</i> attribute [attribute ID <b>0</b>].
@@ -206,7 +204,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
     public Future<CommandResult> getLocationTypeAsync() {
         return read(attributes.get(ATTR_LOCATIONTYPE));
     }
-
 
     /**
      * Synchronously get the <i>LocationType</i> attribute [attribute ID <b>0</b>].
@@ -228,11 +225,8 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocationType(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCATIONTYPE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCATIONTYPE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCATIONTYPE).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCATIONTYPE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCATIONTYPE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCATIONTYPE));
@@ -250,7 +244,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
     public Future<CommandResult> getLocationMethodAsync() {
         return read(attributes.get(ATTR_LOCATIONMETHOD));
     }
-
 
     /**
      * Synchronously get the <i>LocationMethod</i> attribute [attribute ID <b>1</b>].
@@ -270,11 +263,8 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocationMethod(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCATIONMETHOD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCATIONMETHOD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCATIONMETHOD).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCATIONMETHOD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCATIONMETHOD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCATIONMETHOD));
@@ -296,7 +286,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
     public Future<CommandResult> getLocationAgeAsync() {
         return read(attributes.get(ATTR_LOCATIONAGE));
     }
-
 
     /**
      * Synchronously get the <i>LocationAge</i> attribute [attribute ID <b>2</b>].
@@ -320,11 +309,8 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getLocationAge(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_LOCATIONAGE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_LOCATIONAGE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_LOCATIONAGE).getLastValue();
-            }
+        if (attributes.get(ATTR_LOCATIONAGE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_LOCATIONAGE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_LOCATIONAGE));
@@ -351,7 +337,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
     public Future<CommandResult> getQualityMeasureAsync() {
         return read(attributes.get(ATTR_QUALITYMEASURE));
     }
-
 
     /**
      * Synchronously get the <i>QualityMeasure</i> attribute [attribute ID <b>3</b>].
@@ -380,11 +365,8 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getQualityMeasure(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_QUALITYMEASURE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_QUALITYMEASURE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_QUALITYMEASURE).getLastValue();
-            }
+        if (attributes.get(ATTR_QUALITYMEASURE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_QUALITYMEASURE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_QUALITYMEASURE));
@@ -406,7 +388,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
     public Future<CommandResult> getNumberOfDevicesAsync() {
         return read(attributes.get(ATTR_NUMBEROFDEVICES));
     }
-
 
     /**
      * Synchronously get the <i>NumberOfDevices</i> attribute [attribute ID <b>4</b>].
@@ -430,16 +411,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNumberOfDevices(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NUMBEROFDEVICES).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NUMBEROFDEVICES).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NUMBEROFDEVICES).getLastValue();
-            }
+        if (attributes.get(ATTR_NUMBEROFDEVICES).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NUMBEROFDEVICES).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NUMBEROFDEVICES));
     }
-
 
     /**
      * Set the <i>Coordinate1</i> attribute [attribute ID <b>16</b>].
@@ -486,7 +463,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_COORDINATE1));
     }
 
-
     /**
      * Synchronously get the <i>Coordinate1</i> attribute [attribute ID <b>16</b>].
      * <p>
@@ -514,16 +490,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCoordinate1(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_COORDINATE1).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_COORDINATE1).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_COORDINATE1).getLastValue();
-            }
+        if (attributes.get(ATTR_COORDINATE1).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_COORDINATE1).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_COORDINATE1));
     }
-
 
     /**
      * Set the <i>Coordinate2</i> attribute [attribute ID <b>17</b>].
@@ -570,7 +542,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_COORDINATE2));
     }
 
-
     /**
      * Synchronously get the <i>Coordinate2</i> attribute [attribute ID <b>17</b>].
      * <p>
@@ -598,16 +569,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCoordinate2(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_COORDINATE2).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_COORDINATE2).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_COORDINATE2).getLastValue();
-            }
+        if (attributes.get(ATTR_COORDINATE2).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_COORDINATE2).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_COORDINATE2));
     }
-
 
     /**
      * Set the <i>Coordinate3</i> attribute [attribute ID <b>18</b>].
@@ -654,7 +621,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_COORDINATE3));
     }
 
-
     /**
      * Synchronously get the <i>Coordinate3</i> attribute [attribute ID <b>18</b>].
      * <p>
@@ -682,16 +648,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCoordinate3(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_COORDINATE3).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_COORDINATE3).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_COORDINATE3).getLastValue();
-            }
+        if (attributes.get(ATTR_COORDINATE3).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_COORDINATE3).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_COORDINATE3));
     }
-
 
     /**
      * Set the <i>Power</i> attribute [attribute ID <b>19</b>].
@@ -734,7 +696,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_POWER));
     }
 
-
     /**
      * Synchronously get the <i>Power</i> attribute [attribute ID <b>19</b>].
      * <p>
@@ -760,16 +721,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPower(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_POWER).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_POWER).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_POWER).getLastValue();
-            }
+        if (attributes.get(ATTR_POWER).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_POWER).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_POWER));
     }
-
 
     /**
      * Set the <i>PathLossExponent</i> attribute [attribute ID <b>20</b>].
@@ -814,7 +771,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_PATHLOSSEXPONENT));
     }
 
-
     /**
      * Synchronously get the <i>PathLossExponent</i> attribute [attribute ID <b>20</b>].
      * <p>
@@ -841,16 +797,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getPathLossExponent(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_PATHLOSSEXPONENT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_PATHLOSSEXPONENT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_PATHLOSSEXPONENT).getLastValue();
-            }
+        if (attributes.get(ATTR_PATHLOSSEXPONENT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_PATHLOSSEXPONENT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_PATHLOSSEXPONENT));
     }
-
 
     /**
      * Set the <i>ReportingPeriod</i> attribute [attribute ID <b>21</b>].
@@ -891,7 +843,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_REPORTINGPERIOD));
     }
 
-
     /**
      * Synchronously get the <i>ReportingPeriod</i> attribute [attribute ID <b>21</b>].
      * <p>
@@ -916,16 +867,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getReportingPeriod(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_REPORTINGPERIOD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_REPORTINGPERIOD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_REPORTINGPERIOD).getLastValue();
-            }
+        if (attributes.get(ATTR_REPORTINGPERIOD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_REPORTINGPERIOD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_REPORTINGPERIOD));
     }
-
 
     /**
      * Set the <i>CalculationPeriod</i> attribute [attribute ID <b>22</b>].
@@ -964,7 +911,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_CALCULATIONPERIOD));
     }
 
-
     /**
      * Synchronously get the <i>CalculationPeriod</i> attribute [attribute ID <b>22</b>].
      * <p>
@@ -988,16 +934,12 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCalculationPeriod(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CALCULATIONPERIOD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CALCULATIONPERIOD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CALCULATIONPERIOD).getLastValue();
-            }
+        if (attributes.get(ATTR_CALCULATIONPERIOD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CALCULATIONPERIOD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CALCULATIONPERIOD));
     }
-
 
     /**
      * Set the <i>NumberRSSIMeasurements</i> attribute [attribute ID <b>23</b>].
@@ -1036,7 +978,6 @@ public class ZclRssiLocationCluster extends ZclCluster {
         return read(attributes.get(ATTR_NUMBERRSSIMEASUREMENTS));
     }
 
-
     /**
      * Synchronously get the <i>NumberRSSIMeasurements</i> attribute [attribute ID <b>23</b>].
      * <p>
@@ -1060,11 +1001,8 @@ public class ZclRssiLocationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getNumberRssiMeasurements(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_NUMBERRSSIMEASUREMENTS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_NUMBERRSSIMEASUREMENTS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_NUMBERRSSIMEASUREMENTS).getLastValue();
-            }
+        if (attributes.get(ATTR_NUMBERRSSIMEASUREMENTS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_NUMBERRSSIMEASUREMENTS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_NUMBERRSSIMEASUREMENTS));

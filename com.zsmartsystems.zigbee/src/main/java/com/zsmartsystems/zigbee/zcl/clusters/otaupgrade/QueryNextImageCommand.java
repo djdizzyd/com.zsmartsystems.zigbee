@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -15,6 +17,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
 
 /**
  * Query Next Image Command value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * Client devices shall send a Query Next Image Request command to the server to see if there is new
  * OTA upgrade image available. ZR devices may send the command after receiving Image Notify
@@ -30,11 +35,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * policy dictates. If client’s hardware version is included in the command, the server shall examine the
  * value against the minimum and maximum hardware versions included in the OTA file header.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class QueryNextImageCommand extends ZclCommand {
     /**
      * Field control command message field.

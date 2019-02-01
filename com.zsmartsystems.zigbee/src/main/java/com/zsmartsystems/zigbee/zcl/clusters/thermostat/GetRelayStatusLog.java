@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,11 +7,16 @@
  */
 package com.zsmartsystems.zigbee.zcl.clusters.thermostat;
 
+import javax.annotation.Generated;
+
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
 
 /**
  * Get Relay Status Log value object class.
+ * <p>
+ * Cluster: <b>Thermostat</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>specific</b> command used for the Thermostat cluster.
  * <p>
  * The Get Relay Status Log command is used to query the thermostat internal relay status log. This command has no payload.
  * <br>
@@ -31,11 +36,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * or
  * ii) generate new log record at the time of request and send Get Relay Status Log Response with the new data
  * <p>
- * Cluster: <b>Thermostat</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>specific</b> command used for the Thermostat cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class GetRelayStatusLog extends ZclCommand {
     /**
      * Default constructor.

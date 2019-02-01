@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -23,10 +22,10 @@ import com.zsmartsystems.zigbee.zcl.clusters.levelcontrol.Stop2Command;
 import com.zsmartsystems.zigbee.zcl.clusters.levelcontrol.StopCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Level Control</b> cluster implementation (<i>Cluster ID 0x0008</i>).
@@ -37,6 +36,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclLevelControlCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -113,13 +113,11 @@ public class ZclLevelControlCluster extends ZclCluster {
     /**
      * Default constructor to create a Level Control cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclLevelControlCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclLevelControlCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>CurrentLevel</i> attribute [attribute ID <b>0</b>].
@@ -136,7 +134,6 @@ public class ZclLevelControlCluster extends ZclCluster {
     public Future<CommandResult> getCurrentLevelAsync() {
         return read(attributes.get(ATTR_CURRENTLEVEL));
     }
-
 
     /**
      * Synchronously get the <i>CurrentLevel</i> attribute [attribute ID <b>0</b>].
@@ -159,16 +156,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getCurrentLevel(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_CURRENTLEVEL).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_CURRENTLEVEL).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_CURRENTLEVEL).getLastValue();
-            }
+        if (attributes.get(ATTR_CURRENTLEVEL).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_CURRENTLEVEL).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_CURRENTLEVEL));
     }
-
 
     /**
      * Set reporting for the <i>CurrentLevel</i> attribute [attribute ID <b>0</b>].
@@ -205,7 +198,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_REMAININGTIME));
     }
 
-
     /**
      * Synchronously get the <i>RemainingTime</i> attribute [attribute ID <b>1</b>].
      * <p>
@@ -227,16 +219,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getRemainingTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_REMAININGTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_REMAININGTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_REMAININGTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_REMAININGTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_REMAININGTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_REMAININGTIME));
     }
-
 
     /**
      * Set the <i>OnOffTransitionTime</i> attribute [attribute ID <b>16</b>].
@@ -281,7 +269,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_ONOFFTRANSITIONTIME));
     }
 
-
     /**
      * Synchronously get the <i>OnOffTransitionTime</i> attribute [attribute ID <b>16</b>].
      * <p>
@@ -308,16 +295,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOnOffTransitionTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ONOFFTRANSITIONTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ONOFFTRANSITIONTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ONOFFTRANSITIONTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_ONOFFTRANSITIONTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ONOFFTRANSITIONTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ONOFFTRANSITIONTIME));
     }
-
 
     /**
      * Set the <i>OnLevel</i> attribute [attribute ID <b>17</b>].
@@ -354,7 +337,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_ONLEVEL));
     }
 
-
     /**
      * Synchronously get the <i>OnLevel</i> attribute [attribute ID <b>17</b>].
      * <p>
@@ -377,16 +359,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOnLevel(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ONLEVEL).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ONLEVEL).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ONLEVEL).getLastValue();
-            }
+        if (attributes.get(ATTR_ONLEVEL).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ONLEVEL).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ONLEVEL));
     }
-
 
     /**
      * Set the <i>OnTransitionTime</i> attribute [attribute ID <b>18</b>].
@@ -425,7 +403,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_ONTRANSITIONTIME));
     }
 
-
     /**
      * Synchronously get the <i>OnTransitionTime</i> attribute [attribute ID <b>18</b>].
      * <p>
@@ -449,16 +426,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOnTransitionTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ONTRANSITIONTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ONTRANSITIONTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ONTRANSITIONTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_ONTRANSITIONTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ONTRANSITIONTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ONTRANSITIONTIME));
     }
-
 
     /**
      * Set the <i>OffTransitionTime</i> attribute [attribute ID <b>19</b>].
@@ -497,7 +470,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_OFFTRANSITIONTIME));
     }
 
-
     /**
      * Synchronously get the <i>OffTransitionTime</i> attribute [attribute ID <b>19</b>].
      * <p>
@@ -521,16 +493,12 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getOffTransitionTime(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_OFFTRANSITIONTIME).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_OFFTRANSITIONTIME).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_OFFTRANSITIONTIME).getLastValue();
-            }
+        if (attributes.get(ATTR_OFFTRANSITIONTIME).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_OFFTRANSITIONTIME).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_OFFTRANSITIONTIME));
     }
-
 
     /**
      * Set the <i>DefaultMoveRate</i> attribute [attribute ID <b>20</b>].
@@ -565,7 +533,6 @@ public class ZclLevelControlCluster extends ZclCluster {
         return read(attributes.get(ATTR_DEFAULTMOVERATE));
     }
 
-
     /**
      * Synchronously get the <i>DefaultMoveRate</i> attribute [attribute ID <b>20</b>].
      * <p>
@@ -587,11 +554,8 @@ public class ZclLevelControlCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getDefaultMoveRate(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_DEFAULTMOVERATE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_DEFAULTMOVERATE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_DEFAULTMOVERATE).getLastValue();
-            }
+        if (attributes.get(ATTR_DEFAULTMOVERATE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_DEFAULTMOVERATE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_DEFAULTMOVERATE));

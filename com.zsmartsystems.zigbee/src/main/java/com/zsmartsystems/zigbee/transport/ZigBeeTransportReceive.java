@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -47,12 +47,13 @@ public interface ZigBeeTransportReceive {
     void receiveCommand(final ZigBeeApsFrame apsFrame);
 
     /**
-     * Set the network state.
+     * Set the network state. Note that this will only allow valid state transitions, and an attempt to transition
+     * between states that are not allowed will result in the state remaining as it was.
      * <p>
      * This is a callback from the {@link ZigBeeTransportTransmit} when the state of the transport changes
      * </p>
      *
-     * @param state
+     * @param state the updated {@link ZigBeeTransportState}
      */
     void setNetworkState(final ZigBeeTransportState state);
 
@@ -68,4 +69,14 @@ public interface ZigBeeTransportReceive {
      */
     void nodeStatusUpdate(final ZigBeeNodeStatus deviceStatus, final Integer networkAddress,
             final IeeeAddress ieeeAddress);
+
+    /**
+     * A callback called by the {@link ZigBeeTransportTransmit} when a transaction sent using
+     * {@link ZigBeeTransportTransmit#sendCommand(ZigBeeApsFrame)} is received.
+     *
+     * @param transactionId the transaction ID to which a response has been received
+     * @param status the acknowledge status
+     */
+    void receiveCommandStatus(int transactionId, ZigBeeTransportProgressState status);
+
 }

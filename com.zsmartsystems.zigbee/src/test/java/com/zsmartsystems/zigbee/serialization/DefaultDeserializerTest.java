@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -54,6 +54,22 @@ public class DefaultDeserializerTest {
         int[] valIn = { 33 };
         ZclDataType valOut = ZclDataType.getType(valIn[0]);
         testDeserialize(valIn, valOut, ZclDataType.ZIGBEE_DATA_TYPE);
+    }
+
+    @Test
+    public void testDeserialize_CHARACTER_STRING() {
+        testDeserialize(new int[] { 0xFF }, null, ZclDataType.CHARACTER_STRING);
+        testDeserialize(new int[] { 0x00 }, "", ZclDataType.CHARACTER_STRING);
+        testDeserialize(new int[] { 0x01, 0x49 }, "I", ZclDataType.CHARACTER_STRING);
+        testDeserialize(
+                new int[] { 0x0D, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x61, 0x6C },
+                "International", ZclDataType.CHARACTER_STRING);
+        testDeserialize(
+                new int[] { 0x0E, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x61, 0x6C, 0x00 },
+                "International", ZclDataType.CHARACTER_STRING);
+        testDeserialize(new int[] { 0x1F, 0x4D, 0x61, 0x65, 0x73, 0x74, 0x72, 0x6F, 0x53, 0x74, 0x61, 0x74, 0x00, 0x00,
+                0x00, 0xBB, 0xEF, 0x00, 0x00, 0x00, 0x00, 0xA7, 0x43, 0x00, 0xA4, 0x29, 0x02, 0x01, 0x3A, 0x02, 0x00,
+                0x00 }, "MaestroStat", ZclDataType.CHARACTER_STRING);
     }
 
     private void testDeserialize(int[] input, Object objectIn, ZclDataType type) {

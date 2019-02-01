@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
-import com.zsmartsystems.zigbee.ZigBeeKey;
+import com.zsmartsystems.zigbee.security.ZigBeeKey;
 
 /**
  * Base class for all Telegesis frames. Provides methods to serialise and deserialise data.
@@ -47,7 +47,7 @@ public class TelegesisFrame {
      * Serialises the command. This should be the first method called when serialising a command. In addition to
      * serialising the command, it initialises internal variables used to properly create the command packet.
      *
-     * @param command
+     * @param command the command to serialize
      */
     protected void serializeCommand(String command) {
         position = 0;
@@ -199,6 +199,37 @@ public class TelegesisFrame {
     }
 
     /**
+     * Serializes an 32 bit long in hexadecimal (8 characters long)
+     *
+     * @param value the value to serialize
+     */
+    protected void serializeInt32(Long value) {
+        String strValue = Long.toHexString(value);
+
+        for (int cnt = strValue.length(); cnt < 8; cnt++) {
+            buffer[length++] = '0';
+        }
+        serializeUpperCaseString(strValue);
+    }
+
+    /**
+     * Deserializes an 32 bit long in hexadecimal
+     *
+     * @return the deserialized value
+     */
+    protected Long deserializeInt32() {
+        if (buffer.length < position + 8) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (int cnt = 0; cnt < 8; cnt++) {
+            builder.append((char) buffer[position++]);
+        }
+        return Long.parseLong(builder.toString(), 16);
+    }
+
+    /**
      * Deserializes an 8 bit signed integer in hexadecimal
      *
      * @return the deserialized value
@@ -223,6 +254,15 @@ public class TelegesisFrame {
             // Eat the exception
             return null;
         }
+    }
+
+    /**
+     * Serialises the signed 8 bit integer
+     * 
+     * @param value
+     */
+    protected void serializeSInt8(Integer value) {
+        serializeString(value.toString());
     }
 
     protected void serializeBoolean(boolean value) {
@@ -321,7 +361,7 @@ public class TelegesisFrame {
     /**
      * Serializes a {@link ExtendedPanId}
      *
-     * @param address the {@link ExtendedPanId}
+     * @param epanId the {@link ExtendedPanId}
      */
     protected void serializeExtendedPanId(ExtendedPanId epanId) {
         serializeUpperCaseString(epanId.toString());
@@ -405,7 +445,7 @@ public class TelegesisFrame {
     /**
      * Serializes a specified delimiter between two fields.
      *
-     * @param the delimiter to serialize
+     * @param delimiter the delimiter to serialize
      */
     protected void serializeDelimiter(int delimiter) {
         buffer[length++] = delimiter;
@@ -415,7 +455,7 @@ public class TelegesisFrame {
     /**
      * Serializes an {@link IeeeAddress}
      *
-     * @param address the {@link vIeeeAddress}
+     * @param address the {@link IeeeAddress}
      */
     protected void serializeIeeeAddress(IeeeAddress address) {
         serializeUpperCaseString(address.toString());
@@ -436,18 +476,18 @@ public class TelegesisFrame {
     }
 
     /**
-     * Serializes a {@link NetworkKey}
+     * Serializes a {@link ZigBeeKey}
      *
-     * @param key
+     * @param key the {@link ZigBeeKey} to serialize
      */
     protected void serializeZigBeeKey(ZigBeeKey key) {
         serializeUpperCaseString(key.toString());
     }
 
     /**
-     * Deserializes a {link NetworkKey}
+     * Deserializes a {link ZigBeeKey}
      *
-     * @return the {@link NetworkKey}
+     * @return the {@link ZigBeeKey}
      */
     protected ZigBeeKey deserializeZigBeeKey() {
         String string = deserializeHexString(32);

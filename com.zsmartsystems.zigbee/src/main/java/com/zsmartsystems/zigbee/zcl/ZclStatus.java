@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -58,8 +58,9 @@ public enum ZclStatus {
             "A manufacturer specific unicast, ZCL specific command was "
                     + "received with an unknown manufacturer code, or the manufacturer code "
                     + "was recognized but the command is not supported."),
-    INVALID_FIELD(0x85, "At least one field of the command contains an incorrect value, "
-            + "according to the specification the device is implemented to."),
+    INVALID_FIELD(0x85,
+            "At least one field of the command contains an incorrect value, "
+                    + "according to the specification the device is implemented to."),
     UNSUPPORTED_ATTRIBUTE(0x86, "The specified attribute does not exist on the device."),
     INVALID_VALUE(0x87,
             "Out of range error, or set to a reserved value. Attribute keeps its old value. "
@@ -82,6 +83,7 @@ public enum ZclStatus {
     WAIT_FOR_DATA(0x97, "Server does not have data block available yet"),
     NO_IMAGE_AVAILABLE(0x98, "No OTA upgrade image available for a particular client"),
     REQUIRE_MORE_IMAGE(0x99, "The client requires more OTA upgrade image files in order to successfully upgrade."),
+    NOTIFICATION_PENDING(0x9A, "The command has been received and is being processed."),
     HARDWARE_FAILURE(0xc0, "An operation was unsuccessful due to a hardware failure."),
     SOFTWARE_FAILURE(0xc1, "An operation was unsuccessful due to a software failure."),
     CALIBRATION_ERROR(0xc2, "An error occurred during calibration.");
@@ -89,6 +91,13 @@ public enum ZclStatus {
     private final int statusId;
     private final String description;
     private static Map<Integer, ZclStatus> map = null;
+
+    static {
+        map = new HashMap<Integer, ZclStatus>();
+        for (ZclStatus status : values()) {
+            map.put(status.statusId, status);
+        }
+    }
 
     private ZclStatus(int statusId, String description) {
         this.statusId = statusId;
@@ -102,13 +111,6 @@ public enum ZclStatus {
      * @return {@link ZclStatus} or {@link #UNKNOWN}
      */
     public static ZclStatus getStatus(int statusValue) {
-        if (map == null) {
-            map = new HashMap<Integer, ZclStatus>();
-            for (ZclStatus status : values()) {
-                map.put(status.statusId, status);
-            }
-
-        }
         if (map.get(statusValue) == null) {
             return UNKNOWN;
         }

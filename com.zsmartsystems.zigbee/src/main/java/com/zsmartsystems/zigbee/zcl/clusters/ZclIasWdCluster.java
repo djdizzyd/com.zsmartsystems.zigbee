@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -18,10 +17,10 @@ import com.zsmartsystems.zigbee.zcl.clusters.iaswd.SquawkCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaswd.StartWarningCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>IAS WD</b> cluster implementation (<i>Cluster ID 0x0502</i>).
@@ -33,6 +32,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclIasWdCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -75,14 +75,11 @@ public class ZclIasWdCluster extends ZclCluster {
     /**
      * Default constructor to create a IAS WD cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclIasWdCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclIasWdCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
-
 
     /**
      * Set the <i>MaxDuration</i> attribute [attribute ID <b>0</b>].
@@ -117,7 +114,6 @@ public class ZclIasWdCluster extends ZclCluster {
         return read(attributes.get(ATTR_MAXDURATION));
     }
 
-
     /**
      * Synchronously get the <i>MaxDuration</i> attribute [attribute ID <b>0</b>].
      * <p>
@@ -139,11 +135,8 @@ public class ZclIasWdCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMaxDuration(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAXDURATION).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAXDURATION).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAXDURATION).getLastValue();
-            }
+        if (attributes.get(ATTR_MAXDURATION).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAXDURATION).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAXDURATION));
@@ -161,7 +154,6 @@ public class ZclIasWdCluster extends ZclCluster {
     public Future<CommandResult> getZoneTypeAsync() {
         return read(attributes.get(ATTR_ZONETYPE));
     }
-
 
     /**
      * Synchronously get the <i>ZoneType</i> attribute [attribute ID <b>1</b>].
@@ -181,11 +173,8 @@ public class ZclIasWdCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneType(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONETYPE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONETYPE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONETYPE).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONETYPE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONETYPE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONETYPE));
@@ -203,7 +192,6 @@ public class ZclIasWdCluster extends ZclCluster {
     public Future<CommandResult> getZoneStatusAsync() {
         return read(attributes.get(ATTR_ZONESTATUS));
     }
-
 
     /**
      * Synchronously get the <i>ZoneStatus</i> attribute [attribute ID <b>2</b>].
@@ -223,16 +211,12 @@ public class ZclIasWdCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getZoneStatus(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ZONESTATUS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ZONESTATUS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ZONESTATUS).getLastValue();
-            }
+        if (attributes.get(ATTR_ZONESTATUS).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ZONESTATUS).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ZONESTATUS));
     }
-
 
     /**
      * Set the <i>IAS_CIE_Address</i> attribute [attribute ID <b>16</b>].
@@ -261,7 +245,6 @@ public class ZclIasWdCluster extends ZclCluster {
         return read(attributes.get(ATTR_IAS_CIE_ADDRESS));
     }
 
-
     /**
      * Synchronously get the <i>IAS_CIE_Address</i> attribute [attribute ID <b>16</b>].
      * <p>
@@ -280,11 +263,8 @@ public class ZclIasWdCluster extends ZclCluster {
      * @return the {@link IeeeAddress} attribute value, or null on error
      */
     public IeeeAddress getIasCieAddress(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_IAS_CIE_ADDRESS).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_IAS_CIE_ADDRESS).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (IeeeAddress) attributes.get(ATTR_IAS_CIE_ADDRESS).getLastValue();
-            }
+        if (attributes.get(ATTR_IAS_CIE_ADDRESS).isLastValueCurrent(refreshPeriod)) {
+            return (IeeeAddress) attributes.get(ATTR_IAS_CIE_ADDRESS).getLastValue();
         }
 
         return (IeeeAddress) readSync(attributes.get(ATTR_IAS_CIE_ADDRESS));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,8 @@ package com.zsmartsystems.zigbee.zcl.clusters.iaszone;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Generated;
+
 /**
  * Enumeration of IAS Zone attribute ZoneType options.
  * <p>
@@ -17,11 +19,13 @@ import java.util.Map;
  *
  * @author Chris Jackson
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-05-09T17:59:58Z")
 public enum ZoneTypeEnum {
     STANDARD_CIE(0x0000),
     MOTION_SENSOR(0x000D),
     CONTACT_SWITCH(0x0015),
-    WATER_SENSOR(0x0028),
+    FIRE_SENSOR(0x0028),
+    WATER_SENSOR(0x002A),
     CO_SENSOR(0x002B),
     PERSONAL_EMERGENCY_DEVICE(0x002C),
     VIBRATION_MOVEMENT_SENSOR(0x002D),
@@ -37,6 +41,13 @@ public enum ZoneTypeEnum {
      */
     private static Map<Integer, ZoneTypeEnum> idMap;
 
+    static {
+        idMap = new HashMap<Integer, ZoneTypeEnum>();
+        for (ZoneTypeEnum enumValue : values()) {
+            idMap.put(enumValue.key, enumValue);
+        }
+    }
+
     private final int key;
 
     ZoneTypeEnum(final int key) {
@@ -48,12 +59,6 @@ public enum ZoneTypeEnum {
     }
 
     public static ZoneTypeEnum getByValue(final int value) {
-        if (idMap == null) {
-            idMap = new HashMap<Integer, ZoneTypeEnum>();
-            for (ZoneTypeEnum enumValue : values()) {
-                idMap.put(enumValue.key, enumValue);
-            }
-        }
         return idMap.get(value);
     }
 }

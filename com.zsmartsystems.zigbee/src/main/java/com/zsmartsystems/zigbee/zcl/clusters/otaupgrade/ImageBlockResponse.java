@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -17,6 +19,9 @@ import com.zsmartsystems.zigbee.zcl.field.ByteArray;
 
 /**
  * Image Block Response value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * Upon receipt of an Image Block Request command the server shall generate an Image Block Response.
  * If the server is able to retrieve the data for the client and does not wish to change the image download
@@ -37,11 +42,9 @@ import com.zsmartsystems.zigbee.zcl.field.ByteArray;
  * example, the client is five hops away), the largest possible data size that the server can send to the
  * client shall be smaller than 100 bytes.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class ImageBlockResponse extends ZclCommand {
     /**
      * Status command message field.

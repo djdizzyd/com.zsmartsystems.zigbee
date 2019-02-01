@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.general;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -20,18 +22,19 @@ import com.zsmartsystems.zigbee.zcl.field.WriteAttributeStatusRecord;
 /**
  * Write Attributes Structured Response value object class.
  * <p>
- * The write attributes structured response command is generated in response to a
- * write attributes structured command.
- * <p>
  * Cluster: <b>General</b>. Command is sent <b>TO</b> the server.
  * This command is a <b>generic</b> command used across the profile.
  * <p>
+ * The write attributes structured response command is generated in response to a
+ * write attributes structured command.
+ * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class WriteAttributesStructuredResponse extends ZclCommand {
     /**
      * Status command message field.
-     *
+     * <p>
      * Status is only provided if the command was successful, and the write
      * attribute status records are not included for successfully
      * written attributes, in order to save bandwidth.
@@ -40,7 +43,7 @@ public class WriteAttributesStructuredResponse extends ZclCommand {
 
     /**
      * Records command message field.
-     *
+     * <p>
      * Note that write attribute status records are not included for successfully
      * written attributes, in order to save bandwidth.  In the case of successful
      * writing of all attributes, only a single write attribute status record

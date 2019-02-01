@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,11 +32,11 @@ public class ZigBeeApsFrameTest {
     public void testSecurityEnable() {
         ZigBeeApsFrame frame = new ZigBeeApsFrame();
 
-        frame.setSecurityEnable(true);
-        assertTrue(frame.isSecurityEnable());
+        frame.setSecurityEnabled(true);
+        assertTrue(frame.getSecurityEnabled());
 
-        frame.setSecurityEnable(false);
-        assertFalse(frame.isSecurityEnable());
+        frame.setSecurityEnabled(false);
+        assertFalse(frame.getSecurityEnabled());
 
         System.out.println(frame);
     }

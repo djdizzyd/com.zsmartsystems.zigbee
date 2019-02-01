@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,8 +19,8 @@ import org.junit.Test;
 public class ZigBeeStackTypeTest {
     @Test
     public void testTypes() {
-        assertEquals(ZigBeeStackType.ZIGBEE_2006, ZigBeeStackType.getStackType(0));
-        assertEquals(ZigBeeStackType.ZIGBEE_2007, ZigBeeStackType.getStackType(1));
-        assertEquals(ZigBeeStackType.ZIGBEE_PRO, ZigBeeStackType.getStackType(2));
+        assertEquals(ZigBeeStackType.ZIGBEE_2006, ZigBeeStackType.getByValue(0));
+        assertEquals(ZigBeeStackType.ZIGBEE_2007, ZigBeeStackType.getByValue(1));
+        assertEquals(ZigBeeStackType.ZIGBEE_PRO, ZigBeeStackType.getByValue(2));
     }
 }

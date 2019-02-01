@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,15 +9,14 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Power configuration</b> cluster implementation (<i>Cluster ID 0x0001</i>).
@@ -27,6 +26,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclPowerConfigurationCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -221,13 +221,11 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     /**
      * Default constructor to create a Power configuration cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclPowerConfigurationCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclPowerConfigurationCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>MainsVoltage</i> attribute [attribute ID <b>0</b>].
@@ -245,7 +243,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> getMainsVoltageAsync() {
         return read(attributes.get(ATTR_MAINSVOLTAGE));
     }
-
 
     /**
      * Synchronously get the <i>MainsVoltage</i> attribute [attribute ID <b>0</b>].
@@ -269,11 +266,8 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsVoltage(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSVOLTAGE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSVOLTAGE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSVOLTAGE).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSVOLTAGE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSVOLTAGE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSVOLTAGE));
@@ -306,7 +300,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> getMainsFrequencyAsync() {
         return read(attributes.get(ATTR_MAINSFREQUENCY));
     }
-
 
     /**
      * Synchronously get the <i>MainsFrequency</i> attribute [attribute ID <b>1</b>].
@@ -341,16 +334,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsFrequency(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSFREQUENCY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSFREQUENCY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSFREQUENCY).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSFREQUENCY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSFREQUENCY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSFREQUENCY));
     }
-
 
     /**
      * Set the <i>MainsAlarmMask</i> attribute [attribute ID <b>16</b>].
@@ -385,7 +374,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_MAINSALARMMASK));
     }
 
-
     /**
      * Synchronously get the <i>MainsAlarmMask</i> attribute [attribute ID <b>16</b>].
      * <p>
@@ -407,16 +395,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsAlarmMask(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSALARMMASK).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSALARMMASK).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSALARMMASK).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSALARMMASK).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSALARMMASK).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSALARMMASK));
     }
-
 
     /**
      * Set the <i>MainsVoltageMinThreshold</i> attribute [attribute ID <b>17</b>].
@@ -475,7 +459,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD));
     }
 
-
     /**
      * Synchronously get the <i>MainsVoltageMinThreshold</i> attribute [attribute ID <b>17</b>].
      * <p>
@@ -509,16 +492,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsVoltageMinThreshold(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSVOLTAGEMINTHRESHOLD));
     }
-
 
     /**
      * Set the <i>MainsVoltageMaxThreshold</i> attribute [attribute ID <b>18</b>].
@@ -577,7 +556,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD));
     }
 
-
     /**
      * Synchronously get the <i>MainsVoltageMaxThreshold</i> attribute [attribute ID <b>18</b>].
      * <p>
@@ -611,16 +589,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsVoltageMaxThreshold(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSVOLTAGEMAXTHRESHOLD));
     }
-
 
     /**
      * Set the <i>MainsVoltageDwellTripPoint</i> attribute [attribute ID <b>19</b>].
@@ -663,7 +637,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT));
     }
 
-
     /**
      * Synchronously get the <i>MainsVoltageDwellTripPoint</i> attribute [attribute ID <b>19</b>].
      * <p>
@@ -689,11 +662,8 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getMainsVoltageDwellTripPoint(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT).getLastValue();
-            }
+        if (attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_MAINSVOLTAGEDWELLTRIPPOINT));
@@ -715,7 +685,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> getBatteryVoltageAsync() {
         return read(attributes.get(ATTR_BATTERYVOLTAGE));
     }
-
 
     /**
      * Synchronously get the <i>BatteryVoltage</i> attribute [attribute ID <b>32</b>].
@@ -739,11 +708,8 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryVoltage(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYVOLTAGE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYVOLTAGE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYVOLTAGE).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYVOLTAGE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYVOLTAGE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYVOLTAGE));
@@ -761,7 +727,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> getBatteryPercentageRemainingAsync() {
         return read(attributes.get(ATTR_BATTERYPERCENTAGEREMAINING));
     }
-
 
     /**
      * Synchronously get the <i>BatteryPercentageRemaining</i> attribute [attribute ID <b>33</b>].
@@ -781,16 +746,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryPercentageRemaining(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYPERCENTAGEREMAINING).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYPERCENTAGEREMAINING).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYPERCENTAGEREMAINING).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYPERCENTAGEREMAINING).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYPERCENTAGEREMAINING).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYPERCENTAGEREMAINING));
     }
-
 
     /**
      * Set reporting for the <i>BatteryPercentageRemaining</i> attribute [attribute ID <b>33</b>].
@@ -807,7 +768,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> setBatteryPercentageRemainingReporting(final int minInterval, final int maxInterval, final Object reportableChange) {
         return setReporting(attributes.get(ATTR_BATTERYPERCENTAGEREMAINING), minInterval, maxInterval, reportableChange);
     }
-
 
     /**
      * Set the <i>BatteryManufacturer</i> attribute [attribute ID <b>48</b>].
@@ -842,7 +802,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYMANUFACTURER));
     }
 
-
     /**
      * Synchronously get the <i>BatteryManufacturer</i> attribute [attribute ID <b>48</b>].
      * <p>
@@ -864,16 +823,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link String} attribute value, or null on error
      */
     public String getBatteryManufacturer(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYMANUFACTURER).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYMANUFACTURER).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (String) attributes.get(ATTR_BATTERYMANUFACTURER).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYMANUFACTURER).isLastValueCurrent(refreshPeriod)) {
+            return (String) attributes.get(ATTR_BATTERYMANUFACTURER).getLastValue();
         }
 
         return (String) readSync(attributes.get(ATTR_BATTERYMANUFACTURER));
     }
-
 
     /**
      * Set the <i>BatterySize</i> attribute [attribute ID <b>49</b>].
@@ -908,7 +863,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYSIZE));
     }
 
-
     /**
      * Synchronously get the <i>BatterySize</i> attribute [attribute ID <b>49</b>].
      * <p>
@@ -930,16 +884,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatterySize(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYSIZE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYSIZE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYSIZE).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYSIZE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYSIZE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYSIZE));
     }
-
 
     /**
      * Set the <i>BatteryAHrRating</i> attribute [attribute ID <b>50</b>].
@@ -974,7 +924,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYAHRRATING));
     }
 
-
     /**
      * Synchronously get the <i>BatteryAHrRating</i> attribute [attribute ID <b>50</b>].
      * <p>
@@ -996,16 +945,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryAHrRating(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYAHRRATING).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYAHRRATING).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYAHRRATING).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYAHRRATING).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYAHRRATING).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYAHRRATING));
     }
-
 
     /**
      * Set the <i>BatteryQuantity</i> attribute [attribute ID <b>51</b>].
@@ -1040,7 +985,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYQUANTITY));
     }
 
-
     /**
      * Synchronously get the <i>BatteryQuantity</i> attribute [attribute ID <b>51</b>].
      * <p>
@@ -1062,16 +1006,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryQuantity(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYQUANTITY).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYQUANTITY).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYQUANTITY).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYQUANTITY).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYQUANTITY).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYQUANTITY));
     }
-
 
     /**
      * Set the <i>BatteryRatedVoltage</i> attribute [attribute ID <b>52</b>].
@@ -1106,7 +1046,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYRATEDVOLTAGE));
     }
 
-
     /**
      * Synchronously get the <i>BatteryRatedVoltage</i> attribute [attribute ID <b>52</b>].
      * <p>
@@ -1128,16 +1067,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryRatedVoltage(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYRATEDVOLTAGE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYRATEDVOLTAGE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYRATEDVOLTAGE).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYRATEDVOLTAGE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYRATEDVOLTAGE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYRATEDVOLTAGE));
     }
-
 
     /**
      * Set the <i>BatteryAlarmMask</i> attribute [attribute ID <b>53</b>].
@@ -1172,7 +1107,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYALARMMASK));
     }
 
-
     /**
      * Synchronously get the <i>BatteryAlarmMask</i> attribute [attribute ID <b>53</b>].
      * <p>
@@ -1194,16 +1128,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryAlarmMask(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYALARMMASK).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYALARMMASK).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYALARMMASK).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYALARMMASK).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYALARMMASK).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYALARMMASK));
     }
-
 
     /**
      * Set the <i>BatteryVoltageMinThreshold</i> attribute [attribute ID <b>54</b>].
@@ -1254,7 +1184,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD));
     }
 
-
     /**
      * Synchronously get the <i>BatteryVoltageMinThreshold</i> attribute [attribute ID <b>54</b>].
      * <p>
@@ -1284,16 +1213,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryVoltageMinThreshold(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYVOLTAGEMINTHRESHOLD));
     }
-
 
     /**
      * Set the <i>BatteryVoltageThreshold1</i> attribute [attribute ID <b>55</b>].
@@ -1322,7 +1247,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1));
     }
 
-
     /**
      * Synchronously get the <i>BatteryVoltageThreshold1</i> attribute [attribute ID <b>55</b>].
      * <p>
@@ -1341,16 +1265,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryVoltageThreshold1(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD1));
     }
-
 
     /**
      * Set the <i>BatteryVoltageThreshold2</i> attribute [attribute ID <b>56</b>].
@@ -1379,7 +1299,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2));
     }
 
-
     /**
      * Synchronously get the <i>BatteryVoltageThreshold2</i> attribute [attribute ID <b>56</b>].
      * <p>
@@ -1398,16 +1317,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryVoltageThreshold2(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD2));
     }
-
 
     /**
      * Set the <i>BatteryVoltageThreshold3</i> attribute [attribute ID <b>57</b>].
@@ -1436,7 +1351,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3));
     }
 
-
     /**
      * Synchronously get the <i>BatteryVoltageThreshold3</i> attribute [attribute ID <b>57</b>].
      * <p>
@@ -1455,16 +1369,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryVoltageThreshold3(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYVOLTAGETHRESHOLD3));
     }
-
 
     /**
      * Set the <i>BatteryPercentageMinThreshold</i> attribute [attribute ID <b>58</b>].
@@ -1493,7 +1403,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD));
     }
 
-
     /**
      * Synchronously get the <i>BatteryPercentageMinThreshold</i> attribute [attribute ID <b>58</b>].
      * <p>
@@ -1512,16 +1421,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryPercentageMinThreshold(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYPERCENTAGEMINTHRESHOLD));
     }
-
 
     /**
      * Set the <i>BatteryPercentageThreshold1</i> attribute [attribute ID <b>59</b>].
@@ -1550,7 +1455,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1));
     }
 
-
     /**
      * Synchronously get the <i>BatteryPercentageThreshold1</i> attribute [attribute ID <b>59</b>].
      * <p>
@@ -1569,16 +1473,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryPercentageThreshold1(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD1));
     }
-
 
     /**
      * Set the <i>BatteryPercentageThreshold2</i> attribute [attribute ID <b>60</b>].
@@ -1607,7 +1507,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2));
     }
 
-
     /**
      * Synchronously get the <i>BatteryPercentageThreshold2</i> attribute [attribute ID <b>60</b>].
      * <p>
@@ -1626,16 +1525,12 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryPercentageThreshold2(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD2));
     }
-
 
     /**
      * Set the <i>BatteryPercentageThreshold3</i> attribute [attribute ID <b>61</b>].
@@ -1664,7 +1559,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
         return read(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3));
     }
 
-
     /**
      * Synchronously get the <i>BatteryPercentageThreshold3</i> attribute [attribute ID <b>61</b>].
      * <p>
@@ -1683,11 +1577,8 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryPercentageThreshold3(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYPERCENTAGETHRESHOLD3));
@@ -1705,7 +1596,6 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
     public Future<CommandResult> getBatteryAlarmStateAsync() {
         return read(attributes.get(ATTR_BATTERYALARMSTATE));
     }
-
 
     /**
      * Synchronously get the <i>BatteryAlarmState</i> attribute [attribute ID <b>62</b>].
@@ -1725,11 +1615,8 @@ public class ZclPowerConfigurationCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getBatteryAlarmState(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_BATTERYALARMSTATE).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_BATTERYALARMSTATE).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_BATTERYALARMSTATE).getLastValue();
-            }
+        if (attributes.get(ATTR_BATTERYALARMSTATE).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_BATTERYALARMSTATE).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_BATTERYALARMSTATE));

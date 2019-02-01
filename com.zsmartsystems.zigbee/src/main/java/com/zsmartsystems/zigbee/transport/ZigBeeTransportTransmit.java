@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,9 +12,10 @@ import java.util.Map;
 import com.zsmartsystems.zigbee.ExtendedPanId;
 import com.zsmartsystems.zigbee.IeeeAddress;
 import com.zsmartsystems.zigbee.ZigBeeApsFrame;
-import com.zsmartsystems.zigbee.ZigBeeKey;
+import com.zsmartsystems.zigbee.ZigBeeChannel;
 import com.zsmartsystems.zigbee.ZigBeeNetwork;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager.ZigBeeInitializeResponse;
+import com.zsmartsystems.zigbee.ZigBeeStatus;
+import com.zsmartsystems.zigbee.security.ZigBeeKey;
 import com.zsmartsystems.zigbee.serialization.ZigBeeDeserializer;
 import com.zsmartsystems.zigbee.serialization.ZigBeeSerializer;
 
@@ -38,28 +39,33 @@ public interface ZigBeeTransportTransmit {
      * configure the transport layer.
      * <p>
      * During the initialize() method, the provider must initialize the ports and perform any configuration required to
-     * get the stack ready for use. If the dongle has already joined a network, then this method will return true.
+     * get the stack ready for use. If the dongle has already joined a network, then this method will return
+     * {@link ZigBeeStatus#SUCCESS}.
      * <p>
      * At the completion of the initialize method, the {@link #getIeeeAddress()} method must return the valid address
      * for the coordinator.
      *
-     * @return {@link ZigBeeInitializeResponse}
+     * @return {@link ZigBeeStatus} - {@link ZigBeeStatus#SUCCESS} if no error
      */
-    ZigBeeInitializeResponse initialize();
+    ZigBeeStatus initialize();
 
     /**
-     * Starts the transport interface.
+     * Starts the transport interface and brings the transport state {@link ZigBeeTransportState#ONLINE}.
      * <p>
      * This call will optionally reconfigure the interface if the reinitialize parameter is true.
+     * Startup would normally be called once after {@link #initialize()} on system start, and may be called again
+     * subsequently if the dongle is taken offline.
      *
      * @param reinitialize true if the provider is to reinitialise the network with the parameters configured since the
      *            {@link #initialize} method was called.
-     * @return true if startup was success.
+     * @return {@link ZigBeeStatus} with the return status. If the dongle is online, {@link ZigBeeStatus#SUCCESS} will
+     *         be returned and the network state will be set to {@link ZigBeeTransportState#ONLINE}.
      */
-    boolean startup(boolean reinitialize);
+    ZigBeeStatus startup(boolean reinitialize);
 
     /**
-     * Shuts down a transport interface.
+     * Shuts down a transport interface. This method shall free all resources, and the interface may not be used again
+     * until {@link #initialize()} is called.
      */
     void shutdown();
 
@@ -74,6 +80,13 @@ public interface ZigBeeTransportTransmit {
      * @return the {@link IeeeAddress} of the local device. May return null if the address is not known.
      */
     IeeeAddress getIeeeAddress();
+
+    /**
+     * Returns the network address of the local device
+     *
+     * @return the network address of the local device. May return null if the address is not known.
+     */
+    Integer getNwkAddress();
 
     /**
      * Sends ZigBee Cluster Library command without waiting for response. Responses are provided to the framework
@@ -103,18 +116,17 @@ public interface ZigBeeTransportTransmit {
     /**
      * Gets the current ZigBee RF channel
      *
-     * @return the current channel or -1 on error
-     * @return
+     * @return the current {@link ZigBeeChannel} or {@link ZigBeeChannel.UNKNOWN} on error
      */
-    int getZigBeeChannel();
+    ZigBeeChannel getZigBeeChannel();
 
     /**
      * Sets the ZigBee RF channel
      *
-     * @param channel {@link int} defining the channel to use
-     * @return true if the channel was set
+     * @param channel the {@link ZigBeeChannel} defining the channel to use
+     * @return {@link ZigBeeStatus} with the status of function
      */
-    boolean setZigBeeChannel(int channel);
+    ZigBeeStatus setZigBeeChannel(ZigBeeChannel channel);
 
     /**
      * Gets the ZigBee PAN ID currently in use by the transport
@@ -127,9 +139,9 @@ public interface ZigBeeTransportTransmit {
      * Sets the ZigBee PAN ID to the specified value
      *
      * @param panId the new PAN ID
-     * @return true if the PAN Id was set correctly
+     * @return {@link ZigBeeStatus} with the status of function
      */
-    boolean setZigBeePanId(int panId);
+    ZigBeeStatus setZigBeePanId(int panId);
 
     /**
      * Gets the ZigBee Extended PAN ID currently in use by the transport
@@ -142,27 +154,39 @@ public interface ZigBeeTransportTransmit {
      * Sets the ZigBee Extended PAN ID to the specified value
      *
      * @param panId the new {@link ExtendedPanId}
-     * @return true if the EPAN Id was set correctly
+     * @return {@link ZigBeeStatus} with the status of function
      */
-    boolean setZigBeeExtendedPanId(ExtendedPanId panId);
+    ZigBeeStatus setZigBeeExtendedPanId(ExtendedPanId panId);
 
     /**
      * Sets the ZigBee network security key to the specified value
      *
      * @param key the new network key as {@link ZigBeeKey}
-     * @return true if the key was set correctly
+     * @return {@link ZigBeeStatus} with the status of function
      */
-    boolean setZigBeeNetworkKey(ZigBeeKey key);
+    ZigBeeStatus setZigBeeNetworkKey(ZigBeeKey key);
+
+    /**
+     * Gets the current network key.
+     *
+     * @return the current network key as {@link ZigBeeKey} or null if not known.
+     */
+    ZigBeeKey getZigBeeNetworkKey();
 
     /**
      * Sets the Trust Center link security key to the specified value
      *
-     * @deprecated use {@link updateTransportConfiguration}
      * @param key the new link key as {@link ZigBeeKey}
-     * @return true if the key was set correctly
+     * @return {@link ZigBeeStatus} with the status of function
      */
-    @Deprecated
-    boolean setTcLinkKey(ZigBeeKey key);
+    ZigBeeStatus setTcLinkKey(ZigBeeKey key);
+
+    /**
+     * Gets the current Trust Center link security key
+     *
+     * @return the link key as {@link ZigBeeKey} or null if unknown
+     */
+    ZigBeeKey getTcLinkKey();
 
     /**
      * Sets the transport configuration.

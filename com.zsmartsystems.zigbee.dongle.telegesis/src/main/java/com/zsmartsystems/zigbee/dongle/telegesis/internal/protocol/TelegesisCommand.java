@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,10 +31,16 @@ public interface TelegesisCommand {
      * A prompt handler will always process the data and should always return true since it can not handle multiple
      * responses.
      *
+     * @param data the data to deserialize
      * @return true if this data frame completes the transaction
      */
     public boolean deserialize(int[] data);
 
+    /**
+     * Gets the status code from the command response
+     * 
+     * @return the {@link TelegesisStatusCode} of the response
+     */
     public TelegesisStatusCode getStatus();
 
 }

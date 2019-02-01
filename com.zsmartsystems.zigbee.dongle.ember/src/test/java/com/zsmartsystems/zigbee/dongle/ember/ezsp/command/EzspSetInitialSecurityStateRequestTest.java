@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,9 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import com.zsmartsystems.zigbee.IeeeAddress;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrame;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameTest;
+import com.zsmartsystems.zigbee.dongle.ember.ezsp.command.EzspSetInitialSecurityStateRequest;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberInitialSecurityBitmask;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberInitialSecurityState;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberKeyData;
@@ -27,6 +29,8 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberKeyData;
 public class EzspSetInitialSecurityStateRequestTest extends EzspFrameTest {
     @Test
     public void testSecurityStateRequest() {
+        EzspFrame.setEzspVersion(4);
+
         EmberKeyData keyData;
         EzspSetInitialSecurityStateRequest request = new EzspSetInitialSecurityStateRequest();
         EmberInitialSecurityState state = new EmberInitialSecurityState();
@@ -41,9 +45,10 @@ public class EzspSetInitialSecurityStateRequestTest extends EzspFrameTest {
         state.addBitmask(EmberInitialSecurityBitmask.EMBER_STANDARD_SECURITY_MODE);
         request.setState(state);
         request.setSequenceNumber(7);
-        assertTrue(Arrays.equals(
-                getPacketData(
-                        "07 00 68 00 00 BB 00 00 00 00 00 00 00 00 00 00 00 00 00 00 BB AA 00 00 00 00 00 00 00 00 00 00 00 00 00 00 AA 00 EF CD AB 90 78 56 34 12"),
+        System.out.println(request);
+
+        assertTrue(Arrays.equals(getPacketData(
+                "07 00 68 00 00 BB 00 00 00 00 00 00 00 00 00 00 00 00 00 00 BB AA 00 00 00 00 00 00 00 00 00 00 00 00 00 00 AA 00 EF CD AB 90 78 56 34 12"),
                 request.serialize()));
     }
 }

@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.thermostat;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -16,6 +18,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
 /**
  * Set Weekly Schedule value object class.
  * <p>
+ * Cluster: <b>Thermostat</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>specific</b> command used for the Thermostat cluster.
+ * <p>
  * The set weekly schedule command is used to update the thermostat weekly set point schedule from a management system.
  * If the thermostat already has a weekly set point schedule programmed then it SHOULD replace each daily set point set
  * as it receives the updates from the management system. For example if the thermostat has 4 set points for every day of
@@ -25,11 +30,9 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * If the schedule is larger than what fits in one ZigBee frame or contains more than 10 transitions, the schedule SHALL
  * then be sent using multipleSet Weekly Schedule Commands.
  * <p>
- * Cluster: <b>Thermostat</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>specific</b> command used for the Thermostat cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class SetWeeklySchedule extends ZclCommand {
     /**
      * Number of Transitions command message field.

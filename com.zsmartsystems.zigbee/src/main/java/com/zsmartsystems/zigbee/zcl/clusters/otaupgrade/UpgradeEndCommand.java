@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -16,6 +18,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
 
 /**
  * Upgrade End Command value object class.
+ * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
  * <p>
  * Upon reception all the image data, the client should verify the image to ensure its integrity and validity.
  * If the device requires signed images it shall examine the image and verify the signature. Clients may perform
@@ -36,11 +41,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
  * Upgrade End Request with status of ABORT at anytime during the download process. The client shall
  * then try to reinitiate the download process again at a later time.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>TO</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class UpgradeEndCommand extends ZclCommand {
     /**
      * Status command message field.

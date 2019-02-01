@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,8 +7,8 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.ezsp.structure;
 
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspDeserializer;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspDeserializer;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
 
 /**
  * Class to implement the Ember Structure <b>EmberRouteTableEntry</b>.

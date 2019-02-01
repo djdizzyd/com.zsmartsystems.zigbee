@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.iaszone;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -19,15 +21,18 @@ import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
  * Cluster: <b>IAS Zone</b>. Command is sent <b>TO</b> the server.
  * This command is a <b>specific</b> command used for the IAS Zone cluster.
  * <p>
- * The IAS Zone cluster defines an interface to the functionality of an IAS security
- * zone device. IAS Zone supports up to two alarm types per zone, low battery
- * reports and supervision of the IAS network.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-05-06T20:27:25Z")
 public class ZoneEnrollResponse extends ZclCommand {
     /**
      * Enroll response code command message field.
+     * <p>
+     * Specifies the duration, in seconds, for which the IAS Zone server SHALL operate in its test mode.
+     * Specifies the sensitivity level the IAS Zone server SHALL use for the duration of the Test Mode and with which it must update its
+     * CurrentZoneSensitivityLevel attribute.
+     * <p>
+     * The permitted values of Current Zone Sensitivity Level are shown defined for the CurrentZoneSensitivityLevel Attribute.
      */
     private Integer enrollResponseCode;
 
@@ -49,6 +54,11 @@ public class ZoneEnrollResponse extends ZclCommand {
     /**
      * Gets Enroll response code.
      *
+     * Specifies the duration, in seconds, for which the IAS Zone server SHALL operate in its test mode.
+     * Specifies the sensitivity level the IAS Zone server SHALL use for the duration of the Test Mode and with which it must update its CurrentZoneSensitivityLevel attribute.
+     * <p>
+     * The permitted values of Current Zone Sensitivity Level are shown defined for the CurrentZoneSensitivityLevel Attribute.
+     *
      * @return the Enroll response code
      */
     public Integer getEnrollResponseCode() {
@@ -57,6 +67,12 @@ public class ZoneEnrollResponse extends ZclCommand {
 
     /**
      * Sets Enroll response code.
+     *
+     * Specifies the duration, in seconds, for which the IAS Zone server SHALL operate in its test mode.
+     * Specifies the sensitivity level the IAS Zone server SHALL use for the duration of the Test Mode and with which it must update its
+     * CurrentZoneSensitivityLevel attribute.
+     * <p>
+     * The permitted values of Current Zone Sensitivity Level are shown defined for the CurrentZoneSensitivityLevel Attribute.
      *
      * @param enrollResponseCode the Enroll response code
      */

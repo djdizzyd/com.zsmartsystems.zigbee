@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,7 +9,6 @@ package com.zsmartsystems.zigbee.zcl.clusters;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.ZigBeeEndpoint;
-import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclCluster;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -21,10 +20,10 @@ import com.zsmartsystems.zigbee.zcl.clusters.alarms.ResetAlarmLogCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.alarms.ResetAllAlarmsCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclDataType;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import javax.annotation.Generated;
 
 /**
  * <b>Alarms</b> cluster implementation (<i>Cluster ID 0x0009</i>).
@@ -44,6 +43,7 @@ import java.util.concurrent.Future;
  * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-10-24T19:40:52Z")
 public class ZclAlarmsCluster extends ZclCluster {
     /**
      * The ZigBee Cluster Library Cluster ID
@@ -78,13 +78,11 @@ public class ZclAlarmsCluster extends ZclCluster {
     /**
      * Default constructor to create a Alarms cluster.
      *
-     * @param zigbeeManager {@link ZigBeeNetworkManager}
      * @param zigbeeEndpoint the {@link ZigBeeEndpoint}
      */
-    public ZclAlarmsCluster(final ZigBeeNetworkManager zigbeeManager, final ZigBeeEndpoint zigbeeEndpoint) {
-        super(zigbeeManager, zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
+    public ZclAlarmsCluster(final ZigBeeEndpoint zigbeeEndpoint) {
+        super(zigbeeEndpoint, CLUSTER_ID, CLUSTER_NAME);
     }
-
 
     /**
      * Get the <i>AlarmCount</i> attribute [attribute ID <b>0</b>].
@@ -105,7 +103,6 @@ public class ZclAlarmsCluster extends ZclCluster {
     public Future<CommandResult> getAlarmCountAsync() {
         return read(attributes.get(ATTR_ALARMCOUNT));
     }
-
 
     /**
      * Synchronously get the <i>AlarmCount</i> attribute [attribute ID <b>0</b>].
@@ -132,11 +129,8 @@ public class ZclAlarmsCluster extends ZclCluster {
      * @return the {@link Integer} attribute value, or null on error
      */
     public Integer getAlarmCount(final long refreshPeriod) {
-        if(refreshPeriod > 0 && attributes.get(ATTR_ALARMCOUNT).getLastReportTime() != null) {
-            long refreshTime = Calendar.getInstance().getTimeInMillis() - refreshPeriod;
-            if(attributes.get(ATTR_ALARMCOUNT).getLastReportTime().getTimeInMillis() < refreshTime) {
-                return (Integer) attributes.get(ATTR_ALARMCOUNT).getLastValue();
-            }
+        if (attributes.get(ATTR_ALARMCOUNT).isLastValueCurrent(refreshPeriod)) {
+            return (Integer) attributes.get(ATTR_ALARMCOUNT).getLastValue();
         }
 
         return (Integer) readSync(attributes.get(ATTR_ALARMCOUNT));
@@ -194,6 +188,12 @@ public class ZclAlarmsCluster extends ZclCluster {
 
     /**
      * The Alarm Command
+     * <p>
+     * The alarm command signals an alarm situation on the sending device.
+     * <br>
+     * An alarm command is generated when a  cluster  which has alarm functionality detects an alarm
+     * condition, e.g., an attribute has taken on a value that is outside a ‘safe’ range. The details
+     * are given by individual cluster specifications.
      *
      * @param alarmCode {@link Integer} Alarm code
      * @param clusterIdentifier {@link Integer} Cluster identifier
@@ -211,6 +211,12 @@ public class ZclAlarmsCluster extends ZclCluster {
 
     /**
      * The Get Alarm Response
+     * <p>
+     * If there is at least one alarm record in the alarm table then the status field is set to SUCCESS.
+     * The alarm code, cluster identifier and time stamp fields SHALL all be present and SHALL take their
+     * values from the item in the alarm table that they are reporting.If there  are  no more  alarms logged
+     * in the  alarm table  then the  status field is set  to NOT_FOUND  and the alarm code, cluster
+     * identifier and time stamp fields SHALL be omitted.
      *
      * @param status {@link Integer} Status
      * @param alarmCode {@link Integer} Alarm code

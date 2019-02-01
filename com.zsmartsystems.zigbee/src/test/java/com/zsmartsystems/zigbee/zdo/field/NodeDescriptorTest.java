@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import com.zsmartsystems.zigbee.CommandTest;
 import com.zsmartsystems.zigbee.serialization.DefaultDeserializer;
-import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.FrequencyBandType;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.LogicalType;
 import com.zsmartsystems.zigbee.zdo.field.NodeDescriptor.MacCapabilitiesType;
@@ -44,6 +43,12 @@ public class NodeDescriptorTest extends CommandTest {
         assertTrue(descriptor.getMacCapabilities().contains(MacCapabilitiesType.SECURITY_CAPABLE));
         assertTrue(descriptor.getMacCapabilities().contains(MacCapabilitiesType.RECEIVER_ON_WHEN_IDLE));
         assertTrue(descriptor.getMacCapabilities().contains(MacCapabilitiesType.FULL_FUNCTION_DEVICE));
+    }
+
+    @Test
+    public void testNodeDescriptorR21() {
+        NodeDescriptor descriptor = new NodeDescriptor(0, 0, 0, true, 0, 0, 0x2A00, 0, true, 0);
+        assertEquals(21, descriptor.getStackCompliance());
     }
 
     @Test

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -52,7 +52,17 @@ public enum EmberNodeType {
     /**
      * A sleepy end device that can move through the network.
      */
-    EMBER_MOBILE_END_DEVICE(0x0005);
+    EMBER_MOBILE_END_DEVICE(0x0005),
+
+    /**
+     * RF4CE target node.
+     */
+    EMBER_RF4CE_TARGET(0x0006),
+
+    /**
+     * RF4CE controller node.
+     */
+    EMBER_RF4CE_CONTROLLER(0x0007);
 
     /**
      * A mapping between the integer code and its corresponding type to
@@ -62,30 +72,25 @@ public enum EmberNodeType {
 
     private int key;
 
-    private EmberNodeType(int key) {
-        this.key = key;
-    }
-
-    private static void initMapping() {
+    static {
         codeMapping = new HashMap<Integer, EmberNodeType>();
         for (EmberNodeType s : values()) {
             codeMapping.put(s.key, s);
         }
     }
 
+    private EmberNodeType(int key) {
+        this.key = key;
+    }
+
     /**
      * Lookup function based on the EmberStatus type code. Returns null if the
      * code does not exist.
      *
-     * @param code
-     *            the code to lookup
+     * @param code the code to lookup
      * @return enumeration value of the alarm type.
      */
     public static EmberNodeType getEmberNodeType(int code) {
-        if (codeMapping == null) {
-            initMapping();
-        }
-
         if (codeMapping.get(code) == null) {
             return UNKNOWN;
         }
@@ -94,7 +99,7 @@ public enum EmberNodeType {
     }
 
     /**
-     * Returns the EZSP protocol defined value for this enum
+     * Returns the EZSP protocol defined value for this enumeration.
      *
      * @return the EZSP protocol key
      */

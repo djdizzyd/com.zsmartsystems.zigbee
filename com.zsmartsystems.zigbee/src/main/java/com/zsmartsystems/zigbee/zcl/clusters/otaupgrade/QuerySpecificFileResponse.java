@@ -1,11 +1,13 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
 package com.zsmartsystems.zigbee.zcl.clusters.otaupgrade;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.ZclFieldSerializer;
@@ -17,6 +19,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
 /**
  * Query Specific File Response value object class.
  * <p>
+ * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
+ * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
+ * <p>
  * The server sends Query Specific File Response after receiving Query Specific File Request from a
  * client. The server shall determine whether it first supports the Query Specific File Request command.
  * Then it shall determine whether it has the specific file being requested by the client using all the
@@ -27,11 +32,9 @@ import com.zsmartsystems.zigbee.zcl.ZclStatus;
  * specific file available for the client. A status of NOT_AUTHORIZED indicates the server is not
  * authorized to send the file to the client.
  * <p>
- * Cluster: <b>OTA Upgrade</b>. Command is sent <b>FROM</b> the server.
- * This command is a <b>specific</b> command used for the OTA Upgrade cluster.
- * <p>
  * Code is auto-generated. Modifications may be overwritten!
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-04-26T19:23:24Z")
 public class QuerySpecificFileResponse extends ZclCommand {
     /**
      * Status command message field.

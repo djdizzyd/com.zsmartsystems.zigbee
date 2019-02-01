@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,6 +8,8 @@
 package com.zsmartsystems.zigbee.zcl.protocol;
 
 import java.lang.reflect.Constructor;
+
+import javax.annotation.Generated;
 
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclCommandDirection;
@@ -42,6 +44,9 @@ import com.zsmartsystems.zigbee.zcl.clusters.scenes.GetSceneMembershipCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.onoff.OffCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.onoff.OnCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.onoff.ToggleCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.onoff.OffWithEffectCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.onoff.OnWithRecallGlobalSceneCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.onoff.OnWithTimedOffCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.levelcontrol.MoveToLevelCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.levelcontrol.MoveCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.levelcontrol.StepCommand;
@@ -89,6 +94,11 @@ import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.UpgradeEndCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.UpgradeEndResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.QuerySpecificFileCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.QuerySpecificFileResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.pollcontrol.CheckInResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.pollcontrol.CheckInCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.pollcontrol.FastPollStopCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.pollcontrol.SetLongPollIntervalCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.pollcontrol.SetShortPollIntervalCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.LockDoorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.LockDoorResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.doorlock.UnlockDoorCommand;
@@ -111,9 +121,15 @@ import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.MoveToColorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.MoveColorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.StepColorCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.MoveToColorTemperatureCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.EnhancedMoveToHueCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.EnhancedStepHueCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.EnhancedMoveToHueAndSaturationCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.colorcontrol.ColorLoopSetCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneEnrollResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneStatusChangeNotificationCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iaszone.InitiateNormalOperationModeCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaszone.ZoneEnrollRequestCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iaszone.InitiateTestModeCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.ArmCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.ArmResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.BypassCommand;
@@ -121,9 +137,18 @@ import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneIdMapResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.EmergencyCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneInformationResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.FireCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.ZoneStatusChangedCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.PanicCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.PanelStatusChangedCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneIdMapCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetPanelStatusResponse;
 import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneInformationCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.SetBypassedZoneListCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetPanelStatusCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.BypassResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetBypassedZoneListCommand;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneStatusResponse;
+import com.zsmartsystems.zigbee.zcl.clusters.iasace.GetZoneStatusCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaswd.StartWarningCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.iaswd.SquawkCommand;
 import com.zsmartsystems.zigbee.zcl.clusters.general.ReadAttributesCommand;
@@ -158,6 +183,7 @@ import com.zsmartsystems.zigbee.zcl.clusters.general.DiscoverAttributesExtendedR
  *
  * @author Chris Jackson
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-05-06T20:48:39Z")
 public enum ZclCommandType {
     /**
      * ADD_GROUP_COMMAND: Add Group Command
@@ -220,11 +246,35 @@ public enum ZclCommandType {
      */
     BYPASS_COMMAND(0x0501, 1, BypassCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
+     * BYPASS_RESPONSE: Bypass Response
+     * <p>
+     * See {@link BypassResponse}
+     */
+    BYPASS_RESPONSE(0x0501, 7, BypassResponse.class, ZclCommandDirection.SERVER_TO_CLIENT),
+    /**
+     * CHECK_IN_COMMAND: Check In Command
+     * <p>
+     * See {@link CheckInCommand}
+     */
+    CHECK_IN_COMMAND(0x0020, 0, CheckInCommand.class, ZclCommandDirection.SERVER_TO_CLIENT),
+    /**
+     * CHECK_IN_RESPONSE: Check In Response
+     * <p>
+     * See {@link CheckInResponse}
+     */
+    CHECK_IN_RESPONSE(0x0020, 0, CheckInResponse.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
      * CLEAR_WEEKLY_SCHEDULE: Clear Weekly Schedule
      * <p>
      * See {@link ClearWeeklySchedule}
      */
     CLEAR_WEEKLY_SCHEDULE(0x0201, 3, ClearWeeklySchedule.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * COLOR_LOOP_SET_COMMAND: Color Loop Set Command
+     * <p>
+     * See {@link ColorLoopSetCommand}
+     */
+    COLOR_LOOP_SET_COMMAND(0x0300, 67, ColorLoopSetCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
      * COMPACT_LOCATION_DATA_NOTIFICATION_COMMAND: Compact Location Data Notification Command
      * <p>
@@ -310,6 +360,30 @@ public enum ZclCommandType {
      */
     EMERGENCY_COMMAND(0x0501, 2, EmergencyCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
+     * ENHANCED_MOVE_TO_HUE_AND_SATURATION_COMMAND: Enhanced Move To Hue and Saturation Command
+     * <p>
+     * See {@link EnhancedMoveToHueAndSaturationCommand}
+     */
+    ENHANCED_MOVE_TO_HUE_AND_SATURATION_COMMAND(0x0300, 66, EnhancedMoveToHueAndSaturationCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * ENHANCED_MOVE_TO_HUE_COMMAND: Enhanced Move To Hue Command
+     * <p>
+     * See {@link EnhancedMoveToHueCommand}
+     */
+    ENHANCED_MOVE_TO_HUE_COMMAND(0x0300, 64, EnhancedMoveToHueCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * ENHANCED_STEP_HUE_COMMAND: Enhanced Step Hue Command
+     * <p>
+     * See {@link EnhancedStepHueCommand}
+     */
+    ENHANCED_STEP_HUE_COMMAND(0x0300, 65, EnhancedStepHueCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * FAST_POLL_STOP_COMMAND: Fast Poll Stop Command
+     * <p>
+     * See {@link FastPollStopCommand}
+     */
+    FAST_POLL_STOP_COMMAND(0x0020, 1, FastPollStopCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
      * FIRE_COMMAND: Fire Command
      * <p>
      * See {@link FireCommand}
@@ -327,6 +401,12 @@ public enum ZclCommandType {
      * See {@link GetAlarmResponse}
      */
     GET_ALARM_RESPONSE(0x0009, 1, GetAlarmResponse.class, ZclCommandDirection.SERVER_TO_CLIENT),
+    /**
+     * GET_BYPASSED_ZONE_LIST_COMMAND: Get Bypassed Zone List Command
+     * <p>
+     * See {@link GetBypassedZoneListCommand}
+     */
+    GET_BYPASSED_ZONE_LIST_COMMAND(0x0501, 8, GetBypassedZoneListCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
      * GET_DEVICE_CONFIGURATION_COMMAND: Get Device Configuration Command
      * <p>
@@ -351,6 +431,18 @@ public enum ZclCommandType {
      * See {@link GetLocationDataCommand}
      */
     GET_LOCATION_DATA_COMMAND(0x000B, 3, GetLocationDataCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * GET_PANEL_STATUS_COMMAND: Get Panel Status Command
+     * <p>
+     * See {@link GetPanelStatusCommand}
+     */
+    GET_PANEL_STATUS_COMMAND(0x0501, 7, GetPanelStatusCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * GET_PANEL_STATUS_RESPONSE: Get Panel Status Response
+     * <p>
+     * See {@link GetPanelStatusResponse}
+     */
+    GET_PANEL_STATUS_RESPONSE(0x0501, 5, GetPanelStatusResponse.class, ZclCommandDirection.SERVER_TO_CLIENT),
     /**
      * GET_RELAY_STATUS_LOG: Get Relay Status Log
      * <p>
@@ -412,6 +504,18 @@ public enum ZclCommandType {
      */
     GET_ZONE_INFORMATION_RESPONSE(0x0501, 2, GetZoneInformationResponse.class, ZclCommandDirection.SERVER_TO_CLIENT),
     /**
+     * GET_ZONE_STATUS_COMMAND: Get Zone Status Command
+     * <p>
+     * See {@link GetZoneStatusCommand}
+     */
+    GET_ZONE_STATUS_COMMAND(0x0501, 9, GetZoneStatusCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * GET_ZONE_STATUS_RESPONSE: Get Zone Status Response
+     * <p>
+     * See {@link GetZoneStatusResponse}
+     */
+    GET_ZONE_STATUS_RESPONSE(0x0501, 8, GetZoneStatusResponse.class, ZclCommandDirection.SERVER_TO_CLIENT),
+    /**
      * IDENTIFY_COMMAND: Identify Command
      * <p>
      * See {@link IdentifyCommand}
@@ -453,6 +557,18 @@ public enum ZclCommandType {
      * See {@link ImagePageCommand}
      */
     IMAGE_PAGE_COMMAND(0x0019, 4, ImagePageCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * INITIATE_NORMAL_OPERATION_MODE_COMMAND: Initiate Normal Operation Mode Command
+     * <p>
+     * See {@link InitiateNormalOperationModeCommand}
+     */
+    INITIATE_NORMAL_OPERATION_MODE_COMMAND(0x0500, 1, InitiateNormalOperationModeCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * INITIATE_TEST_MODE_COMMAND: Initiate Test Mode Command
+     * <p>
+     * See {@link InitiateTestModeCommand}
+     */
+    INITIATE_TEST_MODE_COMMAND(0x0500, 2, InitiateTestModeCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
      * LOCATION_DATA_NOTIFICATION_COMMAND: Location Data Notification Command
      * <p>
@@ -556,11 +672,35 @@ public enum ZclCommandType {
      */
     OFF_COMMAND(0x0006, 0, OffCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
+     * OFF_WITH_EFFECT_COMMAND: Off With Effect Command
+     * <p>
+     * See {@link OffWithEffectCommand}
+     */
+    OFF_WITH_EFFECT_COMMAND(0x0006, 64, OffWithEffectCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
      * ON_COMMAND: On Command
      * <p>
      * See {@link OnCommand}
      */
     ON_COMMAND(0x0006, 1, OnCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * ON_WITH_RECALL_GLOBAL_SCENE_COMMAND: On With Recall Global Scene Command
+     * <p>
+     * See {@link OnWithRecallGlobalSceneCommand}
+     */
+    ON_WITH_RECALL_GLOBAL_SCENE_COMMAND(0x0006, 65, OnWithRecallGlobalSceneCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * ON_WITH_TIMED_OFF_COMMAND: On With Timed Off Command
+     * <p>
+     * See {@link OnWithTimedOffCommand}
+     */
+    ON_WITH_TIMED_OFF_COMMAND(0x0006, 66, OnWithTimedOffCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * PANEL_STATUS_CHANGED_COMMAND: Panel Status Changed Command
+     * <p>
+     * See {@link PanelStatusChangedCommand}
+     */
+    PANEL_STATUS_CHANGED_COMMAND(0x0501, 4, PanelStatusChangedCommand.class, ZclCommandDirection.SERVER_TO_CLIENT),
     /**
      * PANIC_COMMAND: Panic Command
      * <p>
@@ -796,11 +936,29 @@ public enum ZclCommandType {
      */
     SET_ABSOLUTE_LOCATION_COMMAND(0x000B, 0, SetAbsoluteLocationCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
+     * SET_BYPASSED_ZONE_LIST_COMMAND: Set Bypassed Zone List Command
+     * <p>
+     * See {@link SetBypassedZoneListCommand}
+     */
+    SET_BYPASSED_ZONE_LIST_COMMAND(0x0501, 6, SetBypassedZoneListCommand.class, ZclCommandDirection.SERVER_TO_CLIENT),
+    /**
      * SET_DEVICE_CONFIGURATION_COMMAND: Set Device Configuration Command
      * <p>
      * See {@link SetDeviceConfigurationCommand}
      */
     SET_DEVICE_CONFIGURATION_COMMAND(0x000B, 1, SetDeviceConfigurationCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * SET_LONG_POLL_INTERVAL_COMMAND: Set Long Poll Interval Command
+     * <p>
+     * See {@link SetLongPollIntervalCommand}
+     */
+    SET_LONG_POLL_INTERVAL_COMMAND(0x0020, 2, SetLongPollIntervalCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * SET_SHORT_POLL_INTERVAL_COMMAND: Set Short Poll Interval Command
+     * <p>
+     * See {@link SetShortPollIntervalCommand}
+     */
+    SET_SHORT_POLL_INTERVAL_COMMAND(0x0020, 3, SetShortPollIntervalCommand.class, ZclCommandDirection.CLIENT_TO_SERVER),
     /**
      * SET_WEEKLY_SCHEDULE: Set Weekly Schedule
      * <p>
@@ -975,6 +1133,12 @@ public enum ZclCommandType {
      * See {@link ZoneEnrollResponse}
      */
     ZONE_ENROLL_RESPONSE(0x0500, 0, ZoneEnrollResponse.class, ZclCommandDirection.CLIENT_TO_SERVER),
+    /**
+     * ZONE_STATUS_CHANGED_COMMAND: Zone Status Changed Command
+     * <p>
+     * See {@link ZoneStatusChangedCommand}
+     */
+    ZONE_STATUS_CHANGED_COMMAND(0x0501, 3, ZoneStatusChangedCommand.class, ZclCommandDirection.SERVER_TO_CLIENT),
     /**
      * ZONE_STATUS_CHANGE_NOTIFICATION_COMMAND: Zone Status Change Notification Command
      * <p>

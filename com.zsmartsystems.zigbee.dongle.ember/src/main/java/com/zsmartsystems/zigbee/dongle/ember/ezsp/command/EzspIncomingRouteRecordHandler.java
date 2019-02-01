@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameResponse;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
-    public static int FRAME_ID = 0x59;
+    public static final int FRAME_ID = 0x59;
 
     /**
      * The source of the route record.
@@ -53,10 +53,9 @@ public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
     private int lastHopRssi;
 
     /**
-     * The route record. Each relay in the list is an uint16_t node ID. The list is passed as uint8_t *
-     * to avoid alignment problems.
+     * The route record. Each relay in the list is an uint16_t node ID.
      * <p>
-     * EZSP type is <i>uint8_t[]</i> - Java type is {@link int[]}
+     * EZSP type is <i>uint16_t[]</i> - Java type is {@link int[]}
      */
     private int[] relayList;
 
@@ -73,7 +72,7 @@ public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
         lastHopLqi = deserializer.deserializeUInt8();
         lastHopRssi = deserializer.deserializeInt8S();
         int relayCount = deserializer.deserializeUInt8();
-        relayList= deserializer.deserializeUInt8Array(relayCount);
+        relayList= deserializer.deserializeUInt16Array(relayCount);
     }
 
     /**
@@ -157,10 +156,9 @@ public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
     }
 
     /**
-     * The route record. Each relay in the list is an uint16_t node ID. The list is passed as uint8_t *
-     * to avoid alignment problems.
+     * The route record. Each relay in the list is an uint16_t node ID.
      * <p>
-     * EZSP type is <i>uint8_t[]</i> - Java type is {@link int[]}
+     * EZSP type is <i>uint16_t[]</i> - Java type is {@link int[]}
      *
      * @return the current relayList as {@link int[]}
      */
@@ -169,8 +167,7 @@ public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
     }
 
     /**
-     * The route record. Each relay in the list is an uint16_t node ID. The list is passed as uint8_t *
-     * to avoid alignment problems.
+     * The route record. Each relay in the list is an uint16_t node ID.
      *
      * @param relayList the relayList to set as {@link int[]}
      */
@@ -192,7 +189,7 @@ public class EzspIncomingRouteRecordHandler extends EzspFrameResponse {
         builder.append(", relayList=");
         for (int c = 0; c < relayList.length; c++) {
             if (c > 0) {
-                builder.append(" ");
+                builder.append(' ');
             }
             builder.append(String.format("%02X", relayList[c]));
         }

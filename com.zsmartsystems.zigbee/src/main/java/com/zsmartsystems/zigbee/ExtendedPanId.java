@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -68,9 +68,9 @@ public class ExtendedPanId {
             return;
         }
         if (panId.length != 8) {
-            throw new InvalidParameterException("ExtendedPanId array length must be 8");
+            throw new IllegalArgumentException("ExtendedPanId array length must be 8");
         }
-        this.panId = panId;
+        this.panId = Arrays.copyOf(panId, 8);
     }
 
     /**
@@ -140,4 +140,19 @@ public class ExtendedPanId {
 
         return builder.toString();
     }
+
+    /**
+     * Create an {@link ExtendedPanId} with a random value
+     *
+     * @return {@link ExtendedPanId} containing a random value
+     */
+    public static ExtendedPanId createRandom() {
+        int key[] = new int[8];
+        for (int cnt = 0; cnt < 8; cnt++) {
+            key[cnt] = (int) Math.floor((Math.random() * 255));
+        }
+
+        return new ExtendedPanId(key);
+    }
+
 }

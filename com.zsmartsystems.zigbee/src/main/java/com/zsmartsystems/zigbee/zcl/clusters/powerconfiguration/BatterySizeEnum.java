@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,8 @@ package com.zsmartsystems.zigbee.zcl.clusters.powerconfiguration;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Generated;
+
 /**
  * Enumeration of Power configuration attribute BatterySize options.
  * <p>
@@ -17,6 +19,7 @@ import java.util.Map;
  *
  * @author Chris Jackson
  */
+@Generated(value = "com.zsmartsystems.zigbee.autocode.ZclProtocolCodeGenerator", date = "2018-03-31T12:00:43Z")
 public enum BatterySizeEnum {
     NO_BATTERY(0x0000),
     BUILD_IN(0x0001),
@@ -34,6 +37,13 @@ public enum BatterySizeEnum {
      */
     private static Map<Integer, BatterySizeEnum> idMap;
 
+    static {
+        idMap = new HashMap<Integer, BatterySizeEnum>();
+        for (BatterySizeEnum enumValue : values()) {
+            idMap.put(enumValue.key, enumValue);
+        }
+    }
+
     private final int key;
 
     BatterySizeEnum(final int key) {
@@ -45,12 +55,6 @@ public enum BatterySizeEnum {
     }
 
     public static BatterySizeEnum getByValue(final int value) {
-        if (idMap == null) {
-            idMap = new HashMap<Integer, BatterySizeEnum>();
-            for (BatterySizeEnum enumValue : values()) {
-                idMap.put(enumValue.key, enumValue);
-            }
-        }
         return idMap.get(value);
     }
 }

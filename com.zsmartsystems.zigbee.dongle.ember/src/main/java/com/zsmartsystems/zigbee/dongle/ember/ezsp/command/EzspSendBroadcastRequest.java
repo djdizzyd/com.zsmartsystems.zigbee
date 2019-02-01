@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 by the respective copyright holders.
+ * Copyright (c) 2016-2019 by the respective copyright holders.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,8 +8,8 @@
 package com.zsmartsystems.zigbee.dongle.ember.ezsp.command;
 
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.EzspFrameRequest;
-import com.zsmartsystems.zigbee.dongle.ember.ezsp.serializer.EzspSerializer;
 import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
+import com.zsmartsystems.zigbee.dongle.ember.internal.serializer.EzspSerializer;
 
 /**
  * Class to implement the Ember EZSP command <b>sendBroadcast</b>.
@@ -23,7 +23,7 @@ import com.zsmartsystems.zigbee.dongle.ember.ezsp.structure.EmberApsFrame;
  * @author Chris Jackson - Initial contribution of Java code generator
  */
 public class EzspSendBroadcastRequest extends EzspFrameRequest {
-    public static int FRAME_ID = 0x36;
+    public static final int FRAME_ID = 0x36;
 
     /**
      * The destination to which to send the broadcast. This must be one of the three ZigBee broadcast
@@ -64,7 +64,7 @@ public class EzspSendBroadcastRequest extends EzspFrameRequest {
     private int[] messageContents;
 
     /**
-     * Serialiser used to seialise to binary line data
+     * Serialiser used to serialise to binary line data
      */
     private EzspSerializer serializer;
 
@@ -207,11 +207,11 @@ public class EzspSendBroadcastRequest extends EzspFrameRequest {
         builder.append(", radius=");
         builder.append(radius);
         builder.append(", messageTag=");
-        builder.append(messageTag);
+        builder.append(String.format("%02X", messageTag));
         builder.append(", messageContents=");
         for (int c = 0; c < messageContents.length; c++) {
             if (c > 0) {
-                builder.append(" ");
+                builder.append(' ');
             }
             builder.append(String.format("%02X", messageContents[c]));
         }
