@@ -146,6 +146,8 @@ public class AshFrameHandler implements EzspProtocolHandler {
         this.frameHandler = frameHandler;
     }
 
+    private long startTime = System.currentTimeMillis();
+
     @Override
     public void start(final ZigBeePort port) {
         this.port = port;
@@ -177,60 +179,65 @@ public class AshFrameHandler implements EzspProtocolHandler {
                             // Reset the exception counter
                             exceptionCnt = 0;
 
-                            // Extract the flags for DATA/ACK/NAK frames
-                            switch (packet.getFrameType()) {
-                                case DATA:
-                                    statsRxData++;
+                            if((System.currentTimeMillis() - startTime) > 1000*60*3) {
+                                // fail!
+                                handleError((AshFrameError) packet);
+                            } else {
+                                // Extract the flags for DATA/ACK/NAK frames
+                                switch (packet.getFrameType()) {
+                                    case DATA:
+                                        statsRxData++;
 
-                                    // Always use the ackNum - even if this frame is discarded
-                                    ackSentQueue(packet.getAckNum());
+                                        // Always use the ackNum - even if this frame is discarded
+                                        ackSentQueue(packet.getAckNum());
 
-                                    AshFrameData dataPacket = (AshFrameData) packet;
+                                        AshFrameData dataPacket = (AshFrameData) packet;
 
-                                    // Check for out of sequence frame number
-                                    if (packet.getFrmNum() == ackNum) {
-                                        // Frame was in sequence - prepare the response
-                                        ackNum = (ackNum + 1) & 0x07;
-                                        responseFrame = new AshFrameAck(ackNum);
+                                        // Check for out of sequence frame number
+                                        if (packet.getFrmNum() == ackNum) {
+                                            // Frame was in sequence - prepare the response
+                                            ackNum = (ackNum + 1) & 0x07;
+                                            responseFrame = new AshFrameAck(ackNum);
 
-                                        // Get the EZSP frame
-                                        EzspFrameResponse response = EzspFrame
-                                                .createHandler(dataPacket.getDataBuffer());
-                                        logger.trace("ASH RX EZSP: {}", response);
-                                        if (response == null) {
-                                            logger.debug("ASH: No frame handler created for {}", packet);
+                                            // Get the EZSP frame
+                                            EzspFrameResponse response = EzspFrame
+                                                    .createHandler(dataPacket.getDataBuffer());
+                                            logger.trace("ASH RX EZSP: {}", response);
+                                            if (response == null) {
+                                                logger.debug("ASH: No frame handler created for {}", packet);
+                                            } else {
+                                                notifyTransactionComplete(response);
+                                                handleIncomingFrame(response);
+                                            }
+                                        } else if (!dataPacket.getReTx()) {
+                                            // Send a NAK - this is out of sequence and not a retransmission
+                                            logger.debug("ASH: Frame out of sequence - expected {}, received {}", ackNum,
+                                                    packet.getFrmNum());
+                                            responseFrame = new AshFrameNak(ackNum);
                                         } else {
-                                            notifyTransactionComplete(response);
-                                            handleIncomingFrame(response);
+                                            // Send an ACK - this was out of sequence but was a retransmission
+                                            responseFrame = new AshFrameAck(ackNum);
                                         }
-                                    } else if (!dataPacket.getReTx()) {
-                                        // Send a NAK - this is out of sequence and not a retransmission
-                                        logger.debug("ASH: Frame out of sequence - expected {}, received {}", ackNum,
-                                                packet.getFrmNum());
-                                        responseFrame = new AshFrameNak(ackNum);
-                                    } else {
-                                        // Send an ACK - this was out of sequence but was a retransmission
-                                        responseFrame = new AshFrameAck(ackNum);
-                                    }
-                                    break;
-                                case ACK:
-                                    statsRxAcks++;
-                                    ackSentQueue(packet.getAckNum());
-                                    break;
-                                case NAK:
-                                    statsRxNaks++;
-                                    sendRetry();
-                                    break;
-                                case RSTACK:
-                                    // Stack has been reset!
-                                    handleReset((AshFrameRstAck) packet);
-                                    break;
-                                case ERROR:
-                                    // Stack has entered FAILED state
-                                    handleError((AshFrameError) packet);
-                                    break;
-                                default:
-                                    break;
+                                        break;
+                                    case ACK:
+                                        statsRxAcks++;
+                                        ackSentQueue(packet.getAckNum());
+                                        break;
+                                    case NAK:
+                                        statsRxNaks++;
+                                        sendRetry();
+                                        break;
+                                    case RSTACK:
+                                        // Stack has been reset!
+                                        handleReset((AshFrameRstAck) packet);
+                                        break;
+                                    case ERROR:
+                                        // Stack has entered FAILED state
+                                        handleError((AshFrameError) packet);
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
 
