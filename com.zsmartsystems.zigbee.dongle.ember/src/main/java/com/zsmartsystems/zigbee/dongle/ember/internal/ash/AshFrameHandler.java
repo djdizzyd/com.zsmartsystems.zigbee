@@ -179,7 +179,9 @@ public class AshFrameHandler implements EzspProtocolHandler {
                             // Reset the exception counter
                             exceptionCnt = 0;
 
-                            if((System.currentTimeMillis() - startTime) > 1000*60*3) {
+                            long elapsedTime = (System.currentTimeMillis() - startTime);
+                            logger.debug("Elapsed Time: " + elapsedTime);
+                            if(elapsedTime > 1000*60*3) {
                                 // fail!
                                 handleError((AshFrameError) packet);
                             } else {
