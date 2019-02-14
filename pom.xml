@@ -4,7 +4,7 @@
 
 	<groupId>com.zsmartsystems</groupId>
 	<artifactId>zigbee</artifactId>
-	<version>2.1.10-SNAPSHOT</version>
+	<version>1.1.11-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
