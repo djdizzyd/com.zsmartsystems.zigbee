@@ -183,7 +183,8 @@ public class AshFrameHandler implements EzspProtocolHandler {
                             logger.debug("Elapsed Time: " + elapsedTime);
                             if(elapsedTime > 1000*60*3) {
                                 // fail!
-                                handleError(new AshFrameError(new int[] {0,1,81}));
+                                //handleError(new AshFrameError(new int[] {0,1,81}));
+                                responseFrame = new AshFrameRst();
                             } else {
                                 // Extract the flags for DATA/ACK/NAK frames
                                 switch (packet.getFrameType()) {
