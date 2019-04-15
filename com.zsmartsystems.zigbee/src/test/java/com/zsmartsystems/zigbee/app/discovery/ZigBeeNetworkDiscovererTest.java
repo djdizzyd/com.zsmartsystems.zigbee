@@ -10,7 +10,9 @@ package com.zsmartsystems.zigbee.app.discovery;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -24,10 +26,13 @@ import org.mockito.stubbing.Answer;
 
 import com.zsmartsystems.zigbee.CommandResult;
 import com.zsmartsystems.zigbee.IeeeAddress;
+import com.zsmartsystems.zigbee.TestUtilities;
 import com.zsmartsystems.zigbee.ZigBeeCommand;
 import com.zsmartsystems.zigbee.ZigBeeEndpointAddress;
 import com.zsmartsystems.zigbee.ZigBeeNetworkManager;
 import com.zsmartsystems.zigbee.ZigBeeNode;
+import com.zsmartsystems.zigbee.ZigBeeNode.ZigBeeNodeState;
+import com.zsmartsystems.zigbee.ZigBeeNodeStatus;
 import com.zsmartsystems.zigbee.transaction.ZigBeeTransactionFuture;
 import com.zsmartsystems.zigbee.transaction.ZigBeeTransactionMatcher;
 import com.zsmartsystems.zigbee.zcl.ZclCommand;
@@ -35,6 +40,7 @@ import com.zsmartsystems.zigbee.zdo.ZdoCommandType;
 import com.zsmartsystems.zigbee.zdo.ZdoStatus;
 import com.zsmartsystems.zigbee.zdo.command.DeviceAnnounce;
 import com.zsmartsystems.zigbee.zdo.command.IeeeAddressResponse;
+import com.zsmartsystems.zigbee.zdo.command.NetworkAddressResponse;
 
 /**
  *
@@ -44,14 +50,26 @@ import com.zsmartsystems.zigbee.zdo.command.IeeeAddressResponse;
 public class ZigBeeNetworkDiscovererTest {
     static final int TIMEOUT = 5000;
 
-    ZigBeeNetworkManager networkManager;
-    ArgumentCaptor<ZigBeeNode> nodeCapture;
-    Map<Integer, ZigBeeCommand> responses = new HashMap<Integer, ZigBeeCommand>();
+    private ZigBeeNetworkManager networkManager;
+    private ArgumentCaptor<ZigBeeNode> nodeCapture;
+    private Map<Integer, ZigBeeCommand> responses = new HashMap<>();
 
     @Before
     public void setupTest() {
         networkManager = Mockito.mock(ZigBeeNetworkManager.class);
         nodeCapture = ArgumentCaptor.forClass(ZigBeeNode.class);
+
+        Mockito.doAnswer(new Answer<Future<CommandResult>>() {
+            @Override
+            public Future<CommandResult> answer(InvocationOnMock invocation) {
+                ZigBeeCommand command = (ZigBeeCommand) invocation.getArguments()[0];
+
+                ZigBeeTransactionFuture commandFuture = new ZigBeeTransactionFuture();
+                CommandResult result = new CommandResult(responses.get(command.getClusterId()));
+                commandFuture.set(result);
+                return commandFuture;
+            }
+        }).when(networkManager).sendTransaction(ArgumentMatchers.any(ZigBeeCommand.class));
 
         Mockito.doAnswer(new Answer<Future<CommandResult>>() {
             @Override
@@ -84,33 +102,72 @@ public class ZigBeeNetworkDiscovererTest {
         ieeeResponse.setSourceAddress(new ZigBeeEndpointAddress(0));
         ieeeResponse.setDestinationAddress(new ZigBeeEndpointAddress(0));
         ieeeResponse.setIeeeAddrRemoteDev(new IeeeAddress("1234567890ABCDEF"));
+        ieeeResponse.setNwkAddrRemoteDev(0);
+        ieeeResponse.setStartIndex(0);
+        List<Integer> remotes = new ArrayList<>();
+        remotes.add(1);
+        ieeeResponse.setNwkAddrAssocDevList(remotes);
         responses.put(ZdoCommandType.IEEE_ADDRESS_REQUEST.getClusterId(), ieeeResponse);
 
         ZigBeeNetworkDiscoverer discoverer = new ZigBeeNetworkDiscoverer(networkManager);
 
-        discoverer.setRetryPeriod(1);
+        ZigBeeNode node0 = Mockito.mock(ZigBeeNode.class);
+        Mockito.when(node0.getIeeeAddress()).thenReturn(new IeeeAddress("0000000000000000"));
+
+        ZigBeeNode node1 = Mockito.mock(ZigBeeNode.class);
+        Mockito.when(node1.getIeeeAddress()).thenReturn(new IeeeAddress("1111111111111111"));
+
+        Mockito.doAnswer(new Answer<ZigBeeNode>() {
+            private int count0 = 0;
+            private int count1 = 0;
+
+            @Override
+            public ZigBeeNode answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                Integer nodeId = (Integer) args[0];
+
+                if (nodeId == 0) {
+                    if (count0++ == 0) {
+                        return null;
+                    }
+                    return node0;
+                } else {
+                    if (count1++ == 0) {
+                        return null;
+                    }
+                    return node1;
+                }
+            }
+        }).when(networkManager).getNode(ArgumentMatchers.anyInt());
+
+        discoverer.setRetryPeriod(Integer.MAX_VALUE);
         discoverer.startup();
 
         // Check it registers listeners
         Mockito.verify(networkManager).addCommandListener(discoverer);
         Mockito.verify(networkManager).addAnnounceListener(discoverer);
 
-        // Then wait for the node to be added
-        Mockito.verify(networkManager, Mockito.timeout(TIMEOUT).times(1)).addNode(nodeCapture.capture());
+        // Then wait for the nodes to be added
+        Mockito.verify(networkManager, Mockito.timeout(TIMEOUT).times(2)).addNode(nodeCapture.capture());
 
         ZigBeeNode node = nodeCapture.getValue();
         assertNotNull(node);
         assertEquals(Integer.valueOf(0), node.getNetworkAddress());
         assertEquals(new IeeeAddress("1234567890ABCDEF"), node.getIeeeAddress());
         assertEquals(0, node.getEndpoints().size());
+
+        discoverer.setRetryCount(0);
+        discoverer.setRequeryPeriod(0);
+        discoverer.shutdown();
     }
 
     @Test
     public void testNodeAddressUpdate() {
         IeeeAddress ieeeAddress = new IeeeAddress("123456890ABCDEF");
 
-        ZigBeeNode node = Mockito.mock(ZigBeeNode.class);// new ZigBeeNode(networkManager, ieeeAddress);
+        ZigBeeNode node = Mockito.mock(ZigBeeNode.class);
         Mockito.doReturn(node).when(networkManager).getNode(ArgumentMatchers.any(IeeeAddress.class));
+        Mockito.when(node.getNetworkAddress()).thenReturn(11111);
 
         DeviceAnnounce announce = new DeviceAnnounce();
         announce.setIeeeAddr(ieeeAddress);
@@ -122,12 +179,83 @@ public class ZigBeeNetworkDiscovererTest {
         discoverer.setRetryCount(0);
 
         discoverer.commandReceived(announce);
-        Mockito.verify(node, Mockito.times(1)).setNetworkAddress(ArgumentMatchers.anyInt());
+        Mockito.verify(node, Mockito.times(1)).setNetworkAddress(12345);
+        Mockito.verify(node, Mockito.times(1)).setNodeState(ZigBeeNodeState.ONLINE);
 
         ZigBeeEndpointAddress address = Mockito.mock(ZigBeeEndpointAddress.class);
         Mockito.when(address.getAddress()).thenReturn(12345);
         ZclCommand zclCommand = Mockito.mock(ZclCommand.class);
         Mockito.when(zclCommand.getSourceAddress()).thenReturn(address);
         discoverer.commandReceived(zclCommand);
+    }
+
+    @Test
+    public void deviceStatusUpdate() {
+        ZigBeeNode node = Mockito.mock(ZigBeeNode.class);
+        Mockito.doReturn(node).when(networkManager).getNode(ArgumentMatchers.any(IeeeAddress.class));
+        Mockito.when(node.getNetworkAddress()).thenReturn(1111);
+
+        ZigBeeNetworkDiscoverer discoverer = new ZigBeeNetworkDiscoverer(networkManager);
+        discoverer.setRetryPeriod(0);
+        discoverer.setRequeryPeriod(0);
+        discoverer.setRetryCount(0);
+
+        discoverer.deviceStatusUpdate(ZigBeeNodeStatus.UNSECURED_JOIN, 2222, new IeeeAddress("1111111111111111"));
+        Mockito.verify(node, Mockito.times(1)).setNetworkAddress(2222);
+        Mockito.verify(node, Mockito.times(1)).setNodeState(ZigBeeNodeState.ONLINE);
+    }
+
+    @Test
+    public void rediscoverNodeByEui() throws Exception {
+        ZigBeeNetworkDiscoverer discoverer = new ZigBeeNetworkDiscoverer(networkManager);
+
+        IeeeAddressResponse ieeeResponse = new IeeeAddressResponse();
+        ieeeResponse.setStatus(ZdoStatus.SUCCESS);
+        ieeeResponse.setSourceAddress(new ZigBeeEndpointAddress(1111));
+        ieeeResponse.setDestinationAddress(new ZigBeeEndpointAddress(0));
+        ieeeResponse.setNwkAddrRemoteDev(1111);
+        ieeeResponse.setIeeeAddrRemoteDev(new IeeeAddress("1111111111111111"));
+        responses.put(ZdoCommandType.IEEE_ADDRESS_REQUEST.getClusterId(), ieeeResponse);
+
+        Map<Integer, Long> discoveryStartTime = new HashMap<>();
+        discoveryStartTime.put(1111, Long.MAX_VALUE);
+        TestUtilities.setField(ZigBeeNetworkDiscoverer.class, discoverer, "initialized", true);
+        TestUtilities.setField(ZigBeeNetworkDiscoverer.class, discoverer, "discoveryStartTime", discoveryStartTime);
+        discoverer.rediscoverNode(1111);
+
+        Mockito.verify(networkManager, Mockito.timeout(TIMEOUT).times(1)).addNode(nodeCapture.capture());
+
+        ZigBeeNode node = nodeCapture.getValue();
+        assertNotNull(node);
+        assertEquals(Integer.valueOf(1111), node.getNetworkAddress());
+        assertEquals(new IeeeAddress("1111111111111111"), node.getIeeeAddress());
+        assertEquals(0, node.getEndpoints().size());
+    }
+
+    @Test
+    public void rediscoverNodeByNwk() throws Exception {
+        ZigBeeNetworkDiscoverer discoverer = new ZigBeeNetworkDiscoverer(networkManager);
+
+        NetworkAddressResponse nwkResponse = new NetworkAddressResponse();
+        nwkResponse.setStatus(ZdoStatus.SUCCESS);
+        nwkResponse.setSourceAddress(new ZigBeeEndpointAddress(1111));
+        nwkResponse.setDestinationAddress(new ZigBeeEndpointAddress(0));
+        nwkResponse.setNwkAddrRemoteDev(1111);
+        nwkResponse.setIeeeAddrRemoteDev(new IeeeAddress("1111111111111111"));
+        responses.put(ZdoCommandType.NETWORK_ADDRESS_REQUEST.getClusterId(), nwkResponse);
+
+        Map<Integer, Long> discoveryStartTime = new HashMap<>();
+        discoveryStartTime.put(1111, Long.MAX_VALUE);
+        TestUtilities.setField(ZigBeeNetworkDiscoverer.class, discoverer, "initialized", true);
+        TestUtilities.setField(ZigBeeNetworkDiscoverer.class, discoverer, "discoveryStartTime", discoveryStartTime);
+        discoverer.rediscoverNode(new IeeeAddress("1111111111111111"));
+
+        Mockito.verify(networkManager, Mockito.timeout(TIMEOUT).times(1)).addNode(nodeCapture.capture());
+
+        ZigBeeNode node = nodeCapture.getValue();
+        assertNotNull(node);
+        assertEquals(Integer.valueOf(1111), node.getNetworkAddress());
+        assertEquals(new IeeeAddress("1111111111111111"), node.getIeeeAddress());
+        assertEquals(0, node.getEndpoints().size());
     }
 }

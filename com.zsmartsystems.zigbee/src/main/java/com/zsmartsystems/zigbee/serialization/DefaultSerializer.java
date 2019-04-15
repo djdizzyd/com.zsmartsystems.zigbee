@@ -160,6 +160,7 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 buffer[length++] = (uint24Value >> 8) & 0xFF;
                 buffer[length++] = (uint24Value >> 16) & 0xFF;
                 break;
+            case ENUMERATION_32_BIT:
             case SIGNED_32_BIT_INTEGER:
                 final int intValue = (Integer) data;
                 buffer[length++] = intValue & 0xFF;
@@ -201,6 +202,14 @@ public class DefaultSerializer implements ZigBeeSerializer {
                 break;
             case ZIGBEE_DATA_TYPE:
                 buffer[length++] = ((ZclDataType) data).getId();
+                break;
+            case FLOAT_32_BIT:
+                final Float float32 = ((Double) data).floatValue();
+                final int float32Value = Float.floatToRawIntBits(float32);
+                buffer[length++] = float32Value & 0xFF;
+                buffer[length++] = (float32Value >> 8) & 0xFF;
+                buffer[length++] = (float32Value >> 16) & 0xFF;
+                buffer[length++] = (float32Value >> 24) & 0xFF;
                 break;
             default:
                 throw new IllegalArgumentException("No writer defined in " + ZigBeeDeserializer.class.getSimpleName()

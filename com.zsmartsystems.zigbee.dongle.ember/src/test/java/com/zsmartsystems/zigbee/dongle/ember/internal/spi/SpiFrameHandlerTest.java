@@ -7,10 +7,7 @@
  */
 package com.zsmartsystems.zigbee.dongle.ember.internal.spi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -202,6 +199,12 @@ public class SpiFrameHandlerTest {
     }
 
     @Test
+    public void testReceiveInvalidEzsp() {
+        processSpiCommand(new int[] { 0xFE }, new int[] { 0xFE, 0x04, 0x02, 0x80, 0xFF, 0x00 });
+        assertTrue(responseCaptor.getAllValues().size() == 0);
+    }
+
+    @Test
     public void testReceiveErrors() {
         SpiFrameHandler handler;
 
@@ -246,10 +249,6 @@ public class SpiFrameHandlerTest {
         assertEquals(2, portOutData.size());
         assertEquals(Integer.valueOf(0x0B), portOutData.get(0));
         assertEquals(Integer.valueOf(0xA7), portOutData.get(1));
-
-        // If we process the status and it is ready, then we get the online notification
-        processSpiCommand(new int[] { 0x0B }, new int[] { 0xC1 });
-        assertTrue(stateCaptor.getValue());
     }
 
     @Test
